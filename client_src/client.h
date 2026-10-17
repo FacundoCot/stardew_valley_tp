@@ -3,13 +3,8 @@
 
 class Client {
 
-    private:
-    
-
-
-    public:
+private:
+public:
 };
-
-
 
 #endif
