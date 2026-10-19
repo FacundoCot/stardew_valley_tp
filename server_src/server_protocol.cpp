@@ -113,9 +113,6 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         case MessageType::GAME_CREATED:
         case MessageType::GAME_JOINED: {
             send_string(message.game_code);
-
-            const uint32_t id = htonl(message.player_id);
-            send_or_throw(&id, sizeof(id));
             break;
         }
 
@@ -125,17 +122,16 @@ void ServerProtocol::send_message(const ServerMessage& message) {
                 throw std::runtime_error("too many players");
             }
 
-            const uint16_t count =
-                    htons(static_cast<uint16_t>(message.players.size()));
+            const uint16_t count = htons(static_cast<uint16_t>(message.players.size()));
 
             send_or_throw(&count, sizeof(count));
 
             for (const PlayerState& player : message.players) {
-                const uint32_t id = htonl(player.id);
+                send_string(player.player_name);
+
                 const uint16_t x = htons(player.x);
                 const uint16_t y = htons(player.y);
 
-                send_or_throw(&id, sizeof(id));
                 send_or_throw(&x, sizeof(x));
                 send_or_throw(&y, sizeof(y));
             }
