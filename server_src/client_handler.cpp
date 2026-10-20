@@ -10,6 +10,7 @@ ClientHandler::ClientHandler(Socket&& skt,
                              int client_id):
         skt(std::move(skt)),
         outgoing(),
+        client_id(client_id),
         receiver(this->skt, actions, client_id),
         sender(this->skt, outgoing) {}
 
@@ -41,6 +42,14 @@ void ClientHandler::stop() {
 
 bool ClientHandler::is_finished() {
     return (!receiver.is_alive()) || (!sender.is_alive());
+}
+
+int ClientHandler::id() const {
+    return client_id;
+}
+
+Queue<ServerMessage>& ClientHandler::outgoing_queue() {
+    return outgoing;
 }
 
 ClientHandler::~ClientHandler() {

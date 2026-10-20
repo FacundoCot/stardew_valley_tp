@@ -10,12 +10,15 @@
 
 #include "client_handler.h"
 #include "client_action.h"
+#include "client_registry.h"
+
 
 class Acceptor: public Thread {
 private:
     Socket skt;
 
     Queue<std::shared_ptr<ClientAction>>& actions;
+    ClientRegistry& registry;
 
     int next_client_id = 1;
 
@@ -30,7 +33,8 @@ private:
 
 public:
     explicit Acceptor(Socket&& skt,
-                      Queue<std::shared_ptr<ClientAction>>& actions);
+                      Queue<std::shared_ptr<ClientAction>>& actions,
+                      ClientRegistry& registry);
                       
 
     void run() override;

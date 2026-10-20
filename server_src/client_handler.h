@@ -14,6 +14,7 @@ class ClientHandler {
 private:
     Socket skt;
     Queue<ServerMessage> outgoing;
+    int client_id;
 
     ClientReceiver receiver;
     ClientSender sender;
@@ -29,6 +30,10 @@ public:
     void stop();
 
     bool is_finished();
+
+    int id() const;
+
+    Queue<ServerMessage>& outgoing_queue();
 
     ~ClientHandler();
 };

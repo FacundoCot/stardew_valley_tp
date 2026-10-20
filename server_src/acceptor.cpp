@@ -4,8 +4,9 @@
 #include <utility>
 
 Acceptor::Acceptor(Socket&& skt,
-                   Queue<std::shared_ptr<ClientAction>>& actions):
-    skt(std::move(skt)), actions(actions) {}
+                   Queue<std::shared_ptr<ClientAction>>& actions,
+                   ClientRegistry& registry):
+    skt(std::move(skt)), actions(actions), registry(registry) {}
 
 void Acceptor::stop() {
     Thread::stop();
@@ -15,6 +16,7 @@ void Acceptor::stop() {
 
 void Acceptor::clean() {
     for (auto& client: clients) {
+        registry.remove(client->id());
         client->stop();
         // hago stop al handler y apago todos los socket por cada
         // client_handler vivo, asi desbloqueo posibles
@@ -33,6 +35,7 @@ void Acceptor::reap() {
 
     while (it != clients.end()) {
         if ((*it)->is_finished()) { //desreferencio el iterador para acceder al unique_ptr y luego con -> accedo a clienthandler
+            registry.remove((*it)->id());
             it = clients.erase(it);
         } else {
             ++it;
@@ -57,6 +60,8 @@ void Acceptor::run() {
             // asi es posible despues pushearlo al vector clients
             auto new_handler = std::make_unique<ClientHandler>(
                     std::move(new_client), actions, next_client_id++);
+            
+            registry.add(new_handler->id(), &new_handler->outgoing_queue());
 
             // le transfiero el owner al vector
             clients.push_back(std::move(new_handler));
