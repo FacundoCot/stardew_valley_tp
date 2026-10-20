@@ -13,7 +13,13 @@ enum class ActionType : uint8_t {
   DISCONNECT = 4
 };
 
-enum class Direction : uint8_t { UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4 };
+enum class Direction : uint8_t {
+  DEFAULT = 0,
+  UP = 1,
+  DOWN = 2,
+  LEFT = 3,
+  RIGHT = 4
+};
 
 enum class MessageType : uint8_t {
   GAME_CREATED = 1,
@@ -41,7 +47,7 @@ struct ClientMessage {
   uint16_t game_name_len = 0;
   uint16_t player_name_len = 0;
   std::string player_name;
-  Direction direction;
+  Direction direction = Direction::DEFAULT;
   std::string game_name;
 };
 

@@ -55,17 +55,12 @@ ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
 }
 
 std::string ClientProtocol::serialize_move(const ClientMessage &msg_to_server) {
-  size_t len_msg = sizeof(uint8_t) * 2 + sizeof(msg_to_server.player_name);
+  size_t len_msg = sizeof(uint8_t) * 2;
   std::string buffer;
   buffer.reserve(len_msg);
 
   buffer += static_cast<uint8_t>(msg_to_server.type);
   buffer += static_cast<uint8_t>(msg_to_server.direction);
-
-  uint16_t player_name_len_net = htons(msg_to_server.player_name_len);
-  buffer.append(reinterpret_cast<const char *>(&player_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.player_name;
 
   return buffer;
 }
