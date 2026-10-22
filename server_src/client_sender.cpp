@@ -8,11 +8,10 @@
 
 ClientSender::ClientSender(Socket& skt,
                            Queue<ServerMessage>& outgoing):
-        skt(skt),
+        protocol(skt),
         outgoing(outgoing) {}
 
 void ClientSender::run() {
-    ServerProtocol protocol(skt);
 
     try {
         while (should_keep_running()) {
