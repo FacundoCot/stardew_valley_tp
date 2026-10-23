@@ -20,6 +20,8 @@ public:
   explicit ClientProtocol(Socket &&skt_rcv);
 
   void send_to_server(const ClientMessage &msg_to_server);
+  ServerMessage rcv_from_server();
+  void shutdown();
 };
 
 #endif

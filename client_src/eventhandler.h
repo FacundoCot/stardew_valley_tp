@@ -11,6 +11,7 @@ private:
 
 public:
   ClientMessage get_next_event(const SDL_Event &e);
+  bool is_disconnect(const SDL_Event &e);
 };
 
 #endif

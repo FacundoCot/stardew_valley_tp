@@ -43,3 +43,7 @@ ClientMessage EventHandler::get_next_event(const SDL_Event &e) {
 
   return get_event_to_protocol(e, msg);
 }
+
+bool EventHandler::is_disconnect(const SDL_Event &e) {
+  return e.type == SDL_QUIT;
+}

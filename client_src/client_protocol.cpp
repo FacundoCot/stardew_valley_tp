@@ -96,3 +96,8 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
     throw std::runtime_error("Error at: client_protocol: Socket was closed!\n");
   }
 }
+
+void ClientProtocol::shutdown() {
+  skt.shutdown(2);
+  skt.close();
+}

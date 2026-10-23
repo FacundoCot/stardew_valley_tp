@@ -1,4 +1,2 @@
 // dummy para que compile CMake
-int main(){
-    return 0;
-}
+int main() { return 0; }
