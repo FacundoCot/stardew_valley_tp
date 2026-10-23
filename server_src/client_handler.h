@@ -9,24 +9,33 @@
 #include "client_receiver.h"
 #include "client_sender.h"
 #include "client_action.h"
+#include "../common_src/thread.h"
+#include "menu_games_monitor.h"
 
-class ClientHandler {
+class ClientHandler: public Thread {
 private:
     Socket skt;
     Queue<ServerMessage> outgoing;
 
-    ClientReceiver receiver;
-    ClientSender sender;
+    MenuGamesMonitor& menu_games_monitor;
 
+    std::shared_ptr<Game> game;
+    std::string player_name;
+
+    std::unique_ptr<ClientReceiver> receiver;
+    std::unique_ptr<ClientSender> sender;
+
+    std::mutex lock;
     bool stopped = false;
+
+    void send_menu_result(const MenuResult& result, ActionType action, ServerProtocol& protocol);
 
 public:
     explicit ClientHandler(Socket&& skt,
-                  Queue<std::shared_ptr<ClientAction>>& actions,
-                  int client_id);
+                           MenuGamesMonitor& menu_games_monitor);
 
-    void start();
-    void stop();
+    void run() override;
+    void stop() override;
 
     bool is_finished();
 

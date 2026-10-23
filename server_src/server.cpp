@@ -2,8 +2,13 @@
 
 #include <iostream>
 #include <utility>
+// include de map.h
 
-Server::Server(Socket&& skt): actions(), acceptor(std::move(skt), actions) {}
+Server::Server(Socket&& skt):
+        actions(),
+        menu_games_monitor(Map(20, 20)),
+        acceptor(std::move(skt), actions, menu_games_monitor) 
+{}
 
 void Server::run() {
     acceptor.start();

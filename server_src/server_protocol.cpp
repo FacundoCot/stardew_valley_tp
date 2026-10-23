@@ -63,30 +63,9 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
     uint8_t op;
     recv_or_throw(&op, sizeof(op));
 
-    switch (op) {
-        // caso create, 2 bytes de game_name, string
-        // y despues 2 bytes de player_name, string
-        case static_cast<uint8_t>(ActionType::CREATE_GAME): {
-            std::string game_name = recv_string();
-            std::string player_name = recv_string();
-
-            return std::make_shared<CreateGameAction>(
-                    std::move(game_name), std::move(player_name));
-            break;
-            }
-
-        // caso join, 2 bytes de game_code, string
-        // y despues 2 bytes de player_name, string
-        case static_cast<uint8_t>(ActionType::JOIN_GAME): {
-            std::string game_code = recv_string();
-            std::string player_name = recv_string();
-
-            return std::make_shared<JoinGameAction>(
-                    std::move(game_code), std::move(player_name));
-            break;
-        }
+    switch (static_cast<ActionType>(op)) {
         // caso move, 1 byte de direction
-        case static_cast<uint8_t>(ActionType::MOVE): {
+        case ActionType::MOVE: {
             uint8_t direction;
             recv_or_throw(&direction, sizeof(direction));
 
@@ -101,7 +80,7 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
         }
 
         default:
-            throw std::runtime_error("invalid operation");
+            throw std::runtime_error("invalid game operation");
     }
 }
 
@@ -144,5 +123,29 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
         default:
             throw std::runtime_error("invalid server message");
+    }
+}
+
+MenuRequest ServerProtocol::recv_menu_request() {
+    uint8_t op;
+    recv_or_throw(&op, sizeof(op));
+
+    switch (static_cast<ActionType>(op)) {
+        case ActionType::CREATE_GAME: {
+            std::string game_name = recv_string();
+            std::string player_name = recv_string();
+
+            return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name)};
+        }
+
+        case ActionType::JOIN_GAME: {
+            std::string game_code = recv_string();
+            std::string player_name = recv_string();
+
+            return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name)};
+        }
+
+        default:
+            throw std::runtime_error("invalid menu request");
     }
 }

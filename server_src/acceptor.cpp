@@ -4,8 +4,9 @@
 #include <utility>
 
 Acceptor::Acceptor(Socket&& skt,
-                   Queue<std::shared_ptr<ClientAction>>& actions):
-    skt(std::move(skt)), actions(actions) {}
+                   Queue<std::shared_ptr<ClientAction>>& actions,
+                   MenuGamesMonitor& menu_games_monitor):
+    skt(std::move(skt)), actions(actions), menu_games_monitor(menu_games_monitor) {}
 
 void Acceptor::stop() {
     Thread::stop();
@@ -56,7 +57,7 @@ void Acceptor::run() {
             // en vez de crear un client_handler comun creo uno que sea unique_ptr
             // asi es posible despues pushearlo al vector clients
             auto new_handler = std::make_unique<ClientHandler>(
-                    std::move(new_client), actions, next_client_id++);
+                    std::move(new_client), actions, next_client_id++, menu_games_monitor);
 
             // le transfiero el owner al vector
             clients.push_back(std::move(new_handler));

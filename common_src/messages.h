@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
+//include de game.h
 
 enum class ActionType : uint8_t {
     CREATE_GAME = 1,
@@ -38,6 +40,20 @@ struct ServerMessage {
     std::string game_code;
     std::vector<PlayerState> players;
     std::string error;
+};
+
+struct MenuResult {
+    bool success;
+    std::string error;
+    std::string game_code;
+    std::shared_ptr<Game> game;
+};
+
+struct MenuRequest {
+    ActionType type;
+    std::string game_name;
+    std::string game_code;
+    std::string player_name;
 };
 
 #endif

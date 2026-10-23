@@ -29,6 +29,7 @@ public:
     // automáticamente cuando no haya más referencias a ese puntero
     std::shared_ptr<ClientAction> recv_action();
     void send_message(const ServerMessage& message);
+    MenuRequest recv_menu_request();
 };
 
 #endif
