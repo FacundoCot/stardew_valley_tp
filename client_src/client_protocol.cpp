@@ -66,8 +66,14 @@ std::string ClientProtocol::serialize_move(const ClientMessage &msg_to_server) {
 }
 
 std::string
-ClientProtocol::serialize_disconnect(const ClientMessage &mst_to_server) {
-  return "";
+ClientProtocol::serialize_disconnect(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t);
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+
+  return buffer;
 }
 
 std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
@@ -96,6 +102,8 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
     throw std::runtime_error("Error at: client_protocol: Socket was closed!\n");
   }
 }
+
+ServerMessage ClientProtocol::rcv_from_server() { return {}; }
 
 void ClientProtocol::shutdown() {
   skt.shutdown(2);

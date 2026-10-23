@@ -25,6 +25,7 @@ ClientMessage EventHandler::get_event_to_protocol(const SDL_Event &e,
   case (SDLK_d):
     msg.type = ActionType::MOVE;
     msg.direction = Direction::RIGHT;
+    return msg;
 
   default:
     throw std::runtime_error("There is no event possible!\n");
