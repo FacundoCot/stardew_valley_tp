@@ -4,8 +4,10 @@
 #include <limits>
 #include <stdexcept>
 #include <utility>
+#include <cstring>
 
 #include <arpa/inet.h>
+
 
 ServerProtocol::ServerProtocol(Socket& skt): skt(skt) {}
 
@@ -63,30 +65,9 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
     uint8_t op;
     recv_or_throw(&op, sizeof(op));
 
-    switch (op) {
-        // caso create, 2 bytes de game_name, string
-        // y despues 2 bytes de player_name, string
-        case static_cast<uint8_t>(ActionType::CREATE_GAME): {
-            std::string game_name = recv_string();
-            std::string player_name = recv_string();
-
-            return std::make_shared<CreateGameAction>(
-                    std::move(game_name), std::move(player_name));
-            break;
-            }
-
-        // caso join, 2 bytes de game_code, string
-        // y despues 2 bytes de player_name, string
-        case static_cast<uint8_t>(ActionType::JOIN_GAME): {
-            std::string game_code = recv_string();
-            std::string player_name = recv_string();
-
-            return std::make_shared<JoinGameAction>(
-                    std::move(game_code), std::move(player_name));
-            break;
-        }
+    switch (static_cast<ActionType>(op)) {
         // caso move, 1 byte de direction
-        case static_cast<uint8_t>(ActionType::MOVE): {
+        case ActionType::MOVE: {
             uint8_t direction;
             recv_or_throw(&direction, sizeof(direction));
 
@@ -101,9 +82,16 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
         }
 
         default:
-            throw std::runtime_error("invalid operation");
+            throw std::runtime_error("invalid game operation");
     }
 }
+
+static uint32_t float_to_network(float value) {
+    uint32_t bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    return htonl(bits);
+}
+
 
 void ServerProtocol::send_message(const ServerMessage& message) {
     const uint8_t type = static_cast<uint8_t>(message.type);
@@ -113,9 +101,6 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         case MessageType::GAME_CREATED:
         case MessageType::GAME_JOINED: {
             send_string(message.game_code);
-
-            const uint32_t id = htonl(message.player_id);
-            send_or_throw(&id, sizeof(id));
             break;
         }
 
@@ -125,17 +110,16 @@ void ServerProtocol::send_message(const ServerMessage& message) {
                 throw std::runtime_error("too many players");
             }
 
-            const uint16_t count =
-                    htons(static_cast<uint16_t>(message.players.size()));
+            const uint16_t count = htons(static_cast<uint16_t>(message.players.size()));
 
             send_or_throw(&count, sizeof(count));
 
             for (const PlayerState& player : message.players) {
-                const uint32_t id = htonl(player.id);
-                const uint16_t x = htons(player.x);
-                const uint16_t y = htons(player.y);
+                send_string(player.player_name);
 
-                send_or_throw(&id, sizeof(id));
+                const uint32_t x = float_to_network(player.x);
+                const uint32_t y = float_to_network(player.y);
+
                 send_or_throw(&x, sizeof(x));
                 send_or_throw(&y, sizeof(y));
             }
@@ -148,5 +132,29 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
         default:
             throw std::runtime_error("invalid server message");
+    }
+}
+
+MenuRequest ServerProtocol::recv_menu_request() {
+    uint8_t op;
+    recv_or_throw(&op, sizeof(op));
+
+    switch (static_cast<ActionType>(op)) {
+        case ActionType::CREATE_GAME: {
+            std::string game_name = recv_string();
+            std::string player_name = recv_string();
+
+            return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name)};
+        }
+
+        case ActionType::JOIN_GAME: {
+            std::string game_code = recv_string();
+            std::string player_name = recv_string();
+
+            return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name)};
+        }
+
+        default:
+            throw std::runtime_error("invalid menu request");
     }
 }

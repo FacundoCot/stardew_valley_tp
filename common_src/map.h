@@ -16,9 +16,9 @@ private:
 public:
     Map(int width, int height);
 
-    bool is_walkable(int x, int y) const;
+    bool is_walkable(float x, float y) const;
     const std::vector<std::string>& rows() const;
-    std::vector<std::pair<int, int>> spawns() const;
+    std::vector<std::pair<float, float>> spawns() const;
 };
 
 #endif

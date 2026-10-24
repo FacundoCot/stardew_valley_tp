@@ -1,4 +1,5 @@
 #include "map.h"
+#include <cmath>
 
 namespace {
 const char WALL = '#';
@@ -32,23 +33,26 @@ Map::Map(int map_width, int map_height):
     }
 }
 
-bool Map::is_walkable(int x, int y) const {
-    if (x < 0 || y < 0 || x >= width || y >= height) {
+bool Map::is_walkable(float x, float y) const {
+    const int col = static_cast<int>(std::floor(x));
+    const int row = static_cast<int>(std::floor(y));
+    
+    if (col < 0 || row < 0 || col >= width || row >= height) {
         return false;
     }
-    return grid[y][x] != WALL;
+    return grid[row][col] != WALL;
 }
 
 const std::vector<std::string>& Map::rows() const {
     return grid;
 }
 
-std::vector<std::pair<int, int>> Map::spawns() const {
-    std::vector<std::pair<int, int>> result;
+std::vector<std::pair<float, float>> Map::spawns() const {
+    std::vector<std::pair<float, float>> result;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             if (grid[y][x] == SPAWN) {
-                result.emplace_back(x, y);
+                result.emplace_back(x + 0.5f, y + 0.5f);
             }
         }
     }

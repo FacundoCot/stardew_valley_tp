@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "game_action_handler.h"
-
+/*
 CreateGameAction::CreateGameAction(std::string game_name,
                                    std::string player_name):
         game_name(std::move(game_name)),
@@ -21,7 +21,7 @@ JoinGameAction::JoinGameAction(std::string game_code,
 void JoinGameAction::execute(GameActionHandler& handler) const {
     handler.join_game(get_client_id(), game_code, player_name);
 }
-
+*/
 MoveAction::MoveAction(Direction direction):
         direction(direction) {}
 

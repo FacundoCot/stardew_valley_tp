@@ -10,15 +10,11 @@
 
 #include "client_handler.h"
 #include "client_action.h"
-#include "client_registry.h"
-
+#include "menu_games_monitor.h"
 
 class Acceptor: public Thread {
 private:
     Socket skt;
-
-    Queue<std::shared_ptr<ClientAction>>& actions;
-    ClientRegistry& registry;
 
     int next_client_id = 1;
 
@@ -28,15 +24,15 @@ private:
     // unique_ptr = objeto tiene un solo dueño
     std::vector<std::unique_ptr<ClientHandler>> clients;
 
+    MenuGamesMonitor& menu_games_monitor;
+
     void clean();
     void reap();
 
 public:
     explicit Acceptor(Socket&& skt,
-                      Queue<std::shared_ptr<ClientAction>>& actions,
-                      ClientRegistry& registry);
+                      MenuGamesMonitor& menu_games_monitor);
                       
-
     void run() override;
     void stop() override;
 };

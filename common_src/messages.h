@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 enum class ActionType : uint8_t {
     CREATE_GAME = 1,
@@ -28,17 +29,32 @@ enum class MessageType : uint8_t {
 };
 
 struct PlayerState {
-    uint32_t id;
-    uint16_t x;
-    uint16_t y;
+    std::string player_name;
+    float x;
+    float y;
 };
+
+class Game;
 
 struct ServerMessage {
     MessageType type;
     std::string game_code;
-    uint32_t player_id = 0;
     std::vector<PlayerState> players;
     std::string error;
+};
+
+struct MenuResult {
+    bool success;
+    std::string error;
+    std::string game_code;
+    std::shared_ptr<Game> game;
+};
+
+struct MenuRequest {
+    ActionType type;
+    std::string game_name;
+    std::string game_code;
+    std::string player_name;
 };
 
 #endif

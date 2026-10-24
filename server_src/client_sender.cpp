@@ -9,10 +9,10 @@
 ClientSender::ClientSender(Socket& skt,
                            Queue<ServerMessage>& outgoing):
         skt(skt),
+        protocol(skt),
         outgoing(outgoing) {}
 
 void ClientSender::run() {
-    ServerProtocol protocol(skt);
 
     try {
         while (should_keep_running()) {
@@ -28,7 +28,12 @@ void ClientSender::run() {
         // exepcion que nos indica que la cola fue cerrada.
     } catch (const std::exception& e) {
         if (should_keep_running()) {
-            std::cerr << "Error en ClientSender: "<< e.what() << std::endl;
+            std::cerr << "Error in ClientSender: " << e.what() << "\n";
+            try {
+                skt.shutdown(2);
+            } catch (const std::exception&) {
+            // Socket ya cerrado
+        }
         }
     }
 }

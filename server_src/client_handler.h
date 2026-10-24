@@ -9,27 +9,36 @@
 #include "client_receiver.h"
 #include "client_sender.h"
 #include "client_action.h"
+#include "../common_src/thread.h"
+#include "menu_games_monitor.h"
 
-class ClientHandler {
+class ClientHandler: public Thread {
 private:
     Socket skt;
     Queue<ServerMessage> outgoing;
     int client_id;
 
-    ClientReceiver receiver;
-    ClientSender sender;
+    MenuGamesMonitor& menu_games_monitor;
 
-    bool stopped = false;
+    std::shared_ptr<Game> game;
+    std::string player_name;
+
+    // uso unique_ptr para poder inicializar joiner y reciever recien cuando
+    // el cliente se haya unido a una partida
+    std::unique_ptr<ClientReceiver> receiver;
+    std::unique_ptr<ClientSender> sender;
+
+    bool reciever_started = false;
+    bool sender_started = false;
+
+    void send_menu_result(const MenuResult& result, ActionType action, ServerProtocol& protocol);
 
 public:
     explicit ClientHandler(Socket&& skt,
-                  Queue<std::shared_ptr<ClientAction>>& actions,
-                  int client_id);
+                           MenuGamesMonitor& menu_games_monitor);
 
-    void start();
-    void stop();
-
-    bool is_finished();
+    void run() override;
+    void stop() override;
 
     int id() const;
 
