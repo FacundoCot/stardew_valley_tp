@@ -5,9 +5,8 @@
 // include de map.h
 
 Server::Server(Socket&& skt):
-        actions(),
         menu_games_monitor(Map(20, 20)),
-        acceptor(std::move(skt), actions, menu_games_monitor) 
+        acceptor(std::move(skt), menu_games_monitor) 
 {}
 
 void Server::run() {
@@ -22,6 +21,4 @@ void Server::run() {
 
     acceptor.stop();
     acceptor.join();
-
-    actions.close();
 }

@@ -8,7 +8,6 @@
 
 class Server {
 private:
-    Queue<std::shared_ptr<ClientAction>> actions;
     MenuGamesMonitor menu_games_monitor;
     Acceptor acceptor;
 

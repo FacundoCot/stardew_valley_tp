@@ -16,8 +16,6 @@ class Acceptor: public Thread {
 private:
     Socket skt;
 
-    Queue<std::shared_ptr<ClientAction>>& actions;
-
     int next_client_id = 1;
 
     // vector de clienthandlers los cuales todos pertenecen a acceptor
@@ -33,10 +31,8 @@ private:
 
 public:
     explicit Acceptor(Socket&& skt,
-                      Queue<std::shared_ptr<ClientAction>>& actions,
                       MenuGamesMonitor& menu_games_monitor);
                       
-
     void run() override;
     void stop() override;
 };

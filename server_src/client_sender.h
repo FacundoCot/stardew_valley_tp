@@ -10,6 +10,7 @@ struct ServerMessage;
 
 class ClientSender : public Thread {
 private:
+    Socket& skt;
     ServerProtocol protocol;
     //una por cada clienthandler, cada clienthandler tiene su propia cola de mensajes salientes
     //la llena el gameloop, aca solo pop y manda por socket

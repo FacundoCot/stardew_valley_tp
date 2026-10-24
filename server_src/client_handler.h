@@ -22,11 +22,13 @@ private:
     std::shared_ptr<Game> game;
     std::string player_name;
 
+    // uso unique_ptr para poder inicializar joiner y reciever recien cuando
+    // el cliente se haya unido a una partida
     std::unique_ptr<ClientReceiver> receiver;
     std::unique_ptr<ClientSender> sender;
 
-    std::mutex lock;
-    bool stopped = false;
+    bool reciever_started = false;
+    bool sender_started = false;
 
     void send_menu_result(const MenuResult& result, ActionType action, ServerProtocol& protocol);
 
@@ -37,7 +39,7 @@ public:
     void run() override;
     void stop() override;
 
-    bool is_finished();
+    Queue<ServerMessage>& outgoing_queue();
 
     ~ClientHandler();
 };

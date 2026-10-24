@@ -62,37 +62,60 @@ void ClientHandler::run() {
             game = res.game;
             player_name = menu_request.player_name;
 
+            if (!should_keep_running()) {
+                break;
+            }
+
+            receiver = std::make_unique<ClientReceiver>(skt, game->get_actions_queue(), game->get_player_id(player_name));
+            sender = std::make_unique<ClientSender>(skt, outgoing);
+
+            receiver->start();
+            reciever_started = true;
+            sender->start();
+            sender_started = true;
+
+            receiver->join();
+            reciever_started = false;
 
             break;
         }
-
     } catch (const std::exception& e) {
+        // desconexion del cliente o error en la comunicacion
+    }
+
+    stop();
+
+    if (reciever_started) {
+        receiver->stop();
+        receiver->join();
+    }
+    if (sender_started) {
+        sender->stop();
+        sender->join();
     }
 }
 
 void ClientHandler::stop() {
-    if (stopped) {
-        return;
+    // stop default de Thread de la catedra
+    Thread::stop();
+    
+    try {
+        outgoing.close();
+    } catch (const std::exception&) {
+        // La cola puede estar cerrada 
     }
-
-    stopped = true;
-
-    receiver.stop();
-    sender.stop();
-
-    outgoing.close();
-
     try {
         skt.shutdown(2);
     } catch (const std::exception&) {
         // La conexión puede estar cerrada y si lanza una
-        // excepcion podria no llegar a los joins de los threads,
-        // por lo que se ignora la excepcion
     }
+}
+
+Queue<ServerMessage>& ClientHandler::outgoing_queue() {
+    return outgoing;
 }
 
 ClientHandler::~ClientHandler() {
     stop();
-    receiver.join();
-    sender.join();
+    join();
 }
