@@ -3,20 +3,20 @@
 #include <iostream>
 #include <utility>
 
-Server::Server(Socket&& skt): actions(), acceptor(std::move(skt), actions) {}
+Server::Server(Socket &&skt) : actions(), acceptor(std::move(skt), actions) {}
 
 void Server::run() {
-    acceptor.start();
+  acceptor.start();
 
-    char command;
-    while (std::cin >> command) {
-        if (command == 'q') {
-            break;
-        }
+  char command;
+  while (std::cin >> command) {
+    if (command == 'q') {
+      break;
     }
+  }
 
-    acceptor.stop();
-    acceptor.join();
+  acceptor.stop();
+  acceptor.join();
 
-    actions.close();
+  actions.close();
 }

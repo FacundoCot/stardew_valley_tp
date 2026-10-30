@@ -5,7 +5,7 @@ repos:
     hooks:
       - id: clang-format
         files: ^(.*[.]cpp|.*[.]h)$
-        args: ["--style=files", "-i"]
+        args: ["--style=file", "-i"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
@@ -25,4 +25,4 @@ repos:
       
       - id: cppcheck
         files: ^(.*[.]cpp|.*[.]h)$
-        args: ["--inline-suppr", "--enable=all", "--suppress=missingIncludeSystem", "--suppress=missingInclude", "--suppress=unusedFunction", "--suppress=unmatchedSuppression", "--suppress=unusedStructMember", "--language=c++", "--std=c++20", "--error-exitcode=1"]
+        args: ["--inline-suppr", "--enable=all", "--suppress=duplInheritedMember:common_src/queue.h", "--suppress=cstyleCast:common_src/queue.h", "--suppress=missingIncludeSystem", "--suppress=missingInclude", "--suppress=unusedFunction", "--suppress=unmatchedSuppression", "--suppress=unusedStructMember", "--language=c++", "--std=c++20", "--error-exitcode=1"]

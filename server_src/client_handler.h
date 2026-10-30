@@ -3,34 +3,34 @@
 
 #include <memory>
 
-#include "../common_src/socket.h"
 #include "../common_src/messages.h"
 #include "../common_src/queue.h"
+#include "../common_src/socket.h"
+#include "client_action.h"
 #include "client_receiver.h"
 #include "client_sender.h"
-#include "client_action.h"
 
 class ClientHandler {
 private:
-    Socket skt;
-    Queue<ServerMessage> outgoing;
+  Socket skt;
+  Queue<ServerMessage> outgoing;
 
-    ClientReceiver receiver;
-    ClientSender sender;
+  ClientReceiver receiver;
+  ClientSender sender;
 
-    bool stopped = false;
+  bool stopped = false;
 
 public:
-    explicit ClientHandler(Socket&& skt,
-                  Queue<std::shared_ptr<ClientAction>>& actions,
-                  int client_id);
+  explicit ClientHandler(Socket &&skt,
+                         Queue<std::shared_ptr<ClientAction>> &actions,
+                         int client_id);
 
-    void start();
-    void stop();
+  void start();
+  void stop();
 
-    bool is_finished();
+  bool is_finished();
 
-    ~ClientHandler();
+  ~ClientHandler();
 };
 
 #endif

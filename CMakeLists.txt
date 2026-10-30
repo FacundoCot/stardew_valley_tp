@@ -102,6 +102,13 @@ endif()
 # Program section
 # ---------------
 if(GAME_CLIENT)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(game_client)
 
@@ -118,7 +125,7 @@ if(GAME_CLIENT)
     target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR})
 
     # Link the game_common lib target
-    target_link_libraries(game_client game_common SDL2pp::SDL2pp)
+    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
 endif()
 
 if(GAME_SERVER)

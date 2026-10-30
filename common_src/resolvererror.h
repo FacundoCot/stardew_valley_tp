@@ -6,21 +6,21 @@
 /*
  * Clase que encapsula un "gai" error. Vease getaddrinfo()
  * */
-class ResolverError: public std::exception {
+class ResolverError : public std::exception {
 private:
-    int gai_errno;
+  int gai_errno;
 
 public:
-    explicit ResolverError(int gai_errno);
+  explicit ResolverError(int gai_errno);
 
-    virtual const char* what() const noexcept;
+  virtual const char *what() const noexcept override;
 
-    /*
-     * Siempre que heredemos debemos hacer a nuestros
-     * destructores polimórficos (`virtual`)
-     *
-     * Esto garantiza que será llamado.
-     * */
-    virtual ~ResolverError();
+  /*
+   * Siempre que heredemos debemos hacer a nuestros
+   * destructores polimórficos (`virtual`)
+   *
+   * Esto garantiza que será llamado.
+   * */
+  virtual ~ResolverError();
 };
 #endif
