@@ -29,9 +29,9 @@ enum class MessageType : uint8_t {
 };
 
 struct PlayerState {
-  uint32_t id;
-  uint16_t x;
-  uint16_t y;
+  std::string player_name;
+  float x;
+  float y;
 };
 
 struct ServerMessage {

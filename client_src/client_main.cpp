@@ -6,6 +6,7 @@
 #include "client.h"
 #include "client_protocol.h"
 #include "eventhandler.h"
+#include "ui_mainwindow.h"
 
 int main(int argc, char *argv[]) {
   if (argc != CLIENT_PARAMETERS) {

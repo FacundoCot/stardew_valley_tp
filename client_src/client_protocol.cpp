@@ -103,7 +103,66 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
   }
 }
 
-ServerMessage ClientProtocol::rcv_from_server() { return {}; }
+ServerMessage ClientProtocol::rcv_from_server() { 
+  ServerMessage response{};
+  skt.recvall(&response.type, sizeof(uint8_t));
+  
+  switch(response.type){
+    case MessageType::GAME_CREATED:
+      break;
+    case MessageType::GAME_JOINED:
+      response.game_code = rcv_string();
+      break;
+    case MessageType::GAME_STATE:{
+      uint16_t count;
+      skt.recvall(&count, sizeof(uint16_t));
+      count = ntohs(count);
+      
+      for(uint16_t i = 0; i < count; i++){
+        PlayerState player;
+        player.player_name = rcv_string();
+        
+        uint32_t coordinate;
+        skt.recvall(&coordinate, sizeof(uint32_t));
+        float x = ntohl(coordinate)/100.0f;
+        skt.recvall(&coordinate, sizeof(uint32_t));
+        float y = ntohl(coordinate)/100.0f;
+
+        player.x = x;
+        player.y = y;
+
+        response.players.push_back(player);
+      }
+      
+      break;
+    }
+      
+    case MessageType::ERROR:
+      response.error = rcv_string();
+      break;
+    default:
+      throw std::runtime_error("Invalid server message.");
+  }
+
+  return response; 
+}
+
+std::string ClientProtocol::rcv_string(){
+    uint16_t length;
+
+    skt.recvall(&length, sizeof(uint16_t));
+    length = ntohs(length);
+
+    if (length > 1024) {
+        throw std::runtime_error("String too long.");
+    }
+
+    std::string value(length, '\0');
+    skt.recvall(value.data(), length);
+
+    return value;
+}
+
 
 void ClientProtocol::shutdown() {
   skt.shutdown(2);
