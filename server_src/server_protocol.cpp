@@ -4,7 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <utility>
-#include <cstring>
+#include <cmath>
 
 #include <arpa/inet.h>
 
@@ -86,10 +86,10 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
     }
 }
 
-static uint32_t float_to_network(float value) {
-    uint32_t bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    return htonl(bits);
+static uint32_t coordinate_to_network(float value) {
+    int32_t coordinate = static_cast<int32_t>(std::round(value * 100.0f));
+
+    return htonl(static_cast<uint32_t>(coordinate));
 }
 
 
@@ -117,8 +117,8 @@ void ServerProtocol::send_message(const ServerMessage& message) {
             for (const PlayerState& player : message.players) {
                 send_string(player.player_name);
 
-                const uint32_t x = float_to_network(player.x);
-                const uint32_t y = float_to_network(player.y);
+                const uint32_t x = coordinate_to_network(player.x);
+                const uint32_t y = coordinate_to_network(player.y);
 
                 send_or_throw(&x, sizeof(x));
                 send_or_throw(&y, sizeof(y));
@@ -127,7 +127,6 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         }
 
         case MessageType::ERROR:
-            send_string(message.error);
             break;
 
         default:

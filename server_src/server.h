@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "client_registry.h"
 #include "../common_src/socket.h"
 #include "../common_src/queue.h"
 #include "menu_games_monitor.h"
@@ -8,6 +9,7 @@
 
 class Server {
 private:
+    ClientRegistry registry;
     MenuGamesMonitor menu_games_monitor;
     Acceptor acceptor;
 

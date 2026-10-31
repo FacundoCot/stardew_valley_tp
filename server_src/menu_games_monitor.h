@@ -9,17 +9,20 @@
 #include "../common_src/map.h"
 #include "../common_src/messages.h"
 #include "game.h" 
+#include "server_structs.h"
 
 class MenuGamesMonitor {
 private:
     std::mutex mtx;
     Map world_map;
-    std::map<std::string, std::shared_ptr<Game>> games;
+    ClientRegistry& registry;
+    std::map<std::string, std::unique_ptr<GameRuntime>> games;
 
     int next_game_code = 1;
 
 public:
-    explicit MenuGamesMonitor(Map world_map);
+    explicit MenuGamesMonitor(Map world_map, 
+                              ClientRegistry& registry);
 
     MenuResult create_game(int client_id,
                        const std::string& game_name,

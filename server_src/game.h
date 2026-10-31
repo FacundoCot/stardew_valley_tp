@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
+#include <string>
 
 #include "common_src/map.h"
 #include "common_src/messages.h"
@@ -18,7 +19,8 @@ struct Player {
 class Game {
 private:
     Map map;
-    std::map<int, Player> players; //  client_ id -> posicion 
+    std::map<std::string, Player> players; //  client_ id -> posicion 
+    std::map<int, std::string> connected_clients;
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
 
@@ -27,7 +29,7 @@ public:
     explicit Game(Map map);
 
     // Falso si el id ya existe, la celda es pared, esta fuera del mapa
-    bool add_player(int client_id, float x, float y);
+    bool add_player(int client_id, const std::string& player_name, float x, float y);
 
     // Falso si el jugador no existe, la celda destino es pared
     bool move_player(int client_id, Direction direction);
@@ -41,7 +43,7 @@ public:
     std::vector<PlayerState> snapshot() const;
 
     // Ubica al jugador en el spaw
-    bool add_player_auto(int client_id);
+    bool add_player_auto(int client_id, const std::string& player_name);
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
 };

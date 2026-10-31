@@ -5,8 +5,9 @@
 // include de map.h
 
 Server::Server(Socket&& skt):
-        menu_games_monitor(Map(20, 20)),
-        acceptor(std::move(skt), menu_games_monitor) 
+        registry(),
+        menu_games_monitor(Map(20, 20), registry),
+        acceptor(std::move(skt), menu_games_monitor, registry) 
 {}
 
 void Server::run() {

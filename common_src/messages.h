@@ -40,7 +40,6 @@ struct ServerMessage {
     MessageType type;
     std::string game_code;
     std::vector<PlayerState> players;
-    std::string error;
 };
 
 struct MenuResult {

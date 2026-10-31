@@ -12,27 +12,42 @@ Game::Game(Map map_param):
         map(std::move(map_param)) {}
 
 
-bool Game::add_player(int client_id, float x, float y){
+bool Game::add_player(int client_id, const std::string& player_name, float x, float y){
     std::lock_guard<std::mutex> lock(mtx);
 
-    if (players.count(client_id) > 0)
+    if (connected_clients.count(client_id) > 0)
     {
         return false;
     }
 
-    if (!map.is_walkable(x, y))
-    {
-        return false;
+    for (const auto& [id, name] : connected_clients) {
+        if (name == player_name) {
+            return false;
+        }
+    }
+
+    // Si no existe el personaje, lo creamos
+    if (players.count(player_name) == 0) {
+        if (!map.is_walkable(x, y)) {
+            return false;
+        }
+
+        players[player_name] = Player{x, y};
     }
     
-    players[client_id] = Player{x, y};
+    connected_clients[client_id] = player_name;
     return true;
 }
 
 bool Game::move_player(int client_id, Direction direction) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    auto player_iterator = players.find(client_id);
+    auto client_iterator = connected_clients.find(client_id);
+    if (client_iterator == connected_clients.end()) {
+        return false;
+    }
+
+    auto player_iterator = players.find(client_iterator->second);
     if (player_iterator == players.end()) {
         return false;
     }
@@ -59,13 +74,13 @@ bool Game::move_player(int client_id, Direction direction) {
 
 bool Game::remove_player(int client_id){
     std::lock_guard<std::mutex> lock(mtx);
-    return players.erase(client_id) > 0;
+    return connected_clients.erase(client_id) > 0;
 }
 
 bool Game::is_empty() const{
     std::lock_guard<std::mutex> lock(mtx);
     
-    return players.empty();
+    return connected_clients.empty();
 }
 
 
@@ -73,10 +88,9 @@ std::vector<int> Game::player_ids() const{
     std::lock_guard<std::mutex> lock(mtx);
 
     std::vector<int> ids;
-    ids.reserve(players.size());
+    ids.reserve(connected_clients.size());
 
-    for (const auto& [id, player] : players)
-    {
+    for (const auto& [id, player_name] : connected_clients) {
         ids.push_back(id);
     }
     return ids;
@@ -87,10 +101,13 @@ std::vector<PlayerState> Game::snapshot() const {
     std::lock_guard<std::mutex> lock(mtx);
 
     std::vector<PlayerState> state;
-    state.reserve(players.size());
-    for (const auto& [id, player] : players) {
+    state.reserve(connected_clients.size());
+
+    for (const auto& [id, name] : connected_clients) {
+        const Player& player = players.at(name);
+
         state.push_back(PlayerState{
-            std::to_string(id), // -> hay q cambiar al nombre cuando se tenga
+            name,
             player.x,
             player.y,
         });
@@ -98,13 +115,13 @@ std::vector<PlayerState> Game::snapshot() const {
     return state;
 }
 
-bool Game::add_player_auto(int client_id) {
+bool Game::add_player_auto(int client_id, const std::string& player_name) {
     std::vector<std::pair<float, float>> spawns = map.spawns();
     if (spawns.empty()) {
         return false;
     }
     auto [x, y] = spawns.front();
-    return add_player(client_id, x, y);
+    return add_player(client_id, player_name, x, y);
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {

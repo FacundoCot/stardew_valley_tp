@@ -11,6 +11,7 @@
 #include "client_action.h"
 #include "../common_src/thread.h"
 #include "menu_games_monitor.h"
+#include "client_registry.h"
 
 class ClientHandler: public Thread {
 private:
@@ -19,6 +20,8 @@ private:
     int client_id;
 
     MenuGamesMonitor& menu_games_monitor;
+
+    ClientRegistry& registry;
 
     std::shared_ptr<Game> game;
     std::string player_name;
@@ -35,7 +38,9 @@ private:
 
 public:
     explicit ClientHandler(Socket&& skt,
-                           MenuGamesMonitor& menu_games_monitor);
+                           MenuGamesMonitor& menu_games_monitor,
+                           int client_id,
+                           ClientRegistry& registry);
 
     void run() override;
     void stop() override;

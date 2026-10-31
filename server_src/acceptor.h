@@ -11,6 +11,7 @@
 #include "client_handler.h"
 #include "client_action.h"
 #include "menu_games_monitor.h"
+#include "client_registry.h"
 
 class Acceptor: public Thread {
 private:
@@ -25,14 +26,16 @@ private:
     std::vector<std::unique_ptr<ClientHandler>> clients;
 
     MenuGamesMonitor& menu_games_monitor;
+    ClientRegistry& registry;
 
     void clean();
     void reap();
 
 public:
     explicit Acceptor(Socket&& skt,
-                      MenuGamesMonitor& menu_games_monitor);
-                      
+                      MenuGamesMonitor& menu_games_monitor,
+                      ClientRegistry& registry);
+
     void run() override;
     void stop() override;
 };
