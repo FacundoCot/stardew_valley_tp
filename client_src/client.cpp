@@ -2,7 +2,9 @@
 #include "../common_src/messages.h"
 #include "../common_src/queue.h"
 #include "eventhandler.h"
+#include "mainwindow.h"
 
+#include <QApplication>
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 #include <utility>
@@ -11,10 +13,18 @@ Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
     : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
       receiver(responses, protocol), sender(protocol, commands) {}
 
-void Client::run() {
+void Client::run(int argc, char* argv[]) {
 
   receiver.start();
   sender.start();
+
+  bool exited = main_menu(argc, argv);
+
+  if(exited){
+    // creo faltaría incluir el caso donde se sale con
+    return;
+  }
+
   bool was_intentional = false;
 
   try {
@@ -68,6 +78,17 @@ void Client::stop() {
 
   } catch (const std::exception &) {
   }
+}
+
+bool Client::main_menu(int argc, char* argv[]){
+  QApplication app(argc, argv);
+
+  MainWindow menu(receiver, sender);
+  menu.show();
+
+  app.exec();
+
+  return menu.has_exited();
 }
 
 Client::~Client() {

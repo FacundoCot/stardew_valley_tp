@@ -22,10 +22,12 @@ private:
 
   bool running = true;
 
+  bool main_menu(int argc, char* argv[]);
+
 public:
   Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol);
 
-  void run();
+  void run(int argc, char* argv[]);
   void stop();
 
   ~Client();
