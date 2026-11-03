@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 
 enum class ActionType : uint8_t {
   NULL_ACTION = 0,
@@ -31,9 +32,17 @@ enum class MessageType : uint8_t {
 };
 
 struct PlayerState {
-  std::string player_name;
-  float x;
-  float y;
+    std::string player_name;
+    float x;
+    float y;
+    int health;
+    int max_health;
+    bool unconscious;
+
+    PlayerState(std::string name, float x, float y,
+                int health, int max_health, bool unconscious):
+        player_name(std::move(name)), x(x), y(y),
+        health(health), max_health(max_health), unconscious(unconscious) {}
 };
 
 class Game;

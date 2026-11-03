@@ -1,6 +1,9 @@
 #include "menu_games_monitor.h"
 
+#include <memory>
 #include <utility>
+
+#include "client_action.h"
 
 MenuGamesMonitor::MenuGamesMonitor(Map world_map_param, ClientRegistry& registry):
     world_map(std::move(world_map_param)),
@@ -34,6 +37,10 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
 
     games[code] = std::make_unique<GameRuntime>(registry, game);
 
+    auto join = std::make_shared<JoinAction>();
+    join->set_client_id(client_id);
+    game->get_actions_queue().push(join);
+
     return MenuResult{true, "", code, game};
 }
 
@@ -53,6 +60,10 @@ MenuResult MenuGamesMonitor::join_game(int client_id,
     if (!game->add_player_auto(client_id, player_name)) {
         return MenuResult{false, "No hay lugar en la partida", "", nullptr};
     }
+
+    auto join = std::make_shared<JoinAction>();
+    join->set_client_id(client_id);
+    game->get_actions_queue().push(join);
 
     return MenuResult{true, "", game_code, game};
 }

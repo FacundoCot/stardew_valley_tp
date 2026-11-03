@@ -24,10 +24,13 @@ void GameManager::move_player(int client_id, Direction direction) {
     }
 }
 
-void GameManager::disconnect_client(int client_id) {
-    game->remove_player(client_id);
+void GameManager::join_player(int) {
+    send_state();
+}
 
-    if (!game->is_empty()) {
+void GameManager::disconnect_client(int client_id) {
+    if (game->remove_player(client_id) && !game->is_empty()) {
         send_state();
     }
 }
+

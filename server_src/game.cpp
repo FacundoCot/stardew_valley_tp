@@ -5,6 +5,19 @@
 
 namespace {
     const float PLAYER_STEP = 0.1f;
+
+    bool apply_health(Player& player, int health) {
+        int new_life = health;
+        if (new_life < 0) new_life = 0;
+        if (new_life > MAX_HEALTH) new_life = MAX_HEALTH;
+
+        if (new_life == player.health) {
+            return false;
+        }
+        player.health = new_life;
+        player.unconscious = (new_life == 0);
+        return true;
+    }
 }
 
 
@@ -32,7 +45,7 @@ bool Game::add_player(int client_id, const std::string& player_name, float x, fl
             return false;
         }
 
-        players[player_name] = Player{x, y};
+        players.emplace(player_name, Player(x, y, MAX_HEALTH));
     }
     
     connected_clients[client_id] = player_name;
@@ -49,6 +62,11 @@ bool Game::move_player(int client_id, Direction direction) {
 
     auto player_iterator = players.find(client_iterator->second);
     if (player_iterator == players.end()) {
+        return false;
+    }
+
+
+    if (player_iterator->second.unconscious) {
         return false;
     }
 
@@ -111,6 +129,9 @@ std::vector<PlayerState> Game::snapshot() const {
             name,
             player.x,
             player.y,
+            player.health,
+            MAX_HEALTH,
+            player.unconscious,
         });
     }
     return state;
@@ -127,4 +148,19 @@ bool Game::add_player_auto(int client_id, const std::string& player_name) {
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
     return actions;
+}
+
+bool Game::damage_player(const std::string& player_name, int amount) {
+    if (amount <= 0) {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto player_iterator = players.find(player_name);
+    if (player_iterator == players.end()) {
+        return false;
+    }
+
+    return apply_health(player_iterator->second, player_iterator->second.health - amount);
 }
