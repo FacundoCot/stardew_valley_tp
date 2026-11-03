@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
 
     EventHandler handler;
     ClientProtocol protocol = ClientProtocol(std::move(Socket(host, port)));
+    Chronometer chrono;
 
     Client client = Client(std::move(handler), std::move(protocol));
 

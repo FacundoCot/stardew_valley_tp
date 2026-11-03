@@ -91,7 +91,7 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
     return serialize_disconnect(msg_to_server);
 
   default:
-    throw std::runtime_error("Error at: client_protocol: action not exists!\n");
+    throw std::runtime_error("Error at: client_protocol: action not exists!");
   }
 }
 
@@ -99,7 +99,7 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
   std::string buf = serialize(msg_to_server);
 
   if (skt.sendall(buf.data(), buf.size()) != static_cast<int>(buf.size())) {
-    throw std::runtime_error("Error at: client_protocol: Socket was closed!\n");
+    throw std::runtime_error("Error at: client_protocol: Socket was closed!");
   }
 }
 
@@ -138,7 +138,9 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
       
     case MessageType::ERROR:
-      response.error = rcv_string();
+      uint8_t response_ret;
+      skt.recvall(&response_ret, sizeof(uint8_t));
+      response.return_code = response_ret;
       break;
     default:
       throw std::runtime_error("Invalid server message.");

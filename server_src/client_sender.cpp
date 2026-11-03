@@ -6,11 +6,13 @@
 #include "../common_src/messages.h"
 #include "server_protocol.h"
 
-ClientSender::ClientSender(Socket &skt, Queue<ServerMessage> &outgoing)
-    : skt(skt), outgoing(outgoing) {}
+ClientSender::ClientSender(Socket& skt,
+                           Queue<ServerMessage>& outgoing):
+        skt(skt),
+        protocol(skt),
+        outgoing(outgoing) {}
 
 void ClientSender::run() {
-  ServerProtocol protocol(skt);
 
   try {
     while (should_keep_running()) {
@@ -20,13 +22,18 @@ void ClientSender::run() {
         break;
       }
 
-      protocol.send_message(message);
+            protocol.send_message(message);
+        }
+    } catch (const ClosedQueue&) {
+        // exepcion que nos indica que la cola fue cerrada.
+    } catch (const std::exception& e) {
+        if (should_keep_running()) {
+            std::cerr << "Error in ClientSender: " << e.what() << "\n";
+            try {
+                skt.shutdown(2);
+            } catch (const std::exception&) {
+            // Socket ya cerrado
+        }
+        }
     }
-  } catch (const ClosedQueue &) {
-    // exepcion que nos indica que la cola fue cerrada.
-  } catch (const std::exception &e) {
-    if (should_keep_running()) {
-      std::cerr << "Error en ClientSender: " << e.what() << std::endl;
-    }
-  }
 }

@@ -2,8 +2,13 @@
 
 #include <iostream>
 #include <utility>
+// include de map.h
 
-Server::Server(Socket &&skt) : actions(), acceptor(std::move(skt), actions) {}
+Server::Server(Socket&& skt):
+        registry(),
+        menu_games_monitor(Map(20, 20), registry),
+        acceptor(std::move(skt), menu_games_monitor, registry) 
+{}
 
 void Server::run() {
   acceptor.start();
@@ -15,8 +20,6 @@ void Server::run() {
     }
   }
 
-  acceptor.stop();
-  acceptor.join();
-
-  actions.close();
+    acceptor.stop();
+    acceptor.join();
 }

@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/libsdl2pp-populate"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/libsdl2pp-populate.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/libsdl2pp-populate-complete.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-build.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-configure.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-download.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-install.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-patch.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-test.rule"
+		},
+		{
+			"file" : "/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/libsdl2pp-populate-prefix/src/libsdl2pp-populate-stamp/libsdl2pp-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"libsdl2pp-populate"
+		],
+		"name" : "libsdl2pp-populate"
+	}
+}

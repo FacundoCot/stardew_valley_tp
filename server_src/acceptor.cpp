@@ -3,8 +3,10 @@
 #include <exception>
 #include <utility>
 
-Acceptor::Acceptor(Socket &&skt, Queue<std::shared_ptr<ClientAction>> &actions)
-    : skt(std::move(skt)), actions(actions) {}
+Acceptor::Acceptor(Socket&& skt,
+                   MenuGamesMonitor& menu_games_monitor,
+                   ClientRegistry& registry):
+    skt(std::move(skt)), menu_games_monitor(menu_games_monitor), registry(registry) {}
 
 void Acceptor::stop() {
   Thread::stop();
@@ -30,16 +32,15 @@ void Acceptor::clean() {
 void Acceptor::reap() {
   auto it = clients.begin();
 
-  while (it != clients.end()) {
-    if ((*it)->is_finished()) { // desreferencio el iterador para acceder al
-                                // unique_ptr y luego con -> accedo a
-                                // clienthandler
-      it = clients.erase(it);
-    } else {
-      ++it;
+    while (it != clients.end()) {
+        if (!(*it)->is_alive()) { //desreferencio el iterador para acceder al unique_ptr y luego con -> accedo a clienthandler
+            it = clients.erase(it);
+        } else {
+            ++it;
+        }
     }
-  }
 }
+
 
 void Acceptor::run() {
   std::exception_ptr error = nullptr;
@@ -54,10 +55,9 @@ void Acceptor::run() {
 
       reap();
 
-      // en vez de crear un client_handler comun creo uno que sea unique_ptr
-      // asi es posible despues pushearlo al vector clients
-      auto new_handler = std::make_unique<ClientHandler>(
-          std::move(new_client), actions, next_client_id++);
+            // en vez de crear un client_handler comun creo uno que sea unique_ptr
+            // asi es posible despues pushearlo al vector clients
+      auto new_handler = std::make_unique<ClientHandler>(std::move(new_client), menu_games_monitor, next_client_id++, registry);
 
       // le transfiero el owner al vector
       clients.push_back(std::move(new_handler));

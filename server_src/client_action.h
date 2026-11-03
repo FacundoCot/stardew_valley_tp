@@ -38,6 +38,7 @@ public:
   virtual ~ClientAction() = default;
 };
 
+/*
 class CreateGameAction : public ClientAction {
 private:
   std::string game_name;
@@ -59,6 +60,7 @@ public:
 
   void execute(GameActionHandler &handler) const override;
 };
+*/
 
 class MoveAction : public ClientAction {
 private:
