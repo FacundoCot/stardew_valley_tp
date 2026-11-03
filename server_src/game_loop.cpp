@@ -1,4 +1,5 @@
 #include "game_loop.h"
+#include "../common_src/chronometer.h"
 
 #include <exception>
 
@@ -9,9 +10,17 @@ GameLoop::GameLoop(GameManager& manager_param,
 
 void GameLoop::run() {
     try {
+        Chronometer chrono;
         while (should_keep_running()) {
-            std::shared_ptr<ClientAction> action = actions.pop();
-            action->execute(manager);
+            int iterations = chrono.sleep_and_calculate_it();
+
+            for (int i = 0; i < iterations && should_keep_running(); i++) {
+                std::shared_ptr<ClientAction> action;
+
+                while (actions.try_pop(action)) {
+                    action->execute(manager);
+                }
+            }
         }
     } catch (const ClosedQueue&) {
     }
