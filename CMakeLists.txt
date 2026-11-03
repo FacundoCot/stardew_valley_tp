@@ -103,6 +103,11 @@ if(GAME_CLIENT OR MAP_EDITOR)
     FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
 endif()
 
+if(GAME_CLIENT OR GAME_SERVER OR MAP_EDITOR)
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(game_common PUBLIC SDL2::SDL2)
+endif()
+
 # Program section
 # ---------------
 if(GAME_CLIENT)

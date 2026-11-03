@@ -14,7 +14,6 @@ void GameLoop::run() {
             action->execute(manager);
         }
     } catch (const ClosedQueue&) {
-        
     }
 }
 

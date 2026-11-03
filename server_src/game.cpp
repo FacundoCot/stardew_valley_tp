@@ -60,6 +60,7 @@ bool Game::move_player(int client_id, Direction direction) {
         case Direction::DOWN:  new_y += PLAYER_STEP; break;
         case Direction::LEFT:  new_x -= PLAYER_STEP; break;
         case Direction::RIGHT: new_x += PLAYER_STEP; break;
+        case Direction::DEFAULT: return false;
     }
 
     if (!map.is_walkable(new_x, new_y)) {
