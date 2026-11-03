@@ -29,6 +29,10 @@ void MoveAction::execute(GameActionHandler& handler) const {
     handler.move_player(get_client_id(), direction);
 }
 
+void JoinAction::execute(GameActionHandler& handler) const {
+    handler.join_player(get_client_id());
+}
+
 void DisconnectAction::execute(GameActionHandler& handler) const {
     handler.disconnect_client(get_client_id());
 }

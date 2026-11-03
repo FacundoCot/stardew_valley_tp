@@ -122,6 +122,21 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
                 send_or_throw(&x, sizeof(x));
                 send_or_throw(&y, sizeof(y));
+
+                if (player.health < 0 || player.max_health < 0 ||
+                    player.health > std::numeric_limits<uint16_t>::max() ||
+                    player.max_health > std::numeric_limits<uint16_t>::max()) {
+                    throw std::runtime_error("invalid health value");
+                }
+                
+                const uint16_t health = htons(static_cast<uint16_t>(player.health));
+                const uint16_t max_health = htons(static_cast<uint16_t>(player.max_health));
+
+                send_or_throw(&health, sizeof(health));
+                send_or_throw(&max_health, sizeof(max_health));
+
+                const uint8_t unconscious = player.unconscious ? 1 : 0;
+                send_or_throw(&unconscious, sizeof(unconscious));
             }
             break;
         }

@@ -22,6 +22,9 @@ public:
 
     void move_player(int client_id, Direction direction) override;
 
+    void join_player(int client_id) override;
+
+
     void disconnect_client(int client_id) override;
 };
 

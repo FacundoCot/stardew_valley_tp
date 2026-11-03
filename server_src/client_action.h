@@ -69,6 +69,11 @@ public:
     void execute(GameActionHandler& handler) const override;
 };
 
+class JoinAction : public ClientAction {
+public:
+    void execute(GameActionHandler& handler) const override;
+};
+
 class DisconnectAction : public ClientAction {
 public:
     void execute(GameActionHandler& handler) const override;
