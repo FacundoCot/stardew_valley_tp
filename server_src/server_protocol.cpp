@@ -12,58 +12,61 @@
 ServerProtocol::ServerProtocol(Socket& skt): skt(skt) {}
 
 // Recibe `size` bytes desde el socket y los guarda en `data`.
-// Si el cliente se desconecta antes de recibir todos los bytes, lanza una excepción.
-void ServerProtocol::recv_or_throw(void* data, unsigned int size) {
-    if (size > 0 && skt.recvall(data, size) == 0) { 
-        throw std::runtime_error("client disconnected while receiving");
-    }
+// Si el cliente se desconecta antes de recibir todos los bytes, lanza una
+// excepción.
+void ServerProtocol::recv_or_throw(void *data, unsigned int size) {
+  if (size > 0 && skt.recvall(data, size) == 0) {
+    throw std::runtime_error("client disconnected while receiving");
+  }
 }
 
 // Envía `size` bytes desde `data` al socket.
-// Si el cliente se desconecta antes de enviar todos los bytes, lanza una excepción.
-void ServerProtocol::send_or_throw(const void* data, unsigned int size) {
-    if (size > 0 && skt.sendall(data, size) == 0) {
-        throw std::runtime_error("client disconnected while sending");
-    }
+// Si el cliente se desconecta antes de enviar todos los bytes, lanza una
+// excepción.
+void ServerProtocol::send_or_throw(const void *data, unsigned int size) {
+  if (size > 0 && skt.sendall(data, size) == 0) {
+    throw std::runtime_error("client disconnected while sending");
+  }
 }
 
 std::string ServerProtocol::recv_string() {
-    //leo 2 bytes que representan el tamaño de la cadena en red
-    //y los guardo en network_size
-    uint16_t network_size;
-    recv_or_throw(&network_size, sizeof(network_size));
+  // leo 2 bytes que representan el tamaño de la cadena en red
+  // y los guardo en network_size
+  uint16_t network_size;
+  recv_or_throw(&network_size, sizeof(network_size));
 
-    //los tranformo al endian de la maquina y los guardo en size
-    uint16_t size = ntohs(network_size);
+  // los tranformo al endian de la maquina y los guardo en size
+  uint16_t size = ntohs(network_size);
 
-    if (size > 1024) {
-        throw std::runtime_error("string too long");
-    }
+  if (size > 1024) {
+    throw std::runtime_error("string too long");
+  }
 
-    // creo un string de tamaño size y lo lleno con '\0'
-    std::string value(size, '\0');
-    // recibo size bytes y los guardo en value.data()
-    recv_or_throw(value.data(), size);
+  // creo un string de tamaño size y lo lleno con '\0'
+  std::string value(size, '\0');
+  // recibo size bytes y los guardo en value.data()
+  recv_or_throw(value.data(), size);
 
-    return value;
+  return value;
 }
 
-void ServerProtocol::send_string(const std::string& value) {
-    if (value.size() > 1024) {
-        throw std::runtime_error("string too long");
-    }
+void ServerProtocol::send_string(const std::string &value) {
+  if (value.size() > 1024) {
+    throw std::runtime_error("string too long");
+  }
 
-    //tranformo a red de 2 bytes el tamaño de la cadena y lo guardo en network_size
-    const uint16_t network_size = htons(value.size());
+  // tranformo a red de 2 bytes el tamaño de la cadena y lo guardo en
+  // network_size
+  const uint16_t network_size = htons(value.size());
 
-    //envio los 2 bytes de network_size y luego envio la cadena
-    send_or_throw(&network_size, sizeof(network_size));
-    send_or_throw(value.data(),value.size());
+  // envio los 2 bytes de network_size y luego envio la cadena
+  send_or_throw(&network_size, sizeof(network_size));
+  send_or_throw(value.data(), value.size());
 }
 
 std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
-    uint8_t op;
-    recv_or_throw(&op, sizeof(op));
+  uint8_t op;
+  recv_or_throw(&op, sizeof(op));
 
     switch (static_cast<ActionType>(op)) {
         // caso move, 1 byte de direction
@@ -84,7 +87,11 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
         default:
             throw std::runtime_error("invalid game operation");
     }
-}
+
+  }
+
+
+  
 
 static uint32_t coordinate_to_network(float value) {
     int32_t coordinate = static_cast<int32_t>(std::round(value * 100.0f));
@@ -146,7 +153,7 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
         default:
             throw std::runtime_error("invalid server message");
-    }
+  }
 }
 
 MenuRequest ServerProtocol::recv_menu_request() {

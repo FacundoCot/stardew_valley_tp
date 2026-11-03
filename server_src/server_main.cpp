@@ -2,7 +2,7 @@
 #include <utility>
 
 #include "common_src/socket.h"
-#include "server_src/server.h"
+#include "server.h"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {

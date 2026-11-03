@@ -7,16 +7,19 @@
 #include "menu_games_monitor.h"
 #include "acceptor.h"
 
+#include <memory>
+
 class Server {
 private:
-    ClientRegistry registry;
-    MenuGamesMonitor menu_games_monitor;
-    Acceptor acceptor;
+  Queue<std::shared_ptr<ClientAction>> actions;
+  ClientRegistry registry;
+  MenuGamesMonitor menu_games_monitor;
+  Acceptor acceptor;
 
 
 public:
-    explicit Server(Socket&& skt);
-    void run();
+  explicit Server(Socket &&skt);
+  void run();
 };
 
 #endif

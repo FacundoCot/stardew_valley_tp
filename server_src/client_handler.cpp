@@ -1,7 +1,6 @@
 
 #include "client_handler.h"
 
-
 #include <exception>
 #include <utility>
 

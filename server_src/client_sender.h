@@ -1,9 +1,9 @@
 #ifndef CLIENT_SENDER_H
 #define CLIENT_SENDER_H
 
-#include "../common_src/thread.h"
-#include "../common_src/socket.h"
 #include "../common_src/queue.h"
+#include "../common_src/socket.h"
+#include "../common_src/thread.h"
 #include "server_protocol.h"
 
 struct ServerMessage;
@@ -20,7 +20,7 @@ public:
     explicit ClientSender(Socket& skt,
                  Queue<ServerMessage>& outgoing);
 
-    void run() override;
+  void run() override;
 };
 
 #endif

@@ -96,12 +96,28 @@ if(GAME_CLIENT OR MAP_EDITOR)
         URL https://github.com/libSDL2pp/libSDL2pp/archive/cc198c9a5657048bee67ece82de620b2d5661084.zip
     )
 
+    set(SDL2PP_WITH_IMAGE ON CACHE BOOL "" FORCE)
+    set(SDL2PP_WITH_MIXER ON CACHE BOOL "" FORCE)
+    set(SDL2PP_WITH_TTF ON CACHE BOOL "" FORCE)
+
     FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
+endif()
+
+if(GAME_CLIENT OR GAME_SERVER OR MAP_EDITOR)
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(game_common PUBLIC SDL2::SDL2)
 endif()
 
 # Program section
 # ---------------
 if(GAME_CLIENT)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(game_client)
 
@@ -115,10 +131,10 @@ if(GAME_CLIENT)
     set_project_warnings(game_client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # add libSDL2pp's headers
-    target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR})
+    target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS})
 
     # Link the game_common lib target
-    target_link_libraries(game_client game_common SDL2pp::SDL2pp)
+    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
 endif()
 
 if(GAME_SERVER)

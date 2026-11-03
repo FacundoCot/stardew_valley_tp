@@ -11,14 +11,14 @@ Server::Server(Socket&& skt):
 {}
 
 void Server::run() {
-    acceptor.start();
+  acceptor.start();
 
-    char command;
-    while (std::cin >> command) {
-        if (command == 'q') {
-            break;
-        }
+  char command;
+  while (std::cin >> command) {
+    if (command == 'q') {
+      break;
     }
+  }
 
     acceptor.stop();
     acceptor.join();

@@ -14,13 +14,13 @@ ClientSender::ClientSender(Socket& skt,
 
 void ClientSender::run() {
 
-    try {
-        while (should_keep_running()) {
-            ServerMessage message = outgoing.pop();
+  try {
+    while (should_keep_running()) {
+      ServerMessage message = outgoing.pop();
 
-            if (!should_keep_running()) {
-                break;
-            }
+      if (!should_keep_running()) {
+        break;
+      }
 
             protocol.send_message(message);
         }

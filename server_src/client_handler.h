@@ -3,9 +3,10 @@
 
 #include <memory>
 
-#include "../common_src/socket.h"
 #include "../common_src/messages.h"
 #include "../common_src/queue.h"
+#include "../common_src/socket.h"
+#include "client_action.h"
 #include "client_receiver.h"
 #include "client_sender.h"
 #include "client_action.h"
@@ -49,7 +50,7 @@ public:
 
     Queue<ServerMessage>& outgoing_queue();
 
-    ~ClientHandler();
+  ~ClientHandler();
 };
 
 #endif
