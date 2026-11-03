@@ -19,7 +19,7 @@ void Receiver::run() {
       responses.push(response);
     }
 
-  } catch (const SocketClosed &e) {
-    responses.close();
+  } catch (const ClosedQueue &) {
+    return;
   }
 }

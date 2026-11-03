@@ -22,13 +22,14 @@ private:
 public:
   explicit ServerProtocol(Socket &skt);
 
-  // se usa shared pointer porque la queue hace copias de los punteros
-  // entonces no podemos usar unique_ptr, y no queremos usar raw pointer porque
-  // no queremos preocuparnos por liberar la memoria de los punteros que
-  // se guardan en la queue, entonces usamos shared_ptr para que se libere
-  // automáticamente cuando no haya más referencias a ese puntero
-  std::shared_ptr<ClientAction> recv_action();
-  void send_message(const ServerMessage &message);
+    // se usa shared pointer porque la queue hace copias de los punteros
+    // entonces no podemos usar unique_ptr, y no queremos usar raw pointer porque
+    // no queremos preocuparnos por liberar la memoria de los punteros que
+    // se guardan en la queue, entonces usamos shared_ptr para que se libere
+    // automáticamente cuando no haya más referencias a ese puntero
+    std::shared_ptr<ClientAction> recv_action();
+    void send_message(const ServerMessage& message);
+    MenuRequest recv_menu_request();
 };
 
 #endif

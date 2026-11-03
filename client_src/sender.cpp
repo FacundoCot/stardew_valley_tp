@@ -14,7 +14,7 @@ void Sender::run() {
 
       protocol.send_to_server(msg);
     }
-  } catch (const SocketClosed &) {
-    outgoing.close();
+  } catch (const ClosedQueue &) {
+    return;
   }
 }

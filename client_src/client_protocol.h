@@ -16,6 +16,7 @@ private:
   std::string serialize_move(const ClientMessage &msg_to_server);
   std::string serialize_disconnect(const ClientMessage &msg_to_server);
 
+  std::string rcv_string();
 public:
   explicit ClientProtocol(Socket &&skt_rcv);
 

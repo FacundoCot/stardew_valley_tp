@@ -91,7 +91,7 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
     return serialize_disconnect(msg_to_server);
 
   default:
-    throw std::runtime_error("Error at: client_protocol: action not exists!\n");
+    throw std::runtime_error("Error at: client_protocol: action not exists!");
   }
 }
 
@@ -99,11 +99,72 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
   std::string buf = serialize(msg_to_server);
 
   if (skt.sendall(buf.data(), buf.size()) != static_cast<int>(buf.size())) {
-    throw std::runtime_error("Error at: client_protocol: Socket was closed!\n");
+    throw std::runtime_error("Error at: client_protocol: Socket was closed!");
   }
 }
 
-ServerMessage ClientProtocol::rcv_from_server() { return {}; }
+ServerMessage ClientProtocol::rcv_from_server() { 
+  ServerMessage response{};
+  skt.recvall(&response.type, sizeof(uint8_t));
+  
+  switch(response.type){
+    case MessageType::GAME_CREATED:
+      break;
+    case MessageType::GAME_JOINED:
+      response.game_code = rcv_string();
+      break;
+    case MessageType::GAME_STATE:{
+      uint16_t count;
+      skt.recvall(&count, sizeof(uint16_t));
+      count = ntohs(count);
+      
+      for(uint16_t i = 0; i < count; i++){
+        PlayerState player;
+        player.player_name = rcv_string();
+        
+        uint32_t coordinate;
+        skt.recvall(&coordinate, sizeof(uint32_t));
+        float x = ntohl(coordinate)/100.0f;
+        skt.recvall(&coordinate, sizeof(uint32_t));
+        float y = ntohl(coordinate)/100.0f;
+
+        player.x = x;
+        player.y = y;
+
+        response.players.push_back(player);
+      }
+      
+      break;
+    }
+      
+    case MessageType::ERROR:
+      uint8_t response_ret;
+      skt.recvall(&response_ret, sizeof(uint8_t));
+      response.return_code = response_ret;
+      break;
+    default:
+      throw std::runtime_error("Invalid server message.");
+  }
+
+  return response; 
+}
+
+std::string ClientProtocol::rcv_string(){
+    uint16_t length;
+
+    skt.recvall(&length, sizeof(uint16_t));
+    length = ntohs(length);
+
+    if (length > 1024) {
+        throw std::runtime_error("String too long.");
+    }
+
+    std::string value(length, '\0');
+    skt.recvall(value.data(), length);
+
+    return value;
+}
+
 
 void ClientProtocol::shutdown() {
   skt.shutdown(2);

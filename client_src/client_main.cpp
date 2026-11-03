@@ -6,6 +6,7 @@
 #include "client.h"
 #include "client_protocol.h"
 #include "eventhandler.h"
+#include "ui_mainwindow.h"
 
 int main(int argc, char *argv[]) {
   if (argc != CLIENT_PARAMETERS) {
@@ -20,10 +21,11 @@ int main(int argc, char *argv[]) {
 
     EventHandler handler;
     ClientProtocol protocol = ClientProtocol(std::move(Socket(host, port)));
+    Chronometer chrono;
 
     Client client = Client(std::move(handler), std::move(protocol));
 
-    client.run();
+    client.run(argc, argv);
     return 0;
 
   } catch (const std::exception &e) {
