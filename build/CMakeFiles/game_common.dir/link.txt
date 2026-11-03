@@ -1,2 +1,0 @@
-/usr/bin/ar qc libgame_common.a CMakeFiles/game_common.dir/common_src/chronometer.cpp.o CMakeFiles/game_common.dir/common_src/custom_error.cpp.o CMakeFiles/game_common.dir/common_src/liberror.cpp.o CMakeFiles/game_common.dir/common_src/map.cpp.o CMakeFiles/game_common.dir/common_src/resolver.cpp.o CMakeFiles/game_common.dir/common_src/resolvererror.cpp.o CMakeFiles/game_common.dir/common_src/socket.cpp.o
-/usr/bin/ranlib libgame_common.a

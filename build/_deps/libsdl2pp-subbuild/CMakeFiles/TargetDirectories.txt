@@ -1,3 +1,0 @@
-/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/libsdl2pp-populate.dir
-/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/edit_cache.dir
-/home/cucha/Desktop/Andres/facultad/Taller/stardew_valley_tp/build/_deps/libsdl2pp-subbuild/CMakeFiles/rebuild_cache.dir
