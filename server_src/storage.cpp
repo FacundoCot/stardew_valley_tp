@@ -23,7 +23,7 @@ int Storage::add_item(const Item& item, int quantity) {
         }
     }
 
-    while (quantity > 0 && stacks.size() < capacity) {
+    while (quantity > 0 && stacks.size() < static_cast<size_t>(capacity)) {
         int to_add = std::min(max_quantity, quantity);
         stacks.emplace_back(item, to_add);
         quantity -= to_add;
@@ -31,33 +31,47 @@ int Storage::add_item(const Item& item, int quantity) {
     return quantity;
 }
 
-bool Storage::remove_item(const Item& item, int quantity) {
-    // Si no hay suficientes objetos, no quitamos nada.
-    if (count_item(item) < quantity) {
-        return false;
+std::optional<Stack> Storage::remove_item(int index, RemoveMode mode) {
+    // Comprobar que exista la pila seleccionada.
+    if (index < 0 || static_cast<size_t>(index) >= stacks.size()) {
+        return std::nullopt;
     }
 
-    auto it = stacks.begin();
+    Stack& stack = stacks[index];
 
-    while (it != stacks.end() && quantity > 0) {
-        if (it->get_item() == item) {
-            int current = it->get_quantity();
+    int current = stack.get_quantity();
+    int to_remove = 0;
 
-            if (current <= quantity) {
-                // Se vacia la pila y se elimina.
-                quantity -= current;
-                it = stacks.erase(it);
-            } else {
-                // Solo se quita una parte de la pila.
-                it->set_quantity(current - quantity);
-                quantity = 0;
-            }
-        } else {
-            ++it;
-        }
+    switch (mode) {
+        case RemoveMode::ONE:
+            to_remove = 1;
+            break;
+
+        case RemoveMode::HALF:
+            to_remove = (current + 1) / 2;
+            break;
+
+        case RemoveMode::ALL:
+            to_remove = current;
+            break;
+
+        default:
+            return std::nullopt;
+            break;
     }
 
-    return true;
+    // Guardar lo que vamos a retirar
+    Stack removed(stack.get_item(), to_remove);
+
+    if (to_remove == current) {
+        // Se elimina la pila completa
+        stacks.erase(stacks.begin() + index);
+    } else {
+        // Se descuenta solamente lo retirado
+        stack.set_quantity(current - to_remove);
+    }
+
+    return removed;
 }
 
 int Storage::count_item(const Item& item) const {

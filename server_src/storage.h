@@ -1,9 +1,10 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include "server_structs.h"
+#include "item_types.h"
 #include "stack.h"
 #include "item.h"
+#include <optional>
 
 #include <vector>
 
@@ -16,7 +17,7 @@ class Storage {
         explicit Storage(int capacity);
         
         int add_item(const Item& item, int quantity);
-        bool remove_item(const Item& item, int quantity);
+        std::optional<Stack> remove_item(int index, RemoveMode mode);
         int count_item(const Item& item) const;
         const std::vector<Stack>& get_stacks() const;    
 };

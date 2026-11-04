@@ -1,7 +1,7 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-#include "server_structs.h"
+#include "item_types.h"
 
 class Item { 
     private:
