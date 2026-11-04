@@ -1,7 +1,10 @@
 #include "game.h"
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
 #include <string>
 #include <utility>
-
 
 namespace {
     const float PLAYER_STEP = 0.1f;
@@ -19,6 +22,7 @@ namespace {
         return true;
     }
 }
+
 
 
 Game::Game(Map map_param):
@@ -39,15 +43,18 @@ bool Game::add_player(int client_id, const std::string& player_name, float x, fl
         }
     }
 
-    // Si no existe el personaje, lo creamos
-    if (players.count(player_name) == 0) {
-        if (!map.is_walkable(x, y)) {
-            return false;
-        }
-
-        players.emplace(player_name, Player(x, y, MAX_HEALTH));
+    if (!map.is_walkable(x, y)) {
+        return false;
     }
-    
+
+    auto player_it = players.find(player_name);
+    if (player_it == players.end()) {
+        players.emplace(player_name, Player(x, y, MAX_HEALTH));
+    } else {
+        player_it->second.x = x;
+        player_it->second.y = y;
+    }
+
     connected_clients[client_id] = player_name;
     return true;
 }
@@ -65,28 +72,29 @@ bool Game::move_player(int client_id, Direction direction) {
         return false;
     }
 
-
-    if (player_iterator->second.unconscious) {
+    Player& player = player_iterator->second;
+    if (player.unconscious) {
         return false;
     }
 
-    float new_x = player_iterator->second.x;
-    float new_y = player_iterator->second.y;
-
+    float new_x = player.x;
+    float new_y = player.y;
     switch (direction) {
-        case Direction::UP:    new_y -= PLAYER_STEP; break;
-        case Direction::DOWN:  new_y += PLAYER_STEP; break;
-        case Direction::LEFT:  new_x -= PLAYER_STEP; break;
-        case Direction::RIGHT: new_x += PLAYER_STEP; break;
+        case Direction::UP:      new_y -= PLAYER_STEP; break;
+        case Direction::DOWN:    new_y += PLAYER_STEP; break;
+        case Direction::LEFT:    new_x -= PLAYER_STEP; break;
+        case Direction::RIGHT:   new_x += PLAYER_STEP; break;
         case Direction::DEFAULT: return false;
     }
+
+    player.facing = direction;
 
     if (!map.is_walkable(new_x, new_y)) {
         return false;
     }
 
-    player_iterator->second.x = new_x;
-    player_iterator->second.y = new_y;
+    player.x = new_x;
+    player.y = new_y;
     return true;
 }
 
@@ -150,17 +158,170 @@ Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
     return actions;
 }
 
-bool Game::damage_player(const std::string& player_name, int amount) {
+
+// --- Helpers sin lock (se llaman con mtx tomado) ---
+
+bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (amount <= 0) {
         return false;
     }
+    auto it = players.find(player_name);
+    if (it == players.end() || it->second.unconscious) {
+        return false;
+    }
+    return apply_health(it->second, it->second.health - amount);
+}
 
+bool Game::nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const {
+    bool found = false;
+    float best_distance = 0.0f;
+
+    for (const auto& [client_id, name] : connected_clients) {
+        const Player& player = players.at(name);
+        if (player.unconscious) {
+            continue;
+        }
+        // Distancia de Chebyshev: la misma que usa el esqueleto para atacar
+        float distance = std::max(std::abs(player.x - x), std::abs(player.y - y));
+        if (!found || distance < best_distance) {
+            found = true;
+            best_distance = distance;
+            target = EnemyWorld::Target{name, player.x, player.y};
+        }
+    }
+    return found;
+}
+
+bool Game::remove_dead_enemies_unlocked() {
+    const size_t before = enemies.size();
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+                       [](const std::unique_ptr<Enemy>& e) { return e->should_be_removed(); }),
+        enemies.end());
+    return enemies.size() != before;
+}
+
+
+
+class Game::EnemyView : public EnemyWorld {
+public:
+    explicit EnemyView(Game& g) : game(g) {}
+
+    bool can_walk(float x, float y) override {
+        return game.map.is_walkable(x, y);
+    }
+
+    bool nearest_player(float x, float y, Target& target) override {
+        return game.nearest_player_unlocked(x, y, target);
+    }
+
+    bool damage_player(const std::string& player_name, int damage) override {
+        return game.damage_player_unlocked(player_name, damage);
+    }
+
+private:
+    Game& game;
+};
+
+
+bool Game::damage_player(const std::string& player_name, int amount) {
+    std::lock_guard<std::mutex> lock(mtx);
+    return damage_player_unlocked(player_name, amount);
+}
+
+bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    auto player_iterator = players.find(player_name);
-    if (player_iterator == players.end()) {
+    for (auto& entry : players) {
+        entry.second.attack_cooldown_left =
+            std::max(0.0f, entry.second.attack_cooldown_left - dt);
+    }
+
+    EnemyView view(*this);
+    bool changed = false;
+    for (auto& enemy : enemies) {
+        if (enemy->act(view, dt)) {
+            changed = true;
+        }
+    }
+
+    if (remove_dead_enemies_unlocked()) {
+        changed = true;
+    }
+    return changed;
+}
+
+bool Game::attack(int client_id) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+    auto player_it = players.find(client_it->second);
+    if (player_it == players.end()) {
         return false;
     }
 
-    return apply_health(player_iterator->second, player_iterator->second.health - amount);
+    Player& player = player_it->second;
+    if (player.unconscious || player.attack_cooldown_left > 0.0f) {
+        return false;
+    }
+
+    float target_x = player.x;
+    float target_y = player.y;
+    switch (player.facing) {
+        case Direction::UP:      target_y -= 1.0f; break;
+        case Direction::DOWN:    target_y += 1.0f; break;
+        case Direction::LEFT:    target_x -= 1.0f; break;
+        case Direction::RIGHT:   target_x += 1.0f; break;
+        case Direction::DEFAULT: return false;
+    }
+
+    player.attack_cooldown_left = PLAYER_ATTACK_COOLDOWN;
+
+    const int damage = is_weakened(player.health) ? SWORD_DAMAGE / 2 : SWORD_DAMAGE;
+    const int target_cell_x = static_cast<int>(std::floor(target_x));
+    const int target_cell_y = static_cast<int>(std::floor(target_y));
+
+    for (auto& enemy : enemies) {
+        if (!enemy->is_visible()) {
+            continue;
+        }
+        const int enemy_cell_x = static_cast<int>(std::floor(enemy->get_x()));
+        const int enemy_cell_y = static_cast<int>(std::floor(enemy->get_y()));
+        if (enemy_cell_x == target_cell_x && enemy_cell_y == target_cell_y) {
+            enemy->take_damage(damage);
+            break;
+        }
+    }
+
+    remove_dead_enemies_unlocked();
+
+    return true;
+}
+
+void Game::add_enemy(std::unique_ptr<Enemy> enemy) {
+    std::lock_guard<std::mutex> lock(mtx);
+    enemies.push_back(std::move(enemy));
+}
+
+std::vector<EnemyState> Game::enemy_snapshot() const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    std::vector<EnemyState> state;
+    state.reserve(enemies.size());
+    for (const auto& enemy : enemies) {
+        if (!enemy->is_visible()) {
+            continue;
+        }
+        state.push_back(EnemyState{
+            enemy->kind(),
+            enemy->get_x(),
+            enemy->get_y(),
+            enemy->get_health(),
+            enemy->get_max_health(),
+        });
+    }
+    return state;
 }

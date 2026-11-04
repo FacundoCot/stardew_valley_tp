@@ -83,6 +83,11 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
                     static_cast<Direction>(direction));
             break;
         }
+        case ActionType::ATTACK:
+            return std::make_shared<AttackAction>();
+
+        case ActionType::DISCONNECT:
+            return std::make_shared<DisconnectAction>();
 
         default:
             throw std::runtime_error("invalid game operation");
@@ -99,8 +104,25 @@ static uint32_t coordinate_to_network(float value) {
     return htonl(static_cast<uint32_t>(coordinate));
 }
 
+static void validate_enemies(const std::vector<EnemyState>& enemies) {
+    for (const EnemyState& enemy : enemies) {
+        if (enemy.health < 0 ||
+            enemy.health > std::numeric_limits<uint16_t>::max()) {
+            throw std::runtime_error("invalid enemy health value");
+        }
+        if (enemy.max_health < 0 ||
+            enemy.max_health > std::numeric_limits<uint16_t>::max()) {
+            throw std::runtime_error("invalid enemy max_health value");
+        }
+    }
+}
+
 
 void ServerProtocol::send_message(const ServerMessage& message) {
+    if (message.type == MessageType::GAME_STATE) {
+        validate_enemies(message.enemies);
+    }
+
     const uint8_t type = static_cast<uint8_t>(message.type);
     send_or_throw(&type, sizeof(type));
 
@@ -112,6 +134,25 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         }
 
         case MessageType::GAME_STATE: {
+            /*
+             * GAME_STATE:
+             * u8  tipo de mensaje = 3
+             * u16 cantidad de jugadores (htons)
+             * por cada jugador:
+             *   string nombre (u16 longitud en htons + bytes)
+             *   int32 x (valor * 100, htonl)
+             *   int32 y (valor * 100, htonl)
+             *   u16 vida (htons)
+             *   u16 vida maxima (htons)
+             *   u8  inconsciente (0 o 1)
+             * u16 cantidad de enemigos (htons)
+             * por cada enemigo:
+             *   u8  tipo (EnemyKind)
+             *   int32 x (valor * 100, htonl)
+             *   int32 y (valor * 100, htonl)
+             *   u16 vida (htons)
+             *   u16 vida maxima (htons)
+             */
             if (message.players.size() >
                 std::numeric_limits<uint16_t>::max()) {
                 throw std::runtime_error("too many players");
@@ -144,6 +185,30 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
                 const uint8_t unconscious = player.unconscious ? 1 : 0;
                 send_or_throw(&unconscious, sizeof(unconscious));
+            }
+                        if (message.enemies.size() >
+                std::numeric_limits<uint16_t>::max()) {
+                throw std::runtime_error("too many enemies");
+            }
+
+            const uint16_t enemy_count =
+                htons(static_cast<uint16_t>(message.enemies.size()));
+            send_or_throw(&enemy_count, sizeof(enemy_count));
+
+            for (const EnemyState& enemy : message.enemies) {
+                const uint8_t kind = static_cast<uint8_t>(enemy.kind);
+                send_or_throw(&kind, sizeof(kind));
+
+                const uint32_t x = coordinate_to_network(enemy.x);
+                const uint32_t y = coordinate_to_network(enemy.y);
+                send_or_throw(&x, sizeof(x));
+                send_or_throw(&y, sizeof(y));
+
+                const uint16_t health = htons(static_cast<uint16_t>(enemy.health));
+                const uint16_t max_health =
+                    htons(static_cast<uint16_t>(enemy.max_health));
+                send_or_throw(&health, sizeof(health));
+                send_or_throw(&max_health, sizeof(max_health));
             }
             break;
         }

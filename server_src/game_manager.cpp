@@ -11,9 +11,22 @@ void GameManager::send_state() {
     ServerMessage msg;
     msg.type = MessageType::GAME_STATE;
     msg.players = game->snapshot();
+    msg.enemies = game->enemy_snapshot();
 
     for (int id : game->player_ids()) {
         registry.send(id, msg);
+    }
+}
+
+void GameManager::attack_player(int client_id) {
+    if (game->attack(client_id)) {
+        send_state();
+    }
+}
+
+void GameManager::tick(float dt) {
+    if (game->update(dt)) {
+        send_state();
     }
 }
 

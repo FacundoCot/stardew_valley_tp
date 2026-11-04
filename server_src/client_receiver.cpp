@@ -20,6 +20,10 @@ void ClientReceiver::run() {
       action->set_client_id(client_id);
 
       actions.push(action);
+
+      if (dynamic_cast<DisconnectAction*>(action.get()) != nullptr) {
+        return;
+      }
     }
   } catch (const ClosedQueue &) {
     return;
