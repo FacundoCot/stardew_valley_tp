@@ -12,10 +12,12 @@ class GameActionHandler {
         // que podamos llamar a un método de una clase base y que se 
         // ejecute la implementación de la clase hija correspondiente.
 
-        // = 0 indica que es un método puro virtual, es decir, 
+        // = 0 indica que es un método puro virtual 
         // que no tiene implementación en la clase base y que debe ser implementado en las clases hijas.
         virtual void move_player(int client_id,
                                 Direction direction) = 0;
+
+        virtual void join_player(int client_id) = 0;
 
         virtual void disconnect_client(int client_id) = 0;
 

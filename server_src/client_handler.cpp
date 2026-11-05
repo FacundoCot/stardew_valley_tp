@@ -37,6 +37,8 @@ void ClientHandler::send_menu_result(const MenuResult& result, ActionType action
 }
 
 void ClientHandler::run() {
+    registry.add(client_id, &outgoing);
+
     ServerProtocol protocol(skt);
 
     try {
@@ -75,8 +77,6 @@ void ClientHandler::run() {
 
             receiver = std::make_unique<ClientReceiver>(skt, game->get_actions_queue(), client_id);
             sender = std::make_unique<ClientSender>(skt, outgoing);
-
-            registry.add(client_id, &outgoing);
 
             receiver->start();
             reciever_started = true;
