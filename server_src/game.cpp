@@ -36,20 +36,16 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
     }
   }
 
-  // Si no existe el personaje, lo creamos
   if (players.count(player_name) == 0) {
-    if (!map.is_walkable(x, y)) {
-      return false;
-    }
+      if (!map.is_walkable(x, y)) {
+          return false;
+      }
 
-    players[player_name] = Player{x, y};
+      players.emplace(player_name, Player(x, y, MAX_HEALTH));
   }
 
-        players.emplace(player_name, Player(x, y, MAX_HEALTH));
-    }
-    
-    connected_clients[client_id] = player_name;
-    return true;
+  connected_clients[client_id] = player_name;
+  return true;
 }
 
 bool Game::move_player(int client_id, Direction direction) {
