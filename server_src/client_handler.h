@@ -13,6 +13,7 @@
 #include "../common_src/thread.h"
 #include "menu_games_monitor.h"
 #include "client_registry.h"
+#include "server_structs.h"
 
 class ClientHandler: public Thread {
 private:

@@ -24,8 +24,9 @@ public:
 
     void join_player(int client_id) override;
 
-
     void disconnect_client(int client_id) override;
+
+    void send_inventory(int client_id);
 };
 
 #endif

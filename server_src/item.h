@@ -1,7 +1,7 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-#include "item_types.h"
+#include "../common_src/item_types.h"
 
 class Item { 
     private:

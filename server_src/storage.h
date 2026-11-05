@@ -1,7 +1,7 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include "item_types.h"
+#include "../common_src/item_types.h"
 #include "stack.h"
 #include "item.h"
 #include <optional>
