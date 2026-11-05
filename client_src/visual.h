@@ -6,19 +6,19 @@
 
 class Visual {
 private:
-
-SDL2pp::SDL sdl;
-SDL2pp::Window window;
-SDL2pp::Renderer renderer;
-
+  SDL2pp::SDL sdl;
+  SDL2pp::Window window;
+  SDL2pp::Renderer renderer;
+  bool is_fulscreen;
 
 public:
-
-Visual(const std::string& tittle, const int& ancho, const int& alto);
-SDL2pp::Renderer& get_renderer();
-void clean();
-void present();
+  Visual(const std::string &tittle, const int &ancho, const int &alto);
+  SDL2pp::Renderer &get_renderer();
+  SDL2pp::Window &get_window();
+  bool get_is_fulscreen();
+  void set_is_fulscreen();
+  void clean();
+  void present();
 };
-
 
 #endif
