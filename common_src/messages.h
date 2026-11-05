@@ -3,9 +3,9 @@
 #define MESSAGES_H
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 #include <utility>
 
 enum class ActionType : uint8_t {
@@ -51,7 +51,6 @@ struct ServerMessage {
   MessageType type;
   std::string game_code;
   std::vector<PlayerState> players;
-  uint8_t return_code = 0;
 };
 
 struct MenuResult {

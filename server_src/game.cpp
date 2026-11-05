@@ -1,10 +1,10 @@
 #include "game.h"
+#include <memory>
 #include <string>
 #include <utility>
 
-
 namespace {
-    const float PLAYER_STEP = 0.1f;
+    const float PLAYER_STEP = 5.1f;
 
     bool apply_health(Player& player, int health) {
         int new_life = health;
@@ -20,30 +20,30 @@ namespace {
     }
 }
 
+Game::Game(Map map_param) : map(std::move(map_param)) {}
 
-Game::Game(Map map_param):
-        map(std::move(map_param)) {}
+bool Game::add_player(int client_id, const std::string &player_name, float x,
+                      float y) {
+  std::lock_guard<std::mutex> lock(mtx);
 
+  if (connected_clients.count(client_id) > 0) {
+    return false;
+  }
 
-bool Game::add_player(int client_id, const std::string& player_name, float x, float y){
-    std::lock_guard<std::mutex> lock(mtx);
+  for (const auto &[id, name] : connected_clients) {
+    if (name == player_name) {
+      return false;
+    }
+  }
 
-    if (connected_clients.count(client_id) > 0)
-    {
-        return false;
+  // Si no existe el personaje, lo creamos
+  if (players.count(player_name) == 0) {
+    if (!map.is_walkable(x, y)) {
+      return false;
     }
 
-    for (const auto& [id, name] : connected_clients) {
-        if (name == player_name) {
-            return false;
-        }
-    }
-
-    // Si no existe el personaje, lo creamos
-    if (players.count(player_name) == 0) {
-        if (!map.is_walkable(x, y)) {
-            return false;
-        }
+    players[player_name] = Player{x, y};
+  }
 
         players.emplace(player_name, Player(x, y, MAX_HEALTH));
     }
@@ -90,40 +90,37 @@ bool Game::move_player(int client_id, Direction direction) {
     return true;
 }
 
-
-bool Game::remove_player(int client_id){
-    std::lock_guard<std::mutex> lock(mtx);
-    return connected_clients.erase(client_id) > 0;
+bool Game::remove_player(int client_id) {
+  std::lock_guard<std::mutex> lock(mtx);
+  return connected_clients.erase(client_id) > 0;
 }
 
-bool Game::is_empty() const{
-    std::lock_guard<std::mutex> lock(mtx);
-    
-    return connected_clients.empty();
+bool Game::is_empty() const {
+  std::lock_guard<std::mutex> lock(mtx);
+
+  return connected_clients.empty();
 }
 
+std::vector<int> Game::player_ids() const {
+  std::lock_guard<std::mutex> lock(mtx);
 
-std::vector<int> Game::player_ids() const{
-    std::lock_guard<std::mutex> lock(mtx);
+  std::vector<int> ids;
+  ids.reserve(connected_clients.size());
 
-    std::vector<int> ids;
-    ids.reserve(connected_clients.size());
-
-    for (const auto& [id, player_name] : connected_clients) {
-        ids.push_back(id);
-    }
-    return ids;
+  for (const auto &[id, player_name] : connected_clients) {
+    ids.push_back(id);
+  }
+  return ids;
 }
-
 
 std::vector<PlayerState> Game::snapshot() const {
-    std::lock_guard<std::mutex> lock(mtx);
+  std::lock_guard<std::mutex> lock(mtx);
 
-    std::vector<PlayerState> state;
-    state.reserve(connected_clients.size());
+  std::vector<PlayerState> state;
+  state.reserve(connected_clients.size());
 
-    for (const auto& [id, name] : connected_clients) {
-        const Player& player = players.at(name);
+  for (const auto &[id, name] : connected_clients) {
+    const Player &player = players.at(name);
 
         state.push_back(PlayerState{
             name,
@@ -137,13 +134,13 @@ std::vector<PlayerState> Game::snapshot() const {
     return state;
 }
 
-bool Game::add_player_auto(int client_id, const std::string& player_name) {
-    std::vector<std::pair<float, float>> spawns = map.spawns();
-    if (spawns.empty()) {
-        return false;
-    }
-    auto [x, y] = spawns.front();
-    return add_player(client_id, player_name, x, y);
+bool Game::add_player_auto(int client_id, const std::string &player_name) {
+  std::vector<std::pair<float, float>> spawns = map.spawns();
+  if (spawns.empty()) {
+    return false;
+  }
+  auto [x, y] = spawns.front();
+  return add_player(client_id, player_name, x, y);
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
