@@ -10,6 +10,7 @@
 #include "common_src/messages.h"
 #include "common_src/queue.h"      // falta
 #include "client_action.h" 
+#include "storage.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -25,8 +26,11 @@ struct Player {
     int health;
     bool unconscious;
 
-    Player(float x, float y, int health):
-        x(x), y(y), health(health), unconscious(health == 0) {}
+    Storage inventory {9}; 
+    int coins;
+    
+    Player(float x, float y, int health, int initial_coins):
+        x(x), y(y), health(health), unconscious(health == 0), coins(initial_coins) {}
 };
 
 class Game {
@@ -37,6 +41,7 @@ private:
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
 
+    uint32_t get_initial_coins() const;
 
 public:
     explicit Game(Map map);
@@ -61,6 +66,8 @@ public:
     bool damage_player(const std::string& player_name, int amount);
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
+
+    InventoryState inventory_state(int client_id) const;
 };
 
 #endif

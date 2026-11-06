@@ -24,13 +24,22 @@ void GameManager::move_player(int client_id, Direction direction) {
     }
 }
 
-void GameManager::join_player(int) {
+void GameManager::join_player(int client_id) {
     send_state();
+    send_inventory(client_id);
 }
 
 void GameManager::disconnect_client(int client_id) {
     if (game->remove_player(client_id) && !game->is_empty()) {
         send_state();
     }
+}
+
+void GameManager::send_inventory(int client_id) {
+    ServerMessage msg{};
+    msg.type = MessageType::INVENTORY_STATE;
+    msg.inventory = game->inventory_state(client_id);
+
+    registry.send(client_id, msg);
 }
 

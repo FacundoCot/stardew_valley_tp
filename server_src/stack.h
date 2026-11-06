@@ -2,7 +2,7 @@
 #define STACK_H
 
 #include "item.h"
-#include "item_types.h"
+#include "../common_src/item_types.h"
 
 class Stack {
     private:

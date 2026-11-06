@@ -1,7 +1,9 @@
 #ifndef ITEM_TYPES_H
 #define ITEM_TYPES_H
 
-enum class Quality {
+#include <cstdint>
+
+enum class Quality : uint8_t {
     BASE,
     GOOD,
     EXCELLENT,
@@ -9,7 +11,7 @@ enum class Quality {
     PERFECT
 };
 
-enum class ItemType {
+enum class ItemType : uint8_t {
     // Herramientas
     PICKAXE,
     WATERING_CAN,

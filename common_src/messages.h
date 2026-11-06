@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "item_types.h"
 
 enum class ActionType : uint8_t {
   NULL_ACTION = 0,
@@ -28,7 +29,8 @@ enum class MessageType : uint8_t {
   GAME_CREATED = 1,
   GAME_JOINED = 2,
   GAME_STATE = 3,
-  ERROR = 4
+  ERROR = 4,
+  INVENTORY_STATE = 5
 };
 
 struct PlayerState {
@@ -39,25 +41,30 @@ struct PlayerState {
     int max_health;
     bool unconscious;
 
+
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, bool unconscious):
         player_name(std::move(name)), x(x), y(y),
         health(health), max_health(max_health), unconscious(unconscious) {}
 };
 
-class Game;
+struct InventorySlotState {
+    uint8_t index;
+    ItemType type;
+    Quality quality;
+    uint8_t quantity;
+};
+
+struct InventoryState {
+    uint32_t coins = 0;
+    std::vector<InventorySlotState> slots;
+};
 
 struct ServerMessage {
   MessageType type;
   std::string game_code;
   std::vector<PlayerState> players;
-};
-
-struct MenuResult {
-  bool success;
-  std::string error;
-  std::string game_code;
-  std::shared_ptr<Game> game;
+  InventoryState inventory;
 };
 
 struct MenuRequest {

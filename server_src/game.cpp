@@ -2,6 +2,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <cstdlib> 
+#include <ctime>   
 
 namespace {
     const float PLAYER_STEP = 5.1f;
@@ -18,6 +20,14 @@ namespace {
         player.unconscious = (new_life == 0);
         return true;
     }
+}
+
+uint32_t Game::get_initial_coins() const {
+    // para que cambie en cada ejecucion
+    srand(time(nullptr));
+
+    // Generar número aleatorio entre 0 y 100
+    return static_cast<uint32_t>(rand() % 101);
 }
 
 Game::Game(Map map_param) : map(std::move(map_param)) {}
@@ -40,8 +50,15 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
       if (!map.is_walkable(x, y)) {
           return false;
       }
+      
+      Player player(x, y, MAX_HEALTH, get_initial_coins());
 
-      players.emplace(player_name, Player(x, y, MAX_HEALTH));
+      player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
+
+      players.emplace(player_name, player);
   }
 
   connected_clients[client_id] = player_name;
@@ -156,4 +173,27 @@ bool Game::damage_player(const std::string& player_name, int amount) {
     }
 
     return apply_health(player_iterator->second, player_iterator->second.health - amount);
+}
+
+InventoryState Game::inventory_state(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    const std::string& player_name = connected_clients.at(client_id);
+    const Player& player = players.at(player_name);
+
+    InventoryState state;
+    state.coins = static_cast<uint32_t>(player.coins);
+
+    const auto& stacks = player.inventory.get_stacks();
+
+    for (size_t i = 0; i < stacks.size(); i++) {
+      const Stack& stack = stacks[i];
+      InventorySlotState slot;
+      slot.index = static_cast<uint8_t>(i);
+      slot.quality = stack.get_item().get_quality();
+      slot.type = stack.get_item().get_type();
+      slot.quantity = static_cast<uint8_t>(stack.get_quantity());
+      state.slots.push_back(slot);
+    }
+    return state;
 }
