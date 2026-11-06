@@ -28,22 +28,25 @@ void Client::run(int argc, char* argv[]) {
   receiver.start();
   sender.start();
 
-  bool exited = main_menu(argc, argv);
+  //bool exited = 
+  main_menu(argc, argv);
 
+  /*
   if(exited){
-    // creo faltaría incluir el caso donde se sale con
+    // creo faltaría incluir el caso donde se sale con 'x'
     return;
   }
-
+  */
+  
   bool was_intentional = false;
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());
 
   //MapVisual map_visual;
-  PlayerVisual p_visual;
-  int width = SCREEN_WIDTH;
-  int height = SCREEN_HEIGHT;
-  Camera camera(width, height);
+  // PlayerVisual p_visual;
+  //int width = SCREEN_WIDTH;
+  //int height = SCREEN_HEIGHT;
+  //Camera camera(width, height);
 
 
   int it = 1;
@@ -53,7 +56,7 @@ void Client::run(int argc, char* argv[]) {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(visual, camera, p_visual);
+      simulate_it(/*visual, camera, p_visual*/);
 
       it += chrono.sleep_and_calculate_it();
 
@@ -69,7 +72,7 @@ void Client::run(int argc, char* argv[]) {
   }
 }
 
-void Client::simulate_it(Visual& visual, Camera& camera, PlayerVisual& p_visual) {
+void Client::simulate_it(/*Visual& visual, Camera& camera, PlayerVisual& p_visual*/) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (e_handler.is_disconnect(event)) {
@@ -88,19 +91,6 @@ void Client::simulate_it(Visual& visual, Camera& camera, PlayerVisual& p_visual)
   while (responses.try_pop(response)) {
         // acá se actualiza el estado
   }
-
-  PlayerState player1 = {"pepito", 340.0, 120.0};
-  PlayerState player2 = {"pepe", 120.0, 200.0};
-
-  camera.update_pos(player1.x, player2.y, 32,64);
-
-  visual.get_renderer().SetDrawColor(0,0,0,255);
-  visual.clean();
-
-  p_visual.draw(visual.get_renderer(), player1, camera);
-  p_visual.draw(visual.get_renderer(), player2, camera);
-
-  visual.present();
 
 }
 
@@ -123,7 +113,7 @@ void Client::stop() {
 bool Client::main_menu(int argc, char* argv[]){
   QApplication app(argc, argv);
 
-  MainWindow menu(receiver, sender);
+  MainWindow menu(responses, commands);
   menu.show();
 
   app.exec();

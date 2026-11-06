@@ -1,15 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "receiver.h"
-#include "sender.h"
 #include <QMainWindow>
+#include "../common_src/queue.h"
+#include <QTimer>
+#include "../common_src/messages.h"
 
 enum Pages {
     MAIN,
+    CUSTOM_CREATE,
     CONTINUE,
-    CUSTOMIZATION_CREATE,
-    CUSTOMIZATION_JOIN
+    JOIN
 };
 
 namespace Ui {
@@ -20,9 +21,10 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
     private:
-        Receiver& receiver;
-        Sender& sender;
+        Queue<ServerMessage>& responses;
+        Queue<ClientMessage>& commands;
         Ui::MainWindow* ui;
+        QTimer* timer;
         bool exited = false;
 
     private slots:
@@ -30,10 +32,12 @@ class MainWindow : public QMainWindow {
         void on_click_continueButton();
         void on_click_joinButton();
         void on_click_exitButton();
+        void on_click_submitCodeButton();
         void on_click_backButton();
-
+        void on_click_startCreateButton();
+        void timer_create_response();
     public:
-        explicit MainWindow(Receiver& receiver, Sender& sender, QWidget* parent = nullptr);
+        explicit MainWindow(Queue<ServerMessage>& responses, Queue<ClientMessage>& commands, QWidget* parent = nullptr);
 
         bool has_exited();
 

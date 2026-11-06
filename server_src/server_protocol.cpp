@@ -164,18 +164,30 @@ MenuRequest ServerProtocol::recv_menu_request() {
         case ActionType::CREATE_GAME: {
             std::string game_name = recv_string();
             std::string player_name = recv_string();
+            CharacterAppearance appearance = recv_appearance();
 
-            return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name)};
+            return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name), appearance};
         }
 
         case ActionType::JOIN_GAME: {
             std::string game_code = recv_string();
             std::string player_name = recv_string();
+            CharacterAppearance appearance = recv_appearance();
 
-            return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name)};
+            return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name), appearance};
         }
 
         default:
             throw std::runtime_error("invalid menu request");
     }
+}
+
+CharacterAppearance ServerProtocol::recv_appearance(){
+  uint16_t parts[5];
+  for(uint16_t& p : parts){
+    recv_or_throw(&p, sizeof(uint16_t));
+    p = ntohs(p);
+  }
+  
+  return CharacterAppearance{parts[0], parts[1], parts[2], parts[3], parts[4]};
 }

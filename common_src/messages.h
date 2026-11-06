@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include "character_appearance.h"
 
 enum class ActionType : uint8_t {
   NULL_ACTION = 0,
@@ -43,6 +44,8 @@ struct PlayerState {
                 int health, int max_health, bool unconscious):
         player_name(std::move(name)), x(x), y(y),
         health(health), max_health(max_health), unconscious(unconscious) {}
+
+    PlayerState() = default;
 };
 
 class Game;
@@ -66,6 +69,7 @@ struct MenuRequest {
   std::string game_name;
   std::string game_code;
   std::string player_name;
+  CharacterAppearance appearance;
 };
 
 struct ClientMessage {
@@ -75,6 +79,7 @@ struct ClientMessage {
   std::string player_name;
   Direction direction = Direction::DEFAULT;
   std::string game_name;
+  CharacterAppearance appearance;
 };
 
 #endif
