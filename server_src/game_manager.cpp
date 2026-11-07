@@ -11,9 +11,22 @@ void GameManager::send_state() {
     ServerMessage msg;
     msg.type = MessageType::GAME_STATE;
     msg.players = game->snapshot();
+    msg.enemies = game->enemy_snapshot();
 
     for (int id : game->player_ids()) {
         registry.send(id, msg);
+    }
+}
+
+void GameManager::attack_player(int client_id) {
+    if (game->attack(client_id)) {
+        send_state();
+    }
+}
+
+void GameManager::tick(float dt) {
+    if (game->update(dt)) {
+        send_state();
     }
 }
 
@@ -24,13 +37,22 @@ void GameManager::move_player(int client_id, Direction direction) {
     }
 }
 
-void GameManager::join_player(int) {
+void GameManager::join_player(int client_id) {
     send_state();
+    send_inventory(client_id);
 }
 
 void GameManager::disconnect_client(int client_id) {
     if (game->remove_player(client_id) && !game->is_empty()) {
         send_state();
     }
+}
+
+void GameManager::send_inventory(int client_id) {
+    ServerMessage msg{};
+    msg.type = MessageType::INVENTORY_STATE;
+    msg.inventory = game->inventory_state(client_id);
+
+    registry.send(client_id, msg);
 }
 

@@ -33,3 +33,7 @@ void JoinAction::execute(GameActionHandler& handler) const {
 void DisconnectAction::execute(GameActionHandler& handler) const {
     handler.disconnect_client(get_client_id());
 }
+
+void AttackAction::execute(GameActionHandler& handler) const {
+    handler.attack_player(get_client_id());
+}

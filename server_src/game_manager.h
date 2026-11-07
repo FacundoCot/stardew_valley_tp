@@ -24,8 +24,13 @@ public:
 
     void join_player(int client_id) override;
 
+    void attack_player(int client_id) override;
+
+    void tick(float dt);
 
     void disconnect_client(int client_id) override;
+
+    void send_inventory(int client_id);
 };
 
 #endif

@@ -82,4 +82,9 @@ public:
   void execute(GameActionHandler &handler) const override;
 };
 
+class AttackAction : public ClientAction {
+public:
+    void execute(GameActionHandler& handler) const override;
+};
+
 #endif

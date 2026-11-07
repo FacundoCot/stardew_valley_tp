@@ -4,7 +4,7 @@
 Stack::Stack(Item item, int quantity)
     : item(item), quantity(quantity) {
         int max = item.is_stackable() ? 50 : 1;
-        if (quantity == 0 || quantity > max) {
+        if (quantity <= 0 || quantity > max) {
             throw std::invalid_argument("Cantidad invalida");
         }
 }

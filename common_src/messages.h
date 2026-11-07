@@ -8,13 +8,30 @@
 #include <vector>
 #include <utility>
 #include "character_appearance.h"
+#include "item_types.h"
 
 enum class ActionType : uint8_t {
   NULL_ACTION = 0,
   CREATE_GAME = 1,
   JOIN_GAME = 2,
   MOVE = 3,
-  DISCONNECT = 4
+  DISCONNECT = 4,
+  ATTACK = 5          // NUEVO
+};
+
+enum class EnemyKind : uint8_t {
+  SKELETON = 1,
+  ORC = 2,
+  VAMPIRE = 3,
+  SKULL = 4
+};
+
+struct EnemyState {
+  EnemyKind kind;
+  float x;
+  float y;
+  int health;
+  int max_health;
 };
 
 enum class Direction : uint8_t {
@@ -29,7 +46,8 @@ enum class MessageType : uint8_t {
   GAME_CREATED = 1,
   GAME_JOINED = 2,
   GAME_STATE = 3,
-  ERROR = 4
+  ERROR = 4,
+  INVENTORY_STATE = 5
 };
 
 struct PlayerState {
@@ -40,6 +58,7 @@ struct PlayerState {
     int max_health;
     bool unconscious;
 
+
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, bool unconscious):
         player_name(std::move(name)), x(x), y(y),
@@ -48,19 +67,25 @@ struct PlayerState {
     PlayerState() = default;
 };
 
-class Game;
+struct InventorySlotState {
+    uint8_t index;
+    ItemType type;
+    Quality quality;
+    uint8_t quantity;
+};
+
+struct InventoryState {
+    uint32_t coins = 0;
+    std::vector<InventorySlotState> slots;
+};
 
 struct ServerMessage {
   MessageType type;
   std::string game_code;
   std::vector<PlayerState> players;
-};
-
-struct MenuResult {
-  bool success;
-  std::string error;
-  std::string game_code;
-  std::shared_ptr<Game> game;
+  std::vector<EnemyState> enemies;
+  uint8_t return_code = 0;
+  InventoryState inventory;
 };
 
 struct MenuRequest {
