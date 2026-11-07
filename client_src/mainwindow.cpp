@@ -22,6 +22,11 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
 
 bool MainWindow::has_exited() { return exited; }
 
+void MainWindow::closeEvent(QCloseEvent* event){
+    exited = true;
+    event->accept();
+}
+
 void MainWindow::on_click_createButton(){
     ui->stackedWidget->setCurrentIndex(CUSTOM_CREATE);
 }
@@ -61,7 +66,7 @@ void MainWindow::on_click_startCreateButton(){
     }
 
     msg.player_name = ui->playerNameEdit->text().toStdString();
-    if(msg.game_name.empty()){
+    if(msg.player_name.empty()){
         QMessageBox::warning(this, "Error", "Inserte un nombre de jugador");
         return;
     }

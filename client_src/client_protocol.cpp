@@ -12,7 +12,7 @@ ClientProtocol::ClientProtocol(Socket &&skt_rcv) : skt(std::move(skt_rcv)) {}
 
 void ClientProtocol::append_u16_t(std::string &buffer, uint16_t appearance_item){
   uint16_t appendable = htons(appearance_item);
-  buffer.append(reinterpret_cast<const char*>(appendable), sizeof(uint16_t));
+  buffer.append(reinterpret_cast<const char*>(&appendable), sizeof(uint16_t));
 }
 
 void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer){
@@ -42,6 +42,8 @@ ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
                 sizeof(uint16_t));
   buffer += msg_to_server.player_name;
 
+  serialize_appearance(msg_to_server, buffer);
+
   return buffer;
 }
 
@@ -63,6 +65,8 @@ ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
   buffer.append(reinterpret_cast<const char *>(&player_name_len_net),
                 sizeof(uint16_t));
   buffer += msg_to_server.player_name;
+
+  serialize_appearance(msg_to_server, buffer);
 
   return buffer;
 }

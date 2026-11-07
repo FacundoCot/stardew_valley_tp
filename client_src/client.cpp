@@ -30,14 +30,12 @@ void Client::run(int argc, char* argv[]) {
   receiver.start();
   sender.start();
 
-  //bool exited = 
-  main_menu(argc, argv);
+  bool exited = main_menu(argc, argv);
   
-  /*
   if(exited){
-    // creo faltaría incluir el caso donde se sale con 'x'
+    stop();
     return;
-  }*/
+  }
 
   ClientMessage message = {ActionType::CREATE_GAME, 5,      4, "pepe",
                            Direction::DEFAULT,      "holaa", CharacterAppearance{}};

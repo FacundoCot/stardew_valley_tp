@@ -5,6 +5,7 @@
 #include "../common_src/queue.h"
 #include <QTimer>
 #include "../common_src/messages.h"
+#include <QCloseEvent>
 
 enum Pages {
     MAIN,
@@ -26,6 +27,8 @@ class MainWindow : public QMainWindow {
         Ui::MainWindow* ui;
         QTimer* timer;
         bool exited = false;
+
+        void closeEvent(QCloseEvent* event) override;
 
     private slots:
         void on_click_createButton();
