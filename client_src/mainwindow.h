@@ -27,6 +27,7 @@ class MainWindow : public QMainWindow {
         Ui::MainWindow* ui;
         QTimer* timer;
         bool exited = false;
+        bool game_started = false;
 
         void closeEvent(QCloseEvent* event) override;
 

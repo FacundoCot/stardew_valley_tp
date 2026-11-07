@@ -37,11 +37,6 @@ void Client::run(int argc, char* argv[]) {
     return;
   }
 
-  ClientMessage message = {ActionType::CREATE_GAME, 5,      4, "pepe",
-                           Direction::DEFAULT,      "holaa", CharacterAppearance{}};
-
-  commands.push(message);
-
   bool was_intentional = false;
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());

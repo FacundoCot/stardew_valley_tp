@@ -23,7 +23,9 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
 bool MainWindow::has_exited() { return exited; }
 
 void MainWindow::closeEvent(QCloseEvent* event){
-    exited = true;
+    if(!game_started) {
+        exited = true;
+    }
     event->accept();
 }
 
@@ -98,6 +100,7 @@ void MainWindow::on_click_backButton(){
         QMessageBox::warning(this, "Error", "Campos inválidos");
         return;
     } else {
+        game_started = true;
         this->close();
     }
  }
