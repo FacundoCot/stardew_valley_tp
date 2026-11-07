@@ -11,6 +11,7 @@
 #include "map_visual.h"
 #include "player_visual.h"
 #include "visual.h"
+#include "../common_src/character_appearance.h"
 
 #include <QApplication>
 #include <SDL2/SDL.h>
@@ -24,21 +25,17 @@ Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
     : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
       receiver(responses, protocol), sender(protocol, commands) {}
 
-void Client::run(/*int argc, char* argv[]*/) {
+void Client::run(int argc, char* argv[]) {
 
   receiver.start();
   sender.start();
 
-  /*bool exited = main_menu(argc, argv);
-
+  bool exited = main_menu(argc, argv);
+  
   if(exited){
-    // creo faltaría incluir el caso donde se sale con
+    stop();
     return;
-  }*/
-  ClientMessage message = {ActionType::CREATE_GAME, 5,      4, "pepe",
-                           Direction::DEFAULT,      "holaa"};
-
-  commands.push(message);
+  }
 
   bool was_intentional = false;
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -122,7 +119,7 @@ void Client::stop() {
 bool Client::main_menu(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
-  MainWindow menu(receiver, sender);
+  MainWindow menu(responses, commands);
   menu.show();
 
   app.exec();

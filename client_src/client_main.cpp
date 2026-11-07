@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
     Client client = Client(std::move(handler), std::move(protocol));
 
-    client.run(/*argc, argv*/);
+    client.run(argc, argv);
     return 0;
 
   } catch (const std::exception &e) {

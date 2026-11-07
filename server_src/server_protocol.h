@@ -19,6 +19,8 @@ private:
   std::string recv_string();
   void send_string(const std::string &str);
 
+  CharacterAppearance recv_appearance();
+
   void send_inventory_state(const InventoryState& inventory);
 public:
   explicit ServerProtocol(Socket &skt);

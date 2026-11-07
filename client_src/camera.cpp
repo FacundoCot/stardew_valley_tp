@@ -2,7 +2,7 @@
 #include "../common_src/define.h"
 #include "visual.h"
 
-Camera::Camera(int &map_width, int &map_height)
+Camera::Camera(const int &map_width, const int &map_height)
     : view(0, 0, 1920, 1080), width_map(map_width), height_map(map_height) {}
 
 void Camera::update_pos(float player_x, float player_y, int player_w,

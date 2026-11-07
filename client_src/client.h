@@ -36,8 +36,10 @@ private:
 public:
   Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol);
 
-  void run(/*int argc, char* argv[]*/);
+
+  void run(int argc, char* argv[]);
   void simulate_it(Visual &visual, Camera &camera, PlayerVisual &p_visual);
+
   void stop();
 
   ~Client();

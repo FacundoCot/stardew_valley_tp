@@ -7,7 +7,7 @@
 class Camera {
 private:
   SDL2pp::Rect view;
-  int &width_map, height_map;
+  const int &width_map, height_map;
 
   // va a tener un personaje
 

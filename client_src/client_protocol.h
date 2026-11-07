@@ -16,6 +16,8 @@ private:
   std::string serialize_move(const ClientMessage &msg_to_server);
   std::string serialize_disconnect(const ClientMessage &msg_to_server);
 
+  void append_u16_t(std::string& buffer, uint16_t appearance_item);
+  void serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer);
   std::string rcv_string();
 public:
   explicit ClientProtocol(Socket &&skt_rcv);
