@@ -3,7 +3,7 @@
 #include <QMessageBox>
 
 MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, QWidget* parent) : QMainWindow(parent), responses(resp),
- commands(comm), timer(new QTimer(this)), ui(new Ui::MainWindow) {
+ commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)) {
     ui->setupUi(this);
     
     ui->stackedWidget->setCurrentIndex(MAIN);

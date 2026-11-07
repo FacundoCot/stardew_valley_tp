@@ -183,7 +183,7 @@ MenuRequest ServerProtocol::recv_menu_request() {
 }
 
 CharacterAppearance ServerProtocol::recv_appearance(){
-  uint16_t parts[5];
+  uint16_t parts[5] = {};
   for(uint16_t& p : parts){
     recv_or_throw(&p, sizeof(uint16_t));
     p = ntohs(p);
