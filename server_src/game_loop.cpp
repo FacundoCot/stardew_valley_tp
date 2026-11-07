@@ -1,5 +1,4 @@
 #include "game_loop.h"
-
 #include <algorithm>
 #include <exception>
 

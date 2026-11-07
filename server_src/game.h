@@ -12,6 +12,7 @@
 #include "common_src/queue.h"
 #include "client_action.h"
 #include "enemy.h"
+#include "storage.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -29,10 +30,13 @@ struct Player {
     bool unconscious;
     Direction facing;
     float attack_cooldown_left;
+    Storage inventory{9};
+    int coins;
 
-    Player(float x, float y, int health):
+    Player(float x, float y, int health, int initial_coins = 0):
         x(x), y(y), health(health), unconscious(health == 0),
-        facing(Direction::DOWN), attack_cooldown_left(0.0f) {}
+        facing(Direction::DOWN), attack_cooldown_left(0.0f),
+        inventory(9), coins(initial_coins) {}
 };
 
 class Game {
@@ -50,6 +54,7 @@ private:
     bool damage_player_unlocked(const std::string& player_name, int amount);
     bool nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const;
     bool remove_dead_enemies_unlocked();
+    uint32_t get_initial_coins() const;
 
 public:
     explicit Game(Map map);
@@ -70,6 +75,8 @@ public:
     std::vector<EnemyState> enemy_snapshot() const;
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
+
+    InventoryState inventory_state(int client_id) const;
 };
 
 #endif

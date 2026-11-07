@@ -17,4 +17,11 @@ struct GameRuntime {
                 std::shared_ptr<Game> game_param);
 };
 
+struct MenuResult {
+  bool success;
+  std::string error;
+  std::string game_code;
+  std::shared_ptr<Game> game;
+};
+
 #endif

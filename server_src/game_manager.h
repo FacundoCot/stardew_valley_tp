@@ -29,6 +29,8 @@ public:
     void tick(float dt);
 
     void disconnect_client(int client_id) override;
+
+    void send_inventory(int client_id);
 };
 
 #endif

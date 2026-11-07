@@ -1,13 +1,14 @@
 #include "game.h"
-
 #include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
+#include <cstdlib>
+#include <ctime>
 
 namespace {
-    const float PLAYER_STEP = 0.1f;
+    const float PLAYER_STEP = 5.1f;
 
     bool apply_health(Player& player, int health) {
         int new_life = health;
@@ -23,40 +24,48 @@ namespace {
     }
 }
 
+uint32_t Game::get_initial_coins() const {
+    // para que cambie en cada ejecucion
+    srand(time(nullptr));
 
+    // Generar número aleatorio entre 0 y 100
+    return static_cast<uint32_t>(rand() % 101);
+}
 
 Game::Game(Map map_param):
         map(std::move(map_param)) {}
 
+bool Game::add_player(int client_id, const std::string &player_name, float x,
+                      float y) {
+  std::lock_guard<std::mutex> lock(mtx);
 
-bool Game::add_player(int client_id, const std::string& player_name, float x, float y){
-    std::lock_guard<std::mutex> lock(mtx);
+  if (connected_clients.count(client_id) > 0) {
+    return false;
+  }
 
-    if (connected_clients.count(client_id) > 0)
-    {
-        return false;
+  for (const auto &[id, name] : connected_clients) {
+    if (name == player_name) {
+      return false;
     }
+  }
 
-    for (const auto& [id, name] : connected_clients) {
-        if (name == player_name) {
-            return false;
-        }
-    }
+  if (players.count(player_name) == 0) {
+      if (!map.is_walkable(x, y)) {
+          return false;
+      }
+      
+      Player player(x, y, MAX_HEALTH, get_initial_coins());
 
-    if (!map.is_walkable(x, y)) {
-        return false;
-    }
+      player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
+      player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
 
-    auto player_it = players.find(player_name);
-    if (player_it == players.end()) {
-        players.emplace(player_name, Player(x, y, MAX_HEALTH));
-    } else {
-        player_it->second.x = x;
-        player_it->second.y = y;
-    }
+      players.emplace(player_name, player);
+  }
 
-    connected_clients[client_id] = player_name;
-    return true;
+  connected_clients[client_id] = player_name;
+  return true;
 }
 
 bool Game::move_player(int client_id, Direction direction) {
@@ -98,40 +107,37 @@ bool Game::move_player(int client_id, Direction direction) {
     return true;
 }
 
-
-bool Game::remove_player(int client_id){
-    std::lock_guard<std::mutex> lock(mtx);
-    return connected_clients.erase(client_id) > 0;
+bool Game::remove_player(int client_id) {
+  std::lock_guard<std::mutex> lock(mtx);
+  return connected_clients.erase(client_id) > 0;
 }
 
-bool Game::is_empty() const{
-    std::lock_guard<std::mutex> lock(mtx);
-    
-    return connected_clients.empty();
+bool Game::is_empty() const {
+  std::lock_guard<std::mutex> lock(mtx);
+
+  return connected_clients.empty();
 }
 
+std::vector<int> Game::player_ids() const {
+  std::lock_guard<std::mutex> lock(mtx);
 
-std::vector<int> Game::player_ids() const{
-    std::lock_guard<std::mutex> lock(mtx);
+  std::vector<int> ids;
+  ids.reserve(connected_clients.size());
 
-    std::vector<int> ids;
-    ids.reserve(connected_clients.size());
-
-    for (const auto& [id, player_name] : connected_clients) {
-        ids.push_back(id);
-    }
-    return ids;
+  for (const auto &[id, player_name] : connected_clients) {
+    ids.push_back(id);
+  }
+  return ids;
 }
-
 
 std::vector<PlayerState> Game::snapshot() const {
-    std::lock_guard<std::mutex> lock(mtx);
+  std::lock_guard<std::mutex> lock(mtx);
 
-    std::vector<PlayerState> state;
-    state.reserve(connected_clients.size());
+  std::vector<PlayerState> state;
+  state.reserve(connected_clients.size());
 
-    for (const auto& [id, name] : connected_clients) {
-        const Player& player = players.at(name);
+  for (const auto &[id, name] : connected_clients) {
+    const Player &player = players.at(name);
 
         state.push_back(PlayerState{
             name,
@@ -145,13 +151,13 @@ std::vector<PlayerState> Game::snapshot() const {
     return state;
 }
 
-bool Game::add_player_auto(int client_id, const std::string& player_name) {
-    std::vector<std::pair<float, float>> spawns = map.spawns();
-    if (spawns.empty()) {
-        return false;
-    }
-    auto [x, y] = spawns.front();
-    return add_player(client_id, player_name, x, y);
+bool Game::add_player_auto(int client_id, const std::string &player_name) {
+  std::vector<std::pair<float, float>> spawns = map.spawns();
+  if (spawns.empty()) {
+    return false;
+  }
+  auto [x, y] = spawns.front();
+  return add_player(client_id, player_name, x, y);
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
@@ -322,6 +328,29 @@ std::vector<EnemyState> Game::enemy_snapshot() const {
             enemy->get_health(),
             enemy->get_max_health(),
         });
+    }
+    return state;
+}
+
+InventoryState Game::inventory_state(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    const std::string& player_name = connected_clients.at(client_id);
+    const Player& player = players.at(player_name);
+
+    InventoryState state;
+    state.coins = static_cast<uint32_t>(player.coins);
+
+    const auto& stacks = player.inventory.get_stacks();
+
+    for (size_t i = 0; i < stacks.size(); i++) {
+      const Stack& stack = stacks[i];
+      InventorySlotState slot;
+      slot.index = static_cast<uint8_t>(i);
+      slot.quality = stack.get_item().get_quality();
+      slot.type = stack.get_item().get_type();
+      slot.quantity = static_cast<uint8_t>(stack.get_quantity());
+      state.slots.push_back(slot);
     }
     return state;
 }
