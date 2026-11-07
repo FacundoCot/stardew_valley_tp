@@ -14,7 +14,23 @@ enum class ActionType : uint8_t {
   CREATE_GAME = 1,
   JOIN_GAME = 2,
   MOVE = 3,
-  DISCONNECT = 4
+  DISCONNECT = 4,
+  ATTACK = 5          // NUEVO
+};
+
+enum class EnemyKind : uint8_t {
+  SKELETON = 1,
+  ORC = 2,
+  VAMPIRE = 3,
+  SKULL = 4
+};
+
+struct EnemyState {
+  EnemyKind kind;
+  float x;
+  float y;
+  int health;
+  int max_health;
 };
 
 enum class Direction : uint8_t {
@@ -64,6 +80,8 @@ struct ServerMessage {
   MessageType type;
   std::string game_code;
   std::vector<PlayerState> players;
+  std::vector<EnemyState> enemies;
+  uint8_t return_code = 0;
   InventoryState inventory;
 };
 
