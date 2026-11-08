@@ -56,10 +56,9 @@ ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
 
   buffer += static_cast<uint8_t>(msg_to_server.type);
 
-  uint16_t game_name_len_net = htons(msg_to_server.game_name_len);
-  buffer.append(reinterpret_cast<const char *>(&game_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.game_name;
+  uint16_t code_len_net = htons(static_cast<uint16_t>(msg_to_server.game_code.size()));
+  buffer.append(reinterpret_cast<const char *>(&code_len_net), sizeof(uint16_t));
+  buffer += msg_to_server.game_code;
 
   uint16_t player_name_len_net = htons(msg_to_server.player_name_len);
   buffer.append(reinterpret_cast<const char *>(&player_name_len_net),

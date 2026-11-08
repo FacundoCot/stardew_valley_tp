@@ -18,6 +18,11 @@ namespace Ui {
     class MainWindow;
 }
 
+enum class MenuStyle { 
+    CREATE, 
+    JOIN 
+};
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
@@ -28,7 +33,10 @@ class MainWindow : public QMainWindow {
         QTimer* timer;
         bool exited = false;
         bool game_started = false;
-
+        MenuStyle style = MenuStyle::CREATE;
+        std::string join_code;
+        
+        void customization_menu(MenuStyle new_style);
         void closeEvent(QCloseEvent* event) override;
 
     private slots:

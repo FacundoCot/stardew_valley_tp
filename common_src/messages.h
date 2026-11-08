@@ -104,6 +104,7 @@ struct ClientMessage {
   Direction direction = Direction::DEFAULT;
   std::string game_name;
   CharacterAppearance appearance;
+  std::string game_code; // momentáneo del join
 };
 
 #endif
