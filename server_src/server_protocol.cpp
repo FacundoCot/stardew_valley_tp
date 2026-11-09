@@ -115,7 +115,7 @@ static void validate_enemies(const std::vector<EnemyState>& enemies) {
 }
 
 void ServerProtocol::send_inventory_state(const InventoryState& inventory) {
-    if (inventory.slots.size() > 9) {
+    if (inventory.slot_vector.size() > 9) {
         throw std::runtime_error("invalid inventory size");
     }
 
@@ -124,11 +124,11 @@ void ServerProtocol::send_inventory_state(const InventoryState& inventory) {
     send_or_throw(&coins_network, sizeof(coins_network));
 
     // Enviar cantidad de slots ocupados
-    const uint8_t count = static_cast<uint8_t>(inventory.slots.size());
+    const uint8_t count = static_cast<uint8_t>(inventory.slot_vector.size());
     send_or_throw(&count, sizeof(count));
 
     // Enviar cada slot
-    for (const InventorySlotState& slot : inventory.slots) {
+    for (const InventorySlotState& slot : inventory.slot_vector) {
         //convierto los enums en su valor numerico para enviarlo por el socket
         const uint8_t type = static_cast<uint8_t>(slot.type);
         const uint8_t quality = static_cast<uint8_t>(slot.quality);

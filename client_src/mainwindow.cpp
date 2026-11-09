@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
+#include <iostream>
 
 MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, QWidget* parent) : QMainWindow(parent), responses(resp),
  commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)) {
@@ -49,10 +50,12 @@ void MainWindow::on_click_exitButton(){
 
 void MainWindow::on_click_submitCodeButton(){
     std::string code = ui->codeBox->text().toStdString();
+    /*
     if (code.length() != 4){
         QMessageBox::warning(this, "Error", "Inserte un codigo de 4 valores");
         return;
     }
+    */
     this->join_code = code;
 
     // en realidad habría que hacer esto:
@@ -62,7 +65,6 @@ void MainWindow::on_click_submitCodeButton(){
     // pero de momento:
 
     customization_menu(MenuStyle::JOIN);
-
 }
 
 void MainWindow::on_click_startCreateButton(){
@@ -121,6 +123,7 @@ void MainWindow::timer_create_response() {
         }
         return;
     } else {
+        std::cout << res.game_code << std::endl;
         game_started = true;
         this->close();
     }

@@ -350,7 +350,7 @@ InventoryState Game::inventory_state(int client_id) const {
       slot.quality = stack.get_item().get_quality();
       slot.type = stack.get_item().get_type();
       slot.quantity = static_cast<uint8_t>(stack.get_quantity());
-      state.slots.push_back(slot);
+      state.slot_vector.push_back(slot);
     }
     return state;
 }

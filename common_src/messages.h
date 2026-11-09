@@ -76,7 +76,7 @@ struct InventorySlotState {
 
 struct InventoryState {
     uint32_t coins = 0;
-    std::vector<InventorySlotState> slots;
+    std::vector<InventorySlotState> slot_vector;
 };
 
 struct ServerMessage {

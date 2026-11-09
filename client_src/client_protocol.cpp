@@ -25,8 +25,8 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
 
 std::string
 ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
-  size_t len_msg = sizeof(uint8_t) + sizeof(msg_to_server.game_name) +
-                   sizeof(msg_to_server.player_name);
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.game_name.length() +
+                   sizeof(uint16_t) + msg_to_server.player_name.length();
   std::string buffer;
   buffer.reserve(len_msg);
 
@@ -49,8 +49,8 @@ ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
 
 std::string
 ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
-  size_t len_msg =
-      sizeof(msg_to_server.game_name) + sizeof(msg_to_server.player_name);
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) +
+      msg_to_server.player_name.length();
   std::string buffer;
   buffer.reserve(len_msg);
 
@@ -148,7 +148,47 @@ ServerMessage ClientProtocol::rcv_from_server() {
       player.x = x;
       player.y = y;
 
+      uint16_t health, max_health;
+      skt.recvall(&health, sizeof(uint16_t));
+      skt.recvall(&max_health, sizeof(uint32_t));
+      player.health = ntohs(health);
+      player.max_health = ntohs(max_health);
+
+      uint16_t unconscious;
+      skt.recvall(&unconscious, sizeof(uint8_t));
+      player.unconscious = unconscious;
+
       response.players.push_back(player);
+    }
+
+
+    uint16_t enemy_count;
+    skt.recvall(&enemy_count, sizeof(uint16_t));
+    enemy_count = ntohs(enemy_count);
+
+    for (uint16_t i = 0; i < enemy_count; i++) {
+      EnemyState enemy;
+      
+      uint8_t kind;
+      skt.recvall(&kind, sizeof(uint8_t));
+      enemy.kind = static_cast<EnemyKind>(kind);
+
+      uint32_t coordinate;
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      enemy.x = ntohl(coordinate) / 100.0f;
+      
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      enemy.y = ntohl(coordinate) / 100.0f;
+
+      uint16_t health;
+      skt.recvall(&health, sizeof(uint16_t));
+      enemy.health = ntohs(health);
+
+      uint16_t max_health;
+      skt.recvall(&max_health, sizeof(uint16_t));
+      enemy.max_health = ntohs(max_health);
+
+      response.enemies.push_back(enemy);
     }
 
     break;
