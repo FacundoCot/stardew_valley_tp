@@ -70,7 +70,7 @@ void MainWindow::on_click_submitCodeButton(){
 void MainWindow::on_click_startCreateButton(){
     ClientMessage msg;
     
-    msg.player_name = ui->playerNameEdit->text().toStdString();
+    msg.player_name = ui->playerNameEdit->text().trimmed().toStdString();
     if(msg.player_name.empty()){
         QMessageBox::warning(this, "Error", "Inserte un nombre de jugador");
         return;
@@ -79,7 +79,7 @@ void MainWindow::on_click_startCreateButton(){
     if (style == MenuStyle::CREATE){
         msg.type = ActionType::CREATE_GAME;
         
-        msg.game_name = ui->farmNameEdit->text().toStdString();   
+        msg.game_name = ui->farmNameEdit->text().trimmed().toStdString();   
         if(msg.game_name.empty()){
             QMessageBox::warning(this, "Error", "Inserte un nombre de granja");
             return;
@@ -121,7 +121,6 @@ void MainWindow::timer_create_response() {
         } else {
             QMessageBox::warning(this, "Error", "No se pudo crear la partida");
         }
-        return;
     } else {
         std::cout << res.game_code << std::endl;
         game_started = true;

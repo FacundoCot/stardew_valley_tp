@@ -8,6 +8,8 @@
 #include "client_protocol.h"
 #include <netinet/in.h>
 
+#include <iostream>
+
 ClientProtocol::ClientProtocol(Socket &&skt_rcv) : skt(std::move(skt_rcv)) {}
 
 void ClientProtocol::append_u16_t(std::string &buffer, uint16_t appearance_item){
@@ -150,7 +152,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
 
       uint16_t health, max_health;
       skt.recvall(&health, sizeof(uint16_t));
-      skt.recvall(&max_health, sizeof(uint32_t));
+      skt.recvall(&max_health, sizeof(uint16_t));
       player.health = ntohs(health);
       player.max_health = ntohs(max_health);
 
@@ -193,7 +195,32 @@ ServerMessage ClientProtocol::rcv_from_server() {
 
     break;
   }
+  case MessageType::INVENTORY_STATE: {
+    uint32_t coins;
+    skt.recvall(&coins, sizeof(uint32_t));
+    response.inventory.coins = ntohl(coins);
 
+    uint8_t count;
+    skt.recvall(&count, sizeof(uint8_t));
+
+    for (uint8_t i = 0; i < count; i++) {
+      InventorySlotState slot;
+
+      skt.recvall(&slot.index, sizeof(uint8_t));
+
+      uint8_t type_raw, quality_raw;
+      skt.recvall(&type_raw, sizeof(uint8_t));
+      skt.recvall(&quality_raw, sizeof(uint8_t));
+
+      slot.type = static_cast<ItemType>(type_raw);
+      slot.quality = static_cast<Quality>(quality_raw);
+
+      skt.recvall(&slot.quantity, sizeof(uint8_t));
+
+      response.inventory.slot_vector.push_back(slot);
+    }
+    break;
+  }
   case MessageType::ERROR:
     break;
   default:
