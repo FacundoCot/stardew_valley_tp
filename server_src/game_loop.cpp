@@ -25,7 +25,6 @@ void GameLoop::run() {
 
             // 2) Espera al próximo tick y calcula cuántos ticks pasaron
             int ticks = chronometer.sleep_and_calculate_it();
-            ticks = std::min(ticks, 5);  // evita una espiral si el hilo se atrasó mucho
 
             // 3) Avanza el mundo tantas veces como ticks corresponda
             for (int i = 0; i < ticks; i++) {

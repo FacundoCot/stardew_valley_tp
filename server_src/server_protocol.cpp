@@ -140,6 +140,17 @@ void ServerProtocol::send_inventory_state(const InventoryState& inventory) {
     }
 }
 
+void ServerProtocol::send_time_state(const TimeState& time) {
+    const uint16_t day_network = htons(time.day);
+    send_or_throw(&day_network, sizeof(day_network));
+
+    send_or_throw(&time.hour, sizeof(time.hour));
+    send_or_throw(&time.minute, sizeof(time.minute));
+
+    const uint8_t finished = time.finished ? static_cast<uint8_t>(DayFinished::FINISHED) : 
+                                             static_cast<uint8_t>(DayFinished::NOT_FINISHED);
+    send_or_throw(&finished, sizeof(finished));
+}
 
 void ServerProtocol::send_message(const ServerMessage& message) {
     if (message.type == MessageType::GAME_STATE) {
@@ -237,6 +248,9 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         }
         case MessageType::INVENTORY_STATE:
           send_inventory_state(message.inventory);
+          break;
+        case MessageType::TIME_STATE:
+          send_time_state(message.time);
           break;
         case MessageType::ERROR:
           break;

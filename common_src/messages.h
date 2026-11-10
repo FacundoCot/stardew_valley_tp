@@ -10,13 +10,18 @@
 #include "character_appearance.h"
 #include "item_types.h"
 
+enum class DayFinished : uint8_t {
+    NOT_FINISHED = 0,
+    FINISHED = 1
+};
+
 enum class ActionType : uint8_t {
   NULL_ACTION = 0,
   CREATE_GAME = 1,
   JOIN_GAME = 2,
   MOVE = 3,
   DISCONNECT = 4,
-  ATTACK = 5          // NUEVO
+  ATTACK = 5
 };
 
 enum class EnemyKind : uint8_t {
@@ -47,7 +52,8 @@ enum class MessageType : uint8_t {
   GAME_JOINED = 2,
   GAME_STATE = 3,
   ERROR = 4,
-  INVENTORY_STATE = 5
+  INVENTORY_STATE = 5,
+  TIME_STATE = 6
 };
 
 struct PlayerState {
@@ -79,6 +85,13 @@ struct InventoryState {
     std::vector<InventorySlotState> slots;
 };
 
+struct TimeState {
+    uint16_t day;
+    uint8_t hour;
+    uint8_t minute;
+    bool finished;
+};
+
 struct ServerMessage {
   MessageType type;
   std::string game_code;
@@ -86,6 +99,7 @@ struct ServerMessage {
   std::vector<EnemyState> enemies;
   uint8_t return_code = 0;
   InventoryState inventory;
+  TimeState time;
 };
 
 struct MenuRequest {

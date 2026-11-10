@@ -22,6 +22,7 @@ private:
   CharacterAppearance recv_appearance();
 
   void send_inventory_state(const InventoryState& inventory);
+  void send_time_state(const TimeState& time);
 public:
   explicit ServerProtocol(Socket &skt);
 

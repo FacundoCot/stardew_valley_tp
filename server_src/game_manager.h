@@ -12,7 +12,7 @@
 
 class GameManager : public GameActionHandler {
 private:
-     ClientRegistry& registry;
+    ClientRegistry& registry;
     std::shared_ptr<Game> game;
 
     void send_state();
@@ -31,6 +31,10 @@ public:
     void disconnect_client(int client_id) override;
 
     void send_inventory(int client_id);
+
+    void send_time(int client_id);
+
+    void send_time_global();
 };
 
 #endif

@@ -13,6 +13,7 @@
 #include "client_action.h"
 #include "enemy.h"
 #include "storage.h"
+#include "game_clock.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -44,6 +45,7 @@ private:
     class EnemyView;
 
     Map map;
+    GameClock clock;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::map<std::string, Player> players;          // nombre -> jugador
     std::map<int, std::string> connected_clients;   // client_id -> nombre
@@ -77,6 +79,7 @@ public:
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
 
     InventoryState inventory_state(int client_id) const;
+    TimeState time_state() const;
 };
 
 #endif
