@@ -221,6 +221,17 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
     break;
   }
+  case MessageType::TIME_STATE: {
+    uint16_t day_network;
+    skt.recvall(&day_network, sizeof(uint16_t));
+    response.time.day = ntohs(day_network);
+
+    skt.recvall(&response.time.hour, sizeof(uint8_t));
+    skt.recvall(&response.time.minute, sizeof(uint8_t));
+    skt.recvall(&response.time.finished, sizeof(uint8_t));
+    break;
+  }
+
   case MessageType::ERROR:
     break;
   default:
