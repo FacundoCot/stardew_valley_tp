@@ -33,7 +33,7 @@ uint32_t Game::get_initial_coins() const {
 }
 
 Game::Game(Map map_param):
-        map(std::move(map_param)) {}
+        map(std::move(map_param)), clock(1, 840) {}
 
 bool Game::add_player(int client_id, const std::string &player_name, float x,
                       float y) {
@@ -238,6 +238,8 @@ bool Game::damage_player(const std::string& player_name, int amount) {
 bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
+    clock.update(dt);
+
     for (auto& entry : players) {
         entry.second.attack_cooldown_left =
             std::max(0.0f, entry.second.attack_cooldown_left - dt);
@@ -352,5 +354,16 @@ InventoryState Game::inventory_state(int client_id) const {
       slot.quantity = static_cast<uint8_t>(stack.get_quantity());
       state.slots.push_back(slot);
     }
+    return state;
+}
+
+TimeState Game::time_state() const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    TimeState state;
+    state.day = static_cast<uint16_t>(clock.get_day());
+    state.hour = static_cast<uint8_t>(clock.get_hour());
+    state.minute = static_cast<uint8_t>(clock.get_minute());
+    state.finished = clock.is_finished();
     return state;
 }
