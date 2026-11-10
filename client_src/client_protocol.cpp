@@ -8,6 +8,8 @@
 #include "client_protocol.h"
 #include <netinet/in.h>
 
+#include <iostream>
+
 ClientProtocol::ClientProtocol(Socket &&skt_rcv) : skt(std::move(skt_rcv)) {}
 
 void ClientProtocol::append_u16_t(std::string &buffer, uint16_t appearance_item){
@@ -25,8 +27,8 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
 
 std::string
 ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
-  size_t len_msg = sizeof(uint8_t) + sizeof(msg_to_server.game_name) +
-                   sizeof(msg_to_server.player_name);
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.game_name.length() +
+                   sizeof(uint16_t) + msg_to_server.player_name.length();
   std::string buffer;
   buffer.reserve(len_msg);
 
@@ -49,17 +51,16 @@ ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
 
 std::string
 ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
-  size_t len_msg =
-      sizeof(msg_to_server.game_name) + sizeof(msg_to_server.player_name);
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) +
+      msg_to_server.player_name.length();
   std::string buffer;
   buffer.reserve(len_msg);
 
   buffer += static_cast<uint8_t>(msg_to_server.type);
 
-  uint16_t game_name_len_net = htons(msg_to_server.game_name_len);
-  buffer.append(reinterpret_cast<const char *>(&game_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.game_name;
+  uint16_t code_len_net = htons(static_cast<uint16_t>(msg_to_server.game_code.size()));
+  buffer.append(reinterpret_cast<const char *>(&code_len_net), sizeof(uint16_t));
+  buffer += msg_to_server.game_code;
 
   uint16_t player_name_len_net = htons(msg_to_server.player_name_len);
   buffer.append(reinterpret_cast<const char *>(&player_name_len_net),
@@ -149,9 +150,85 @@ ServerMessage ClientProtocol::rcv_from_server() {
       player.x = x;
       player.y = y;
 
+      uint16_t health, max_health;
+      skt.recvall(&health, sizeof(uint16_t));
+      skt.recvall(&max_health, sizeof(uint16_t));
+      player.health = ntohs(health);
+      player.max_health = ntohs(max_health);
+
+      uint16_t unconscious;
+      skt.recvall(&unconscious, sizeof(uint8_t));
+      player.unconscious = unconscious;
+
       response.players.push_back(player);
     }
 
+
+    uint16_t enemy_count;
+    skt.recvall(&enemy_count, sizeof(uint16_t));
+    enemy_count = ntohs(enemy_count);
+
+    for (uint16_t i = 0; i < enemy_count; i++) {
+      EnemyState enemy;
+      
+      uint8_t kind;
+      skt.recvall(&kind, sizeof(uint8_t));
+      enemy.kind = static_cast<EnemyKind>(kind);
+
+      uint32_t coordinate;
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      enemy.x = ntohl(coordinate) / 100.0f;
+      
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      enemy.y = ntohl(coordinate) / 100.0f;
+
+      uint16_t health;
+      skt.recvall(&health, sizeof(uint16_t));
+      enemy.health = ntohs(health);
+
+      uint16_t max_health;
+      skt.recvall(&max_health, sizeof(uint16_t));
+      enemy.max_health = ntohs(max_health);
+
+      response.enemies.push_back(enemy);
+    }
+
+    break;
+  }
+  case MessageType::INVENTORY_STATE: {
+    uint32_t coins;
+    skt.recvall(&coins, sizeof(uint32_t));
+    response.inventory.coins = ntohl(coins);
+
+    uint8_t count;
+    skt.recvall(&count, sizeof(uint8_t));
+
+    for (uint8_t i = 0; i < count; i++) {
+      InventorySlotState slot;
+
+      skt.recvall(&slot.index, sizeof(uint8_t));
+
+      uint8_t type_raw, quality_raw;
+      skt.recvall(&type_raw, sizeof(uint8_t));
+      skt.recvall(&quality_raw, sizeof(uint8_t));
+
+      slot.type = static_cast<ItemType>(type_raw);
+      slot.quality = static_cast<Quality>(quality_raw);
+
+      skt.recvall(&slot.quantity, sizeof(uint8_t));
+
+      response.inventory.slot_vector.push_back(slot);
+    }
+    break;
+  }
+  case MessageType::TIME_STATE: {
+    uint16_t day_network;
+    skt.recvall(&day_network, sizeof(uint16_t));
+    response.time.day = ntohs(day_network);
+
+    skt.recvall(&response.time.hour, sizeof(uint8_t));
+    skt.recvall(&response.time.minute, sizeof(uint8_t));
+    skt.recvall(&response.time.finished, sizeof(uint8_t));
     break;
   }
 

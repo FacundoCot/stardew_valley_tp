@@ -133,7 +133,7 @@ if(GAME_CLIENT)
     set_project_warnings(game_client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # add libSDL2pp's headers
-    target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS})
+    target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/client_src)
 
     # Link the game_common lib target
     target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
