@@ -367,3 +367,26 @@ TimeState Game::time_state() const {
     state.finished = clock.is_finished();
     return state;
 }
+
+bool Game::player_name(int client_id, std::string& player_name) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto found = connected_clients.find(client_id);
+    if (found == connected_clients.end()) {
+        return false;
+    }
+    player_name = found->second;
+    return true;
+}
+
+bool Game::name_to_client_id(int& client_id, const std::string& player_name) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    for (const auto& [id, name] : connected_clients) {
+        if (name == player_name) {
+            client_id = id;
+            return true;
+        }
+    }
+    return false;
+}

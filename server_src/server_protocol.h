@@ -23,6 +23,7 @@ private:
 
   void send_inventory_state(const InventoryState& inventory);
   void send_time_state(const TimeState& time);
+  void send_chat_message(const ChatState& chat);
 public:
   explicit ServerProtocol(Socket &skt);
 

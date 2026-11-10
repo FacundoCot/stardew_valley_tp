@@ -17,6 +17,14 @@ private:
 
     void send_state();
 
+    void send_chat_global(const std::string& name, const std::string& text);
+
+    void send_chat_private(const int client_id, const std::string& sender, const std::string& text);
+
+    void handle_command(const int client_id, const std::string& text);
+
+    void send_system_message(int client_id, const std::string& text);
+
 public:
     GameManager(ClientRegistry& registry, std::shared_ptr<Game> game);
 
@@ -35,6 +43,8 @@ public:
     void send_time(int client_id);
 
     void send_time_global();
+
+    void send_chat(int client_id, const std::string& text) override;
 };
 
 #endif

@@ -80,6 +80,8 @@ public:
 
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
+    bool player_name(int client_id, std::string& player_name) const;
+    bool name_to_client_id(int& client_id, const std::string& player_name) const;
 };
 
 #endif

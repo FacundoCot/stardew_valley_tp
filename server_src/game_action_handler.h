@@ -23,6 +23,8 @@ class GameActionHandler {
 
         virtual void attack_player(int client_id) = 0;
         
+        virtual void send_chat(int client_id, const std::string& text) = 0;
+
         // Destructor virtual: asegura que al destruir un objeto mediante un puntero
         // a la clase padre, se ejecuten también los destructores de las clases hijas
         virtual ~GameActionHandler() = default;
