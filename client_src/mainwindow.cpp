@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
+#include <iostream>
 
 MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, QWidget* parent) : QMainWindow(parent), responses(resp),
  commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)) {
@@ -30,7 +31,7 @@ void MainWindow::closeEvent(QCloseEvent* event){
 }
 
 void MainWindow::on_click_createButton(){
-    ui->stackedWidget->setCurrentIndex(CUSTOM_CREATE);
+    customization_menu(MenuStyle::CREATE);
 }
 
 void MainWindow::on_click_continueButton(){
@@ -48,32 +49,49 @@ void MainWindow::on_click_exitButton(){
 }
 
 void MainWindow::on_click_submitCodeButton(){
-    // obtener input de caja de texto
-    QString code = ui->codeBox->text();
-    
+    std::string code = ui->codeBox->text().toStdString();
+    /*
+    if (code.length() != 4){
+        QMessageBox::warning(this, "Error", "Inserte un codigo de 4 valores");
+        return;
+    }
+    */
+    this->join_code = code;
+
+    // en realidad habría que hacer esto:
     // enviar input por receiver a servidor
     // obtener respuesta
+    // si es valido ui->stackedWidget->setCurrentIndex(CUSTOMIZATION_CREATE);
+    // pero de momento:
 
-    // si es valido ui->stackedWidget->setCurrentIndex(CUSTOMIZATION_CREATE); 
-    // inhabilitar seccion de customizar granja
+    customization_menu(MenuStyle::JOIN);
 }
 
 void MainWindow::on_click_startCreateButton(){
     ClientMessage msg;
-    msg.type = ActionType::CREATE_GAME;
-    msg.game_name = ui->farmNameEdit->text().toStdString();
-    if(msg.game_name.empty()){
-        QMessageBox::warning(this, "Error", "Inserte un nombre de granja");
-        return;
-    }
-
-    msg.player_name = ui->playerNameEdit->text().toStdString();
+    
+    msg.player_name = ui->playerNameEdit->text().trimmed().toStdString();
     if(msg.player_name.empty()){
         QMessageBox::warning(this, "Error", "Inserte un nombre de jugador");
         return;
     }
+    
+    if (style == MenuStyle::CREATE){
+        msg.type = ActionType::CREATE_GAME;
+        
+        msg.game_name = ui->farmNameEdit->text().trimmed().toStdString();   
+        if(msg.game_name.empty()){
+            QMessageBox::warning(this, "Error", "Inserte un nombre de granja");
+            return;
+        }
 
-    msg.game_name_len = msg.game_name.size();
+        msg.game_name_len = msg.game_name.size();
+    } else {
+        msg.type = ActionType::JOIN_GAME;
+
+        msg.game_code = join_code;
+    }
+
     msg.player_name_len = msg.player_name.size();
     msg.appearance = CharacterAppearance{};
     
@@ -87,7 +105,7 @@ void MainWindow::on_click_backButton(){
     ui->stackedWidget->setCurrentIndex(MAIN);
 }
 
- void MainWindow::timer_create_response() {
+void MainWindow::timer_create_response() {
     ServerMessage res;
 
     if(!responses.try_pop(res)){
@@ -97,12 +115,26 @@ void MainWindow::on_click_backButton(){
     ui->startCreateButton->setEnabled(true);
 
     if(res.type == MessageType::ERROR){
-        QMessageBox::warning(this, "Error", "Campos inválidos");
-        return;
+        if (style == MenuStyle::JOIN) {
+            QMessageBox::warning(this, "Error", "No se pudo unir. Posible código invalido.");
+            ui->stackedWidget->setCurrentIndex(JOIN);
+        } else {
+            QMessageBox::warning(this, "Error", "No se pudo crear la partida");
+        }
     } else {
+        std::cout << res.game_code << std::endl;
         game_started = true;
         this->close();
     }
- }
+}
+
+void MainWindow::customization_menu(MenuStyle new_style) {
+    style = new_style;
+    bool if_create = (new_style == MenuStyle::CREATE);
+
+    ui->farmNameEdit->setVisible(if_create);
+    ui->farmNameLabel->setVisible(if_create);
+    ui->stackedWidget->setCurrentIndex(CUSTOM_CREATE);
+}
 
 MainWindow::~MainWindow() { delete ui; }

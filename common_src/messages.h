@@ -145,6 +145,7 @@ struct ClientMessage {
   std::string game_name;
   CharacterAppearance appearance;
   std::string chat_text;
+  std::string game_code; // momentáneo del join
 };
 
 #endif
