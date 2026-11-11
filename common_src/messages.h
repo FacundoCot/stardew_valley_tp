@@ -22,7 +22,8 @@ enum class ActionType : uint8_t {
   MOVE = 3,
   DISCONNECT = 4,
   ATTACK = 5,
-  CHAT = 6
+  CHAT = 6,
+  LIST_GAMES = 7
 };
 
 enum class EnemyKind : uint8_t {
@@ -55,7 +56,8 @@ enum class MessageType : uint8_t {
   ERROR = 4,
   INVENTORY_STATE = 5,
   TIME_STATE = 6,
-  CHAT_MESSAGE = 7
+  CHAT_MESSAGE = 7,
+  GAMES_LIST = 8
 };
 
 struct PlayerState {
@@ -84,7 +86,7 @@ struct InventorySlotState {
 
 struct InventoryState {
     uint32_t coins = 0;
-    std::vector<InventorySlotState> slots;
+    std::vector<InventorySlotState> slot_vector;
 };
 
 struct TimeState {
@@ -107,6 +109,13 @@ struct ChatState {
     std::string text;
 };
 
+struct GameInfoForMenu {
+    std::string game_code;
+    std::string game_name;
+    std::string owner_name;
+    bool multiplayer;
+};
+
 struct ServerMessage {
   MessageType type;
   std::string game_code;
@@ -116,6 +125,7 @@ struct ServerMessage {
   InventoryState inventory;
   TimeState time;
   ChatState chat;
+  std::vector<GameInfoForMenu> games;
 };
 
 struct MenuRequest {

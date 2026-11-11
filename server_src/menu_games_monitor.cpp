@@ -7,11 +7,33 @@
 
 MenuGamesMonitor::MenuGamesMonitor(Map world_map_param, ClientRegistry& registry):
     world_map(std::move(world_map_param)),
-    registry(registry) {}
+    registry(registry),
+    save_disc("saves") 
+{
+    for (const std::string& code : save_disc.list_saves()) {
+        GameSaveData data = save_disc.load(code);
+
+        auto game = std::make_shared<Game>(world_map);
+        game->restore_save_data(data);
+
+        games[code] = std::make_unique<GameRuntime>(registry, game, data.game_name, data.owner_name, data.multiplayer);
+
+        int saved_code = std::stoi(code);
+        if (saved_code >= next_game_code) {
+            next_game_code = saved_code + 1;
+        }
+    }
+}
 
 GameRuntime::GameRuntime(ClientRegistry& registry,
-                         std::shared_ptr<Game> game_param):
+                         std::shared_ptr<Game> game_param,
+                         std::string game_name_param,
+                         std::string owner_name_param,
+                         bool multiplayer_param):
         game(std::move(game_param)),
+        game_name(game_name_param),
+        owner_name(owner_name_param),
+        multiplayer(multiplayer_param),
         manager(registry, game),
         loop(manager, game->get_actions_queue()) {
 
@@ -35,7 +57,7 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
     
     std::string code = std::to_string(next_game_code++);
 
-    games[code] = std::make_unique<GameRuntime>(registry, game);
+    games[code] = std::make_unique<GameRuntime>(registry, game, game_name, player_name, false);
 
     auto join = std::make_shared<JoinAction>();
     join->set_client_id(client_id);
@@ -55,6 +77,10 @@ MenuResult MenuGamesMonitor::join_game(int client_id,
         return MenuResult{false, "No existe una partida con ese codigo", "", nullptr};
     }
 
+    if (!it->second->multiplayer && player_name != it->second->owner_name) {
+        return MenuResult{false, "Solo el duenio puede entrar a esta partida", "", nullptr};
+    }
+
     auto game = it->second->game;
 
     if (!game->add_player_auto(client_id, player_name)) {
@@ -66,4 +92,22 @@ MenuResult MenuGamesMonitor::join_game(int client_id,
     game->get_actions_queue().push(join);
 
     return MenuResult{true, "", game_code, game};
+}
+
+ServerMessage MenuGamesMonitor::list_games() {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    ServerMessage msg{};
+    msg.type = MessageType::GAMES_LIST;
+
+    for (const auto& [code, runtime] : games) {
+        GameInfoForMenu game_info;
+        game_info.game_code = code;
+        game_info.game_name = runtime->game_name;
+        game_info.owner_name = runtime->owner_name;
+        game_info.multiplayer = runtime->multiplayer;
+        msg.games.push_back(game_info);
+    }
+
+    return msg;
 }

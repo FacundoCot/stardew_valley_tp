@@ -56,6 +56,9 @@ void ClientHandler::run() {
                 case ActionType::JOIN_GAME:
                     res = menu_games_monitor.join_game(client_id, menu_request.game_code, menu_request.player_name);
                     break;
+                case ActionType::LIST_GAMES:
+                    protocol.send_message(menu_games_monitor.list_games());
+                    continue;
                 default:
                     break;
             }

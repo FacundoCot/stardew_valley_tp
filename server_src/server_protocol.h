@@ -24,6 +24,7 @@ private:
   void send_inventory_state(const InventoryState& inventory);
   void send_time_state(const TimeState& time);
   void send_chat_message(const ChatState& chat);
+  void send_games_list(const std::vector<GameInfoForMenu>& games);
 public:
   explicit ServerProtocol(Socket &skt);
 

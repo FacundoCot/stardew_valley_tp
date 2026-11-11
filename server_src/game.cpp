@@ -238,6 +238,10 @@ bool Game::damage_player(const std::string& player_name, int amount) {
 bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
+    if (connected_clients.empty()) {
+        return false;
+    }
+
     clock.update(dt);
 
     for (auto& entry : players) {
@@ -352,7 +356,7 @@ InventoryState Game::inventory_state(int client_id) const {
       slot.quality = stack.get_item().get_quality();
       slot.type = stack.get_item().get_type();
       slot.quantity = static_cast<uint8_t>(stack.get_quantity());
-      state.slots.push_back(slot);
+      state.slot_vector.push_back(slot);
     }
     return state;
 }
@@ -389,4 +393,55 @@ bool Game::name_to_client_id(int& client_id, const std::string& player_name) con
         }
     }
     return false;
+}
+
+GameSaveData Game::get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    GameSaveData data;
+    data.game_code = game_code;
+    data.game_name = game_name;
+    data.owner_name = owner_name;
+    data.multiplayer = multiplayer;
+    data.day = clock.get_day();
+
+    for (const auto& [player_name, player] : players) {
+        PlayerSaveData player_data;
+        player_data.name = player_name;
+        player_data.x = player.x;
+        player_data.y = player.y;
+        player_data.health = player.health;
+        player_data.coins = player.coins;
+
+        const auto& stacks = player.inventory.get_stacks();
+        for (const Stack& stack : stacks) {
+            ItemSaveData item_data;
+            item_data.type = stack.get_item().get_type();
+            item_data.quality = stack.get_item().get_quality();
+            item_data.quantity = stack.get_quantity();
+            player_data.inventory.push_back(item_data);
+        }
+
+        data.players.push_back(player_data);
+    }
+
+    return data;
+}
+
+void Game::restore_save_data(const GameSaveData& data) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    players.clear();
+    connected_clients.clear();
+    clock = GameClock(data.day, 840);
+
+    for (const PlayerSaveData& saved_player : data.players) {
+        Player player(saved_player.x, saved_player.y, saved_player.health, saved_player.coins);
+
+        for (const ItemSaveData& saved_item : saved_player.inventory) {
+            player.inventory.add_item(Item(saved_item.type, saved_item.quality), saved_item.quantity);
+        }
+
+        players.emplace(saved_player.name, std::move(player));
+    }
 }
