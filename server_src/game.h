@@ -14,6 +14,7 @@
 #include "enemy.h"
 #include "storage.h"
 #include "game_clock.h"
+#include "save_data_structs.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -80,6 +81,10 @@ public:
 
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
+    bool player_name(int client_id, std::string& player_name) const;
+    bool name_to_client_id(int& client_id, const std::string& player_name) const;
+    GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const;
+    void restore_save_data(const GameSaveData& data);
 };
 
 #endif

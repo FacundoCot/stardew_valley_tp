@@ -19,8 +19,7 @@ void JoinGameAction::execute(GameActionHandler &handler) const {
   handler.join_game(get_client_id(), game_code, player_name);
 }
 */
-MoveAction::MoveAction(Direction direction):
-        direction(direction) {}
+MoveAction::MoveAction(Direction direction): direction(direction) {}
 
 void MoveAction::execute(GameActionHandler &handler) const {
   handler.move_player(get_client_id(), direction);
@@ -36,4 +35,10 @@ void DisconnectAction::execute(GameActionHandler& handler) const {
 
 void AttackAction::execute(GameActionHandler& handler) const {
     handler.attack_player(get_client_id());
+}
+
+ChatAction::ChatAction(std::string text): text(std::move(text)) {}
+
+void ChatAction::execute(GameActionHandler& handler) const {
+    handler.send_chat(get_client_id(), text);
 }

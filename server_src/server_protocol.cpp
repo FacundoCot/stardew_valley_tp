@@ -88,6 +88,12 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
 
         case ActionType::DISCONNECT:
             return std::make_shared<DisconnectAction>();
+        
+        case ActionType::CHAT: {
+            std::string text = recv_string();
+            //creo una ChatAction, que hereda de client_action
+            return std::make_shared<ChatAction>(std::move(text));
+        }
 
         default:
             throw std::runtime_error("invalid game operation");
@@ -150,6 +156,29 @@ void ServerProtocol::send_time_state(const TimeState& time) {
     const uint8_t finished = time.finished ? static_cast<uint8_t>(DayFinished::FINISHED) : 
                                              static_cast<uint8_t>(DayFinished::NOT_FINISHED);
     send_or_throw(&finished, sizeof(finished));
+}
+
+void ServerProtocol::send_chat_message(const ChatState& chat) {
+    const uint8_t kind = static_cast<uint8_t>(chat.kind);
+
+    send_or_throw(&kind, sizeof(kind));
+
+    send_string(chat.sender);
+    send_string(chat.text);
+}
+
+void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) {
+    uint16_t count = htons(static_cast<uint16_t>(games.size()));
+    send_or_throw(&count, sizeof(count));
+
+    for (const GameInfoForMenu& game : games) {
+        send_string(game.game_code);
+        send_string(game.game_name);
+        send_string(game.owner_name);
+
+        uint8_t multiplayer = game.multiplayer ? 1 : 0;
+        send_or_throw(&multiplayer, sizeof(multiplayer));
+    }
 }
 
 void ServerProtocol::send_message(const ServerMessage& message) {
@@ -252,6 +281,12 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         case MessageType::TIME_STATE:
           send_time_state(message.time);
           break;
+        case MessageType::CHAT_MESSAGE:
+          send_chat_message(message.chat);
+          break;
+        case MessageType::GAMES_LIST:
+          send_games_list(message.games);
+          break;
         case MessageType::ERROR:
           break;
         default:
@@ -265,20 +300,22 @@ MenuRequest ServerProtocol::recv_menu_request() {
 
     switch (static_cast<ActionType>(op)) {
         case ActionType::CREATE_GAME: {
-            std::string game_name = recv_string();
-            std::string player_name = recv_string();
-            CharacterAppearance appearance = recv_appearance();
+          std::string game_name = recv_string();
+          std::string player_name = recv_string();
+          CharacterAppearance appearance = recv_appearance();
 
-            return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name), appearance};
+          return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name), appearance};
         }
 
         case ActionType::JOIN_GAME: {
-            std::string game_code = recv_string();
-            std::string player_name = recv_string();
-            CharacterAppearance appearance = recv_appearance();
+          std::string game_code = recv_string();
+          std::string player_name = recv_string();
+          CharacterAppearance appearance = recv_appearance();
 
-            return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name), appearance};
+          return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name), appearance};
         }
+        case ActionType::LIST_GAMES:
+          return MenuRequest{ActionType::LIST_GAMES, "", "", "", {}};
 
         default:
             throw std::runtime_error("invalid menu request");
