@@ -43,7 +43,7 @@ void GameManager::move_player(int client_id, Direction direction) {
     }
 }
 
-void GameManager::join_player(int client_id) {
+void GameManager::join_player(int /*no se necesita el client_id*/) {
     send_state();
 }
 

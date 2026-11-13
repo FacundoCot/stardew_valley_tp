@@ -140,6 +140,8 @@ if(GAME_CLIENT)
 endif()
 
 if(GAME_SERVER)
+    find_package(nlohmann_json 3.10 CONFIG REQUIRED)
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(game_server)
 
@@ -153,7 +155,7 @@ if(GAME_SERVER)
     set_project_warnings(game_server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # Link the game_common lib target
-    target_link_libraries(game_server game_common)
+    target_link_libraries(game_server game_common nlohmann_json::nlohmann_json)
 endif()
 
 if(MAP_EDITOR)
