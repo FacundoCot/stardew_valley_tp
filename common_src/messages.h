@@ -55,10 +55,8 @@ enum class MessageType : uint8_t {
   GAME_JOINED = 2,
   GAME_STATE = 3,
   ERROR = 4,
-  INVENTORY_STATE = 5,
-  TIME_STATE = 6,
-  CHAT_MESSAGE = 7,
-  GAMES_LIST = 8
+  CHAT_MESSAGE = 5,
+  GAMES_LIST = 6
 };
 
 struct PlayerState {

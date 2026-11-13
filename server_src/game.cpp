@@ -135,7 +135,6 @@ std::vector<int> Game::player_ids() const {
 }
 
 std::vector<PlayerState> Game::snapshot() const {
-  std::lock_guard<std::mutex> lock(mtx);
 
   std::vector<PlayerState> state;
   state.reserve(connected_clients.size());
@@ -333,7 +332,6 @@ void Game::add_enemy(std::unique_ptr<Enemy> enemy) {
 }
 
 std::vector<EnemyState> Game::enemy_snapshot() const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     std::vector<EnemyState> state;
     state.reserve(enemies.size());
@@ -353,7 +351,6 @@ std::vector<EnemyState> Game::enemy_snapshot() const {
 }
 
 InventoryState Game::inventory_state(int client_id) const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     const std::string& player_name = connected_clients.at(client_id);
     const Player& player = players.at(player_name);
@@ -364,19 +361,24 @@ InventoryState Game::inventory_state(int client_id) const {
     const auto& stacks = player.inventory.get_stacks();
 
     for (size_t i = 0; i < stacks.size(); i++) {
-      const Stack& stack = stacks[i];
-      InventorySlotState slot;
-      slot.index = static_cast<uint8_t>(i);
-      slot.quality = stack.get_item().get_quality();
-      slot.type = stack.get_item().get_type();
-      slot.quantity = static_cast<uint8_t>(stack.get_quantity());
-      state.slot_vector.push_back(slot);
+        if (!stacks[i]) {
+            continue;
+        }
+
+        const Stack& stack = *stacks[i];
+
+        InventorySlotState slot;
+        slot.index = static_cast<uint8_t>(i);
+        slot.quality = stack.get_item().get_quality();
+        slot.type = stack.get_item().get_type();
+        slot.quantity = static_cast<uint8_t>(stack.get_quantity());
+
+        state.slot_vector.push_back(slot);
     }
     return state;
 }
 
 TimeState Game::time_state() const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     TimeState state;
     state.day = static_cast<uint16_t>(clock.get_day());
@@ -384,6 +386,20 @@ TimeState Game::time_state() const {
     state.minute = static_cast<uint8_t>(clock.get_minute());
     state.finished = clock.is_finished();
     return state;
+}
+
+ServerMessage Game::game_state(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    ServerMessage msg{};
+    msg.type = MessageType::GAME_STATE;
+
+    msg.players = snapshot();
+    msg.enemies = enemy_snapshot();
+    msg.inventory = inventory_state(client_id);
+    msg.time = time_state();
+
+    return msg;
 }
 
 bool Game::confirm_next_day(int client_id) {
@@ -469,11 +485,20 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.coins = player.coins;
 
         const auto& stacks = player.inventory.get_stacks();
-        for (const Stack& stack : stacks) {
+
+        for (size_t i = 0; i < stacks.size(); i++) {
+            if (!stacks[i]) {
+                continue;
+            }
+
+            const Stack& stack = *stacks[i];
+
             ItemSaveData item_data;
             item_data.type = stack.get_item().get_type();
             item_data.quality = stack.get_item().get_quality();
             item_data.quantity = stack.get_quantity();
+            item_data.index = static_cast<int>(i);
+
             player_data.inventory.push_back(item_data);
         }
 
@@ -483,20 +508,33 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
     return data;
 }
 
+
 void Game::restore_save_data(const GameSaveData& data) {
     std::lock_guard<std::mutex> lock(mtx);
 
     players.clear();
     connected_clients.clear();
+    ready_clients.clear();
     clock = GameClock(data.day, 840);
 
     for (const PlayerSaveData& saved_player : data.players) {
-        Player player(saved_player.x, saved_player.y, saved_player.health, saved_player.coins);
+        Player player(
+            saved_player.x,
+            saved_player.y,
+            saved_player.health,
+            saved_player.coins
+        );
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
-            player.inventory.add_item(Item(saved_item.type, saved_item.quality), saved_item.quantity);
+            Item item(saved_item.type, saved_item.quality);
+
+            if (!player.inventory.place_item(
+                    saved_item.index, item, saved_item.quantity)) {
+                throw std::runtime_error("Inventario guardado invalido");
+            }
         }
 
         players.emplace(saved_player.name, std::move(player));
     }
 }
+

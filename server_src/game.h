@@ -61,6 +61,11 @@ private:
     bool remove_dead_enemies_unlocked();
     uint32_t get_initial_coins() const;
 
+    std::vector<PlayerState> snapshot() const;
+    std::vector<EnemyState> enemy_snapshot() const;
+    InventoryState inventory_state(int client_id) const;
+    TimeState time_state() const;
+
 public:
     explicit Game(Map map);
 
@@ -70,21 +75,19 @@ public:
     bool remove_player(int client_id);
     bool is_empty() const;
     std::vector<int> player_ids() const;
-    std::vector<PlayerState> snapshot() const;
 
     bool damage_player(const std::string& player_name, int amount);
     bool attack(int client_id);
     bool update(float dt);
 
     void add_enemy(std::unique_ptr<Enemy> enemy);
-    std::vector<EnemyState> enemy_snapshot() const;
 
     bool all_players_ready_no_mutex() const;
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
 
-    InventoryState inventory_state(int client_id) const;
-    TimeState time_state() const;
+    ServerMessage game_state(int client_id) const;
+
     bool confirm_next_day(int client_id);
     bool all_players_ready() const;
     bool start_next_day_game();
