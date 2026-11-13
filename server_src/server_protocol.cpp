@@ -304,7 +304,9 @@ MenuRequest ServerProtocol::recv_menu_request() {
           std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
-          return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name), appearance};
+          return MenuRequest{ActionType::CREATE_GAME, "por_defecto",
+                             std::move(game_name), "", std::move(player_name),
+                             appearance};
         }
 
         case ActionType::JOIN_GAME: {
@@ -312,10 +314,13 @@ MenuRequest ServerProtocol::recv_menu_request() {
           std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
-          return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name), appearance};
+          return MenuRequest{ActionType::JOIN_GAME, "por_defecto", "",
+                             std::move(game_code), std::move(player_name),
+                             appearance};
         }
         case ActionType::LIST_GAMES:
-          return MenuRequest{ActionType::LIST_GAMES, "", "", "", {}};
+          return MenuRequest{ActionType::LIST_GAMES, "por_defecto", "", "",
+                             "", {}};
 
         default:
             throw std::runtime_error("invalid menu request");

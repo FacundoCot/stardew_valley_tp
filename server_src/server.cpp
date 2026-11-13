@@ -2,10 +2,8 @@
 
 #include <iostream>
 #include <utility>
-// include de map.h
-
-Server::Server(Socket &&skt)
-    : registry(), menu_games_monitor(Map(1920, 1080), registry),
+Server::Server(Socket &&skt, WorldCatalog& catalog)
+    : registry(), menu_games_monitor(catalog, registry),
       acceptor(std::move(skt), menu_games_monitor, registry) {}
 
 void Server::run() {

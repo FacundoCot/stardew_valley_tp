@@ -7,9 +7,10 @@
 #include <string>
 #include <vector>
 
-#include "common_src/map.h"
+#include "common_src/farm_zone.h"
 #include "common_src/messages.h"
 #include "common_src/queue.h"
+#include "common_src/world.h"
 #include "client_action.h"
 #include "enemy.h"
 #include "storage.h"
@@ -34,18 +35,26 @@ struct Player {
     float attack_cooldown_left;
     Storage inventory{9};
     int coins;
+    ZoneId zone;
 
-    Player(float x, float y, int health, int initial_coins = 0):
+    Player(float x, float y, int health, int initial_coins = 0,
+           ZoneId zone = ZoneId::FARM_ZONE):
         x(x), y(y), health(health), unconscious(health == 0),
         facing(Direction::DOWN), attack_cooldown_left(0.0f),
-        inventory(9), coins(initial_coins) {}
+        inventory(9), coins(initial_coins), zone(zone) {}
 };
 
 class Game {
 private:
     class EnemyView;
+    enum class MovementResult {
+        BLOCKED,
+        MOVED,
+        TRANSPORTED
+    };
 
-    Map map;
+    std::shared_ptr<const World> world;
+    std::shared_ptr<const FarmZone> farm;
     GameClock clock;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::map<std::string, Player> players;          // nombre -> jugador
@@ -58,11 +67,14 @@ private:
     bool nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const;
     bool remove_dead_enemies_unlocked();
     uint32_t get_initial_coins() const;
+    bool add_player_unlocked(int client_id, const std::string& player_name,
+                             ZoneId zone, float x, float y);
+    std::map<std::string, int> bed_by_player;
+    MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
 
 public:
-    explicit Game(Map map);
+    explicit Game(std::shared_ptr<const World> world);
 
-    bool add_player(int client_id, const std::string& player_name, float x, float y);
     bool add_player_auto(int client_id, const std::string& player_name);
     bool move_player(int client_id, Direction direction);
     bool remove_player(int client_id);

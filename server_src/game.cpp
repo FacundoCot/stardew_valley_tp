@@ -6,6 +6,7 @@
 #include <utility>
 #include <cstdlib>
 #include <ctime>
+#include <stdexcept>
 
 namespace {
     const float PLAYER_STEP = 5.1f;
@@ -32,13 +33,20 @@ uint32_t Game::get_initial_coins() const {
     return static_cast<uint32_t>(rand() % 101);
 }
 
-Game::Game(Map map_param):
-        map(std::move(map_param)), clock(1, 840) {}
+Game::Game(std::shared_ptr<const World> world_param):
+        world(std::move(world_param)), clock(1, 840) {
+    if (world == nullptr) {
+        throw std::invalid_argument("el mundo no puede ser nulo");
+    }
+    farm = std::dynamic_pointer_cast<const FarmZone>(
+        world->zone(ZoneId::FARM_ZONE));
+    if (farm == nullptr) {
+        throw std::invalid_argument("el mundo tiene que tener granja");
+    }
+}
 
-bool Game::add_player(int client_id, const std::string &player_name, float x,
-                      float y) {
-  std::lock_guard<std::mutex> lock(mtx);
-
+bool Game::add_player_unlocked(int client_id, const std::string &player_name,
+                               ZoneId zone, float x, float y) {
   if (connected_clients.count(client_id) > 0) {
     return false;
   }
@@ -50,11 +58,11 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
   }
 
   if (players.count(player_name) == 0) {
-      if (!map.is_walkable(x, y)) {
+      if (!world->is_walkable(zone, x, y)) {
           return false;
       }
       
-      Player player(x, y, MAX_HEALTH, get_initial_coins());
+      Player player(x, y, MAX_HEALTH, get_initial_coins(), zone);
 
       player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
       player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
@@ -66,6 +74,68 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
 
   connected_clients[client_id] = player_name;
   return true;
+}
+
+bool Game::add_player_auto(int client_id, const std::string& player_name) {
+  std::lock_guard<std::mutex> lock(mtx);
+
+  int bed_index;
+  const auto assigned_bed = bed_by_player.find(player_name);
+  if (assigned_bed != bed_by_player.end()) {
+      bed_index = assigned_bed->second;
+  } else {
+      bed_index = -1;
+      for (int candidate = 0; candidate < farm->bed_count(); ++candidate) {
+          bool occupied = false;
+          for (const auto& [other_player, other_bed] : bed_by_player) {
+              if (other_player != player_name && other_bed == candidate) {
+                  occupied = true;
+                  break;
+              }
+          }
+          if (!occupied) {
+              bed_index = candidate;
+              break;
+          }
+      }
+      if (bed_index < 0) {
+          return false;
+      }
+  }
+
+  const auto [x, y] = farm->bed_position(bed_index);
+  if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y)) {
+      return false;
+  }
+  bed_by_player[player_name] = bed_index;
+  return true;
+}
+
+Game::MovementResult Game::move_player_unlocked(
+        Player& player, float new_x, float new_y) {
+    const float dx = new_x - player.x;
+    const float dy = new_y - player.y;
+    const float distance = std::max(std::fabs(dx), std::fabs(dy));
+    const int steps = std::max(1, static_cast<int>(std::ceil(distance / 0.25f)));
+
+    for (int i = 1; i <= steps; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(steps);
+        const float step_x = player.x + dx * t;
+        const float step_y = player.y + dy * t;
+        if (!world->is_walkable(player.zone, step_x, step_y)) {
+            return MovementResult::BLOCKED;
+        }
+        const auto portal = world->portal_at(player.zone, step_x, step_y);
+        if (portal.has_value()) {
+            player.zone = portal->destination;
+            player.x = portal->arrival.first;
+            player.y = portal->arrival.second;
+            return MovementResult::TRANSPORTED;
+        }
+    }
+    player.x = new_x;
+    player.y = new_y;
+    return MovementResult::MOVED;
 }
 
 bool Game::move_player(int client_id, Direction direction) {
@@ -98,13 +168,8 @@ bool Game::move_player(int client_id, Direction direction) {
 
     player.facing = direction;
 
-    if (!map.is_walkable(new_x, new_y)) {
-        return false;
-    }
-
-    player.x = new_x;
-    player.y = new_y;
-    return true;
+    return move_player_unlocked(player, new_x, new_y) !=
+           MovementResult::BLOCKED;
 }
 
 bool Game::remove_player(int client_id) {
@@ -149,15 +214,6 @@ std::vector<PlayerState> Game::snapshot() const {
         });
     }
     return state;
-}
-
-bool Game::add_player_auto(int client_id, const std::string &player_name) {
-  std::vector<std::pair<float, float>> spawns = map.spawns();
-  if (spawns.empty()) {
-    return false;
-  }
-  auto [x, y] = spawns.front();
-  return add_player(client_id, player_name, x, y);
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
@@ -214,7 +270,8 @@ public:
     explicit EnemyView(Game& g) : game(g) {}
 
     bool can_walk(float x, float y) override {
-        return game.map.is_walkable(x, y);
+        // provisional: los enemigos tendrán zona propia
+        return game.world->is_walkable(ZoneId::FARM_ZONE, x, y);
     }
 
     bool nearest_player(float x, float y, Target& target) override {
