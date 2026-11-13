@@ -42,3 +42,7 @@ ChatAction::ChatAction(std::string text): text(std::move(text)) {}
 void ChatAction::execute(GameActionHandler& handler) const {
     handler.send_chat(get_client_id(), text);
 }
+
+void ConfirmNextDayAction::execute(GameActionHandler& handler) const {
+    handler.confirm_next_day(get_client_id());
+}

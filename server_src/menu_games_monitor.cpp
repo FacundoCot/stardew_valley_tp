@@ -16,7 +16,8 @@ MenuGamesMonitor::MenuGamesMonitor(Map world_map_param, ClientRegistry& registry
         auto game = std::make_shared<Game>(world_map);
         game->restore_save_data(data);
 
-        games[code] = std::make_unique<GameRuntime>(registry, game, data.game_name, data.owner_name, data.multiplayer);
+        games[code] = std::make_unique<GameRuntime>(registry, save_disc, code, game,
+                data.game_name, data.owner_name, data.multiplayer);
 
         int saved_code = std::stoi(code);
         if (saved_code >= next_game_code) {
@@ -26,15 +27,19 @@ MenuGamesMonitor::MenuGamesMonitor(Map world_map_param, ClientRegistry& registry
 }
 
 GameRuntime::GameRuntime(ClientRegistry& registry,
+                         SaveDisc& save_disc,
+                         std::string game_code_param,
                          std::shared_ptr<Game> game_param,
                          std::string game_name_param,
                          std::string owner_name_param,
                          bool multiplayer_param):
         game(std::move(game_param)),
-        game_name(game_name_param),
-        owner_name(owner_name_param),
+        game_code(std::move(game_code_param)),
+        game_name(std::move(game_name_param)),
+        owner_name(std::move(owner_name_param)),
         multiplayer(multiplayer_param),
-        manager(registry, game),
+        manager(registry, game, save_disc, game_code,
+                game_name, owner_name, multiplayer),
         loop(manager, game->get_actions_queue()) {
 
     loop.start();
@@ -57,7 +62,8 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
     
     std::string code = std::to_string(next_game_code++);
 
-    games[code] = std::make_unique<GameRuntime>(registry, game, game_name, player_name, false);
+    games[code] = std::make_unique<GameRuntime>(registry, save_disc, code, game,
+            game_name, player_name, false);
 
     auto join = std::make_shared<JoinAction>();
     join->set_client_id(client_id);
