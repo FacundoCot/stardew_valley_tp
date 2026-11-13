@@ -4,9 +4,19 @@
 #include <sstream>
 
 GameManager::GameManager(ClientRegistry& registry_param,
-                         std::shared_ptr<Game> game_param):
+                         std::shared_ptr<Game> game_param,
+                         SaveDisc& save_disc_param,
+                         const std::string& game_code_param,
+                         const std::string& game_name_param,
+                         const std::string& owner_name_param,
+                         bool multiplayer_param):
         registry(registry_param),
-        game(std::move(game_param)) {}
+        game(std::move(game_param)),
+        save_disc(save_disc_param),
+        game_code(game_code_param),
+        game_name(game_name_param),
+        owner_name(owner_name_param),
+        multiplayer(multiplayer_param) {}
 
 void GameManager::send_state() {
     ServerMessage msg;
@@ -61,6 +71,7 @@ void GameManager::join_player(int client_id) {
 void GameManager::disconnect_client(int client_id) {
     if (game->remove_player(client_id) && !game->is_empty()) {
         send_state();
+        try_start_next_day();
     }
 }
 
@@ -210,4 +221,32 @@ void GameManager::send_chat(int client_id, const std::string& text) {
     }
 
     send_chat_global(name, text);
+}
+
+void GameManager::try_start_next_day() {
+    if (!game->start_next_day_game()) {
+        return;
+    }
+
+    try {
+        GameSaveData data = game->get_save_data(
+                game_code, game_name, owner_name, multiplayer);
+
+        save_disc.save(data);
+
+    } catch (const std::exception& e) {
+        for (int id : game->player_ids()) {
+            send_system_message(id, "Error al guardar la partida");
+        }
+    }
+
+    send_time_global();
+    send_state();
+}
+
+void GameManager::confirm_next_day(int client_id) {
+    if (!game->confirm_next_day(client_id)) {
+        return;
+    }
+    try_start_next_day();
 }

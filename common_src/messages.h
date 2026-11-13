@@ -23,7 +23,8 @@ enum class ActionType : uint8_t {
   DISCONNECT = 4,
   ATTACK = 5,
   CHAT = 6,
-  LIST_GAMES = 7
+  LIST_GAMES = 7,
+  CONFIRM_NEXT_DAY = 8
 };
 
 enum class EnemyKind : uint8_t {

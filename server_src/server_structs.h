@@ -10,6 +10,7 @@
 
 struct GameRuntime {
     std::shared_ptr<Game> game;
+    std::string game_code;
     std::string game_name;
     std::string owner_name;
     bool multiplayer;
@@ -17,6 +18,8 @@ struct GameRuntime {
     GameLoop loop;
 
     GameRuntime(ClientRegistry& registry,
+                SaveDisc& save_disc,
+                std::string game_code_param,
                 std::shared_ptr<Game> game_param,
                 std::string game_name_param,
                 std::string owner_name_param,

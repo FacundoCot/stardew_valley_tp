@@ -70,7 +70,10 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
 
 bool Game::move_player(int client_id, Direction direction) {
     std::lock_guard<std::mutex> lock(mtx);
-
+    //si el dia termino no hay que moverse
+    if (clock.is_finished()) {
+        return false;
+    }
     auto client_iterator = connected_clients.find(client_id);
     if (client_iterator == connected_clients.end()) {
         return false;
@@ -109,6 +112,7 @@ bool Game::move_player(int client_id, Direction direction) {
 
 bool Game::remove_player(int client_id) {
   std::lock_guard<std::mutex> lock(mtx);
+  ready_clients.erase(client_id);
   return connected_clients.erase(client_id) > 0;
 }
 
@@ -238,11 +242,16 @@ bool Game::damage_player(const std::string& player_name, int amount) {
 bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    if (connected_clients.empty()) {
+    if (connected_clients.empty() || clock.is_finished()) {
         return false;
     }
 
     clock.update(dt);
+
+    //para que si el dia termino se se actualicen los enemigos
+    if (clock.is_finished()) {
+        return false;
+    }
 
     for (auto& entry : players) {
         entry.second.attack_cooldown_left =
@@ -265,6 +274,11 @@ bool Game::update(float dt) {
 
 bool Game::attack(int client_id) {
     std::lock_guard<std::mutex> lock(mtx);
+
+    //si el dia termino no hay que moverse
+    if (clock.is_finished()) {
+        return false;
+    }
 
     auto client_it = connected_clients.find(client_id);
     if (client_it == connected_clients.end()) {
@@ -370,6 +384,47 @@ TimeState Game::time_state() const {
     state.minute = static_cast<uint8_t>(clock.get_minute());
     state.finished = clock.is_finished();
     return state;
+}
+
+bool Game::confirm_next_day(int client_id) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (!clock.is_finished()) {
+        return false;
+    }
+
+    if (connected_clients.find(client_id) == connected_clients.end()) {
+        return false;
+    }
+
+    if (ready_clients.find(client_id) != ready_clients.end()) {
+        return false;
+    }
+    ready_clients.insert(client_id);
+    return true;
+}
+
+bool Game::all_players_ready_no_mutex() const {
+    if (!clock.is_finished() || connected_clients.empty()) {
+        return false;
+    }
+
+    return ready_clients.size() == connected_clients.size();
+}
+
+bool Game::all_players_ready() const {
+    std::lock_guard<std::mutex> lock(mtx);
+    return all_players_ready_no_mutex();
+}
+
+bool Game::start_next_day_game() {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!all_players_ready_no_mutex()) {
+        return false;
+    }
+    clock.start_next_day();
+    ready_clients.clear();
+    return true;
 }
 
 bool Game::player_name(int client_id, std::string& player_name) const {
