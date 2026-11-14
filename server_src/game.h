@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -59,6 +60,7 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::map<std::string, Player> players;          // nombre -> jugador
     std::map<int, std::string> connected_clients;   // client_id -> nombre
+    std::set<int> ready_clients;
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
 
@@ -72,6 +74,11 @@ private:
     std::map<std::string, int> bed_by_player;
     MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
 
+    std::vector<PlayerState> snapshot() const;
+    std::vector<EnemyState> enemy_snapshot() const;
+    InventoryState inventory_state(int client_id) const;
+    TimeState time_state() const;
+
 public:
     explicit Game(std::shared_ptr<const World> world);
 
@@ -80,19 +87,22 @@ public:
     bool remove_player(int client_id);
     bool is_empty() const;
     std::vector<int> player_ids() const;
-    std::vector<PlayerState> snapshot() const;
 
     bool damage_player(const std::string& player_name, int amount);
     bool attack(int client_id);
     bool update(float dt);
 
     void add_enemy(std::unique_ptr<Enemy> enemy);
-    std::vector<EnemyState> enemy_snapshot() const;
+
+    bool all_players_ready_no_mutex() const;
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
 
-    InventoryState inventory_state(int client_id) const;
-    TimeState time_state() const;
+    ServerMessage game_state(int client_id) const;
+
+    bool confirm_next_day(int client_id);
+    bool all_players_ready() const;
+    bool start_next_day_game();
     bool player_name(int client_id, std::string& player_name) const;
     bool name_to_client_id(int& client_id, const std::string& player_name) const;
     GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const;

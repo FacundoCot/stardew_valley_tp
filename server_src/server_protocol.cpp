@@ -84,17 +84,20 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
             break;
         }
         case ActionType::ATTACK:
-            return std::make_shared<AttackAction>();
+          return std::make_shared<AttackAction>();
 
         case ActionType::DISCONNECT:
-            return std::make_shared<DisconnectAction>();
+          return std::make_shared<DisconnectAction>();
         
         case ActionType::CHAT: {
-            std::string text = recv_string();
-            //creo una ChatAction, que hereda de client_action
-            return std::make_shared<ChatAction>(std::move(text));
+          std::string text = recv_string();
+          //creo una ChatAction, que hereda de client_action
+          return std::make_shared<ChatAction>(std::move(text));
         }
 
+        case ActionType::CONFIRM_NEXT_DAY:
+          return std::make_shared<ConfirmNextDayAction>();
+          
         default:
             throw std::runtime_error("invalid game operation");
     }
@@ -273,14 +276,19 @@ void ServerProtocol::send_message(const ServerMessage& message) {
                 send_or_throw(&health, sizeof(health));
                 send_or_throw(&max_health, sizeof(max_health));
             }
-            break;
+
+          send_inventory_state(message.inventory);
+          send_time_state(message.time);
+          break;
         }
+        /*
         case MessageType::INVENTORY_STATE:
           send_inventory_state(message.inventory);
           break;
         case MessageType::TIME_STATE:
           send_time_state(message.time);
           break;
+        */
         case MessageType::CHAT_MESSAGE:
           send_chat_message(message.chat);
           break;

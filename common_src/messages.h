@@ -23,7 +23,8 @@ enum class ActionType : uint8_t {
   DISCONNECT = 4,
   ATTACK = 5,
   CHAT = 6,
-  LIST_GAMES = 7
+  LIST_GAMES = 7,
+  CONFIRM_NEXT_DAY = 8
 };
 
 enum class EnemyKind : uint8_t {
@@ -31,6 +32,12 @@ enum class EnemyKind : uint8_t {
   ORC = 2,
   VAMPIRE = 3,
   SKULL = 4
+};
+
+enum class ClientState : uint8_t {
+  PLAYING,
+  DAY_ENDED,
+  WAITING_OTHER_PLAYERS
 };
 
 struct EnemyState {
@@ -54,10 +61,8 @@ enum class MessageType : uint8_t {
   GAME_JOINED = 2,
   GAME_STATE = 3,
   ERROR = 4,
-  INVENTORY_STATE = 5,
-  TIME_STATE = 6,
-  CHAT_MESSAGE = 7,
-  GAMES_LIST = 8
+  CHAT_MESSAGE = 5,
+  GAMES_LIST = 6
 };
 
 struct PlayerState {

@@ -10,6 +10,7 @@ struct ItemSaveData {
     ItemType type;
     Quality quality;
     int quantity;
+    int index;
 };
 
 struct PlayerSaveData {

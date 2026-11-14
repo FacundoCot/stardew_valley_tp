@@ -97,4 +97,8 @@ public:
     void execute(GameActionHandler& handler) const override;
 };
 
+class ConfirmNextDayAction : public ClientAction {
+  public:
+    void execute(GameActionHandler& handler) const override;
+};
 #endif
