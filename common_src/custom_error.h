@@ -10,7 +10,16 @@ private:
 
 public:
   explicit SocketClosed(const std::string &msg);
+  
+  const char *what() const noexcept override;
+};
 
+class AssetNotFound : std::exception {
+private:
+  std::string msg;
+  
+public:
+  explicit AssetNotFound(const std::string &msg);
   const char *what() const noexcept override;
 };
 

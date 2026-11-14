@@ -33,7 +33,7 @@ uint32_t Game::get_initial_coins() const {
 }
 
 Game::Game(Map map_param):
-        map(std::move(map_param)), clock(1, 840) {}
+        map(std::move(map_param)), clock(1, 200) {}
 
 bool Game::add_player(int client_id, const std::string &player_name, float x,
                       float y) {
@@ -256,7 +256,7 @@ bool Game::update(float dt) {
         entry.second.attack_cooldown_left =
             std::max(0.0f, entry.second.attack_cooldown_left - dt);
     }
-
+    /*
     EnemyView view(*this);
     bool changed = false;
     for (auto& enemy : enemies) {
@@ -267,8 +267,8 @@ bool Game::update(float dt) {
 
     if (remove_dead_enemies_unlocked()) {
         changed = true;
-    }
-    return changed;
+    }*/
+    return true;
 }
 
 bool Game::attack(int client_id) {

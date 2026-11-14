@@ -2,6 +2,7 @@
 #include "../common_src/messages.h"
 #include "camera.h"
 #include "visual.h"
+#include "button.h"
 
 #include <SDL2/SDL.h>
 #include <stdexcept>
@@ -36,37 +37,73 @@ ClientMessage EventHandler::get_event_to_protocol(const SDL_Event &e,
 }
 
 ClientMessage EventHandler::get_next_event(const SDL_Event &e, Visual &visual,
-                                           Camera &camera) {
+                                           Camera &camera, ClientState& state, Button& btn) {
   ClientMessage msg;
   if (e.type == SDL_QUIT) {
     msg.type = ActionType::DISCONNECT;
     return msg;
   }
-  if (e.type == SDL_KEYDOWN) {
-    if (e.key.keysym.sym == SDLK_F11) {
+  switch (state) {
+    case (ClientState::DAY_ENDED):
+      return get_mouse_event(e, btn, state);
+
+    case (ClientState::WAITING_OTHER_PLAYERS):
       msg.type = ActionType::NULL_ACTION;
-      SDL2pp::Window &w = visual.get_window();
-      bool fulscreen = visual.get_is_fulscreen();
-
-      if (e.key.repeat == 0) {
-        if (fulscreen) {
-          w.SetFullscreen(0);
-          w.SetSize(1280, 720);
-          w.SetPosition(SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-          camera.set_dimensions(1280, 720);
-        } else {
-          w.SetFullscreen(SDL_WINDOW_FULLSCREEN_DESKTOP);
-          camera.set_dimensions(w.GetWidth(), w.GetHeight());
-        }
-        visual.set_is_fulscreen();
-      }
       return msg;
-    }
-  }
 
-  return get_event_to_protocol(e, msg);
+    case (ClientState::PLAYING):
+      if(e.type == SDL_KEYDOWN) {
+
+        change_window_dimension(e, visual, camera);
+
+        return get_event_to_protocol(e, msg);
+      }
+      msg.type = ActionType::NULL_ACTION;
+      return msg;
+
+    default:
+      return {};
+
+  }
+ 
 }
 
 bool EventHandler::is_disconnect(const SDL_Event &e) {
   return e.type == SDL_QUIT;
+}
+
+void EventHandler::change_window_dimension(const SDL_Event& e, Visual& visual, Camera& camera) {  
+  if (e.key.keysym.sym == SDLK_F11) {
+    SDL2pp::Window &w = visual.get_window();
+    bool fulscreen = visual.get_is_fulscreen();
+
+    if (e.key.repeat == 0) {
+      if (fulscreen) {
+        w.SetFullscreen(0);
+        w.SetSize(1280, 720);
+        w.SetPosition(SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        camera.set_dimensions(1280, 720);
+      } else {
+        w.SetFullscreen(SDL_WINDOW_FULLSCREEN_DESKTOP);
+        camera.set_dimensions(w.GetWidth(), w.GetHeight());
+      }
+      visual.set_is_fulscreen();
+    }
+  } 
+}
+
+ClientMessage EventHandler::get_mouse_event(const SDL_Event &e, Button& btn, ClientState& state) {
+  ClientMessage msg;
+  if (e.type == SDL_MOUSEBUTTONDOWN) {
+    int mouse_x = static_cast<int>(e.button.x);
+    int mouse_y = static_cast<int>(e.button.y);
+
+    if(btn.is_clicked(mouse_x, mouse_y)) {
+      msg.type = ActionType::CONFIRM_NEXT_DAY;
+      state = ClientState::WAITING_OTHER_PLAYERS;
+      return msg;
+    }
+  }
+  msg.type = ActionType::NULL_ACTION;
+  return msg;
 }
