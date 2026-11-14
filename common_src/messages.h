@@ -21,7 +21,10 @@ enum class ActionType : uint8_t {
   JOIN_GAME = 2,
   MOVE = 3,
   DISCONNECT = 4,
-  ATTACK = 5
+  ATTACK = 5,
+  CHAT = 6,
+  LIST_GAMES = 7,
+  CONFIRM_NEXT_DAY = 8
 };
 
 enum class EnemyKind : uint8_t {
@@ -29,6 +32,12 @@ enum class EnemyKind : uint8_t {
   ORC = 2,
   VAMPIRE = 3,
   SKULL = 4
+};
+
+enum class ClientState : uint8_t {
+  PLAYING,
+  DAY_ENDED,
+  WAITING_OTHER_PLAYERS
 };
 
 struct EnemyState {
@@ -52,8 +61,8 @@ enum class MessageType : uint8_t {
   GAME_JOINED = 2,
   GAME_STATE = 3,
   ERROR = 4,
-  INVENTORY_STATE = 5,
-  TIME_STATE = 6
+  CHAT_MESSAGE = 5,
+  GAMES_LIST = 6
 };
 
 struct PlayerState {
@@ -92,6 +101,26 @@ struct TimeState {
     bool finished;
 };
 
+enum class ChatKind : uint8_t {
+    PUBLIC = 0,
+    PRIVATE = 1,
+    NPC = 2,
+    SYSTEM = 3
+};
+
+struct ChatState {
+    ChatKind kind;
+    std::string sender;
+    std::string text;
+};
+
+struct GameInfoForMenu {
+    std::string game_code;
+    std::string game_name;
+    std::string owner_name;
+    bool multiplayer;
+};
+
 struct ServerMessage {
   MessageType type;
   std::string game_code;
@@ -100,10 +129,13 @@ struct ServerMessage {
   uint8_t return_code = 0;
   InventoryState inventory;
   TimeState time;
+  ChatState chat;
+  std::vector<GameInfoForMenu> games;
 };
 
 struct MenuRequest {
   ActionType type;
+  std::string world_name = "por_defecto";
   std::string game_name;
   std::string game_code;
   std::string player_name;
@@ -118,6 +150,7 @@ struct ClientMessage {
   Direction direction = Direction::DEFAULT;
   std::string game_name;
   CharacterAppearance appearance;
+  std::string chat_text;
   std::string game_code; // momentáneo del join
 };
 

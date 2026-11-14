@@ -6,6 +6,7 @@
 #include <utility>
 #include <cstdlib>
 #include <ctime>
+#include <stdexcept>
 
 namespace {
     const float PLAYER_STEP = 5.1f;
@@ -32,13 +33,20 @@ uint32_t Game::get_initial_coins() const {
     return static_cast<uint32_t>(rand() % 101);
 }
 
-Game::Game(Map map_param):
-        map(std::move(map_param)), clock(1, 840) {}
+Game::Game(std::shared_ptr<const World> world_param):
+        world(std::move(world_param)), clock(1, 840) {
+    if (world == nullptr) {
+        throw std::invalid_argument("el mundo no puede ser nulo");
+    }
+    farm = std::dynamic_pointer_cast<const FarmZone>(
+        world->zone(ZoneId::FARM_ZONE));
+    if (farm == nullptr) {
+        throw std::invalid_argument("el mundo tiene que tener granja");
+    }
+}
 
-bool Game::add_player(int client_id, const std::string &player_name, float x,
-                      float y) {
-  std::lock_guard<std::mutex> lock(mtx);
-
+bool Game::add_player_unlocked(int client_id, const std::string &player_name,
+                               ZoneId zone, float x, float y) {
   if (connected_clients.count(client_id) > 0) {
     return false;
   }
@@ -50,11 +58,11 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
   }
 
   if (players.count(player_name) == 0) {
-      if (!map.is_walkable(x, y)) {
+      if (!world->is_walkable(zone, x, y)) {
           return false;
       }
       
-      Player player(x, y, MAX_HEALTH, get_initial_coins());
+      Player player(x, y, MAX_HEALTH, get_initial_coins(), zone);
 
       player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
       player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
@@ -68,9 +76,74 @@ bool Game::add_player(int client_id, const std::string &player_name, float x,
   return true;
 }
 
+bool Game::add_player_auto(int client_id, const std::string& player_name) {
+  std::lock_guard<std::mutex> lock(mtx);
+
+  int bed_index;
+  const auto assigned_bed = bed_by_player.find(player_name);
+  if (assigned_bed != bed_by_player.end()) {
+      bed_index = assigned_bed->second;
+  } else {
+      bed_index = -1;
+      for (int candidate = 0; candidate < farm->bed_count(); ++candidate) {
+          bool occupied = false;
+          for (const auto& [other_player, other_bed] : bed_by_player) {
+              if (other_player != player_name && other_bed == candidate) {
+                  occupied = true;
+                  break;
+              }
+          }
+          if (!occupied) {
+              bed_index = candidate;
+              break;
+          }
+      }
+      if (bed_index < 0) {
+          return false;
+      }
+  }
+
+  const auto [x, y] = farm->bed_position(bed_index);
+  if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y)) {
+      return false;
+  }
+  bed_by_player[player_name] = bed_index;
+  return true;
+}
+
+Game::MovementResult Game::move_player_unlocked(
+        Player& player, float new_x, float new_y) {
+    const float dx = new_x - player.x;
+    const float dy = new_y - player.y;
+    const float distance = std::max(std::fabs(dx), std::fabs(dy));
+    const int steps = std::max(1, static_cast<int>(std::ceil(distance / 0.25f)));
+
+    for (int i = 1; i <= steps; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(steps);
+        const float step_x = player.x + dx * t;
+        const float step_y = player.y + dy * t;
+        if (!world->is_walkable(player.zone, step_x, step_y)) {
+            return MovementResult::BLOCKED;
+        }
+        const auto portal = world->portal_at(player.zone, step_x, step_y);
+        if (portal.has_value()) {
+            player.zone = portal->destination;
+            player.x = portal->arrival.first;
+            player.y = portal->arrival.second;
+            return MovementResult::TRANSPORTED;
+        }
+    }
+    player.x = new_x;
+    player.y = new_y;
+    return MovementResult::MOVED;
+}
+
 bool Game::move_player(int client_id, Direction direction) {
     std::lock_guard<std::mutex> lock(mtx);
-
+    //si el dia termino no hay que moverse
+    if (clock.is_finished()) {
+        return false;
+    }
     auto client_iterator = connected_clients.find(client_id);
     if (client_iterator == connected_clients.end()) {
         return false;
@@ -98,17 +171,13 @@ bool Game::move_player(int client_id, Direction direction) {
 
     player.facing = direction;
 
-    if (!map.is_walkable(new_x, new_y)) {
-        return false;
-    }
-
-    player.x = new_x;
-    player.y = new_y;
-    return true;
+    return move_player_unlocked(player, new_x, new_y) !=
+           MovementResult::BLOCKED;
 }
 
 bool Game::remove_player(int client_id) {
   std::lock_guard<std::mutex> lock(mtx);
+  ready_clients.erase(client_id);
   return connected_clients.erase(client_id) > 0;
 }
 
@@ -131,7 +200,6 @@ std::vector<int> Game::player_ids() const {
 }
 
 std::vector<PlayerState> Game::snapshot() const {
-  std::lock_guard<std::mutex> lock(mtx);
 
   std::vector<PlayerState> state;
   state.reserve(connected_clients.size());
@@ -149,15 +217,6 @@ std::vector<PlayerState> Game::snapshot() const {
         });
     }
     return state;
-}
-
-bool Game::add_player_auto(int client_id, const std::string &player_name) {
-  std::vector<std::pair<float, float>> spawns = map.spawns();
-  if (spawns.empty()) {
-    return false;
-  }
-  auto [x, y] = spawns.front();
-  return add_player(client_id, player_name, x, y);
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
@@ -214,7 +273,8 @@ public:
     explicit EnemyView(Game& g) : game(g) {}
 
     bool can_walk(float x, float y) override {
-        return game.map.is_walkable(x, y);
+        // provisional: los enemigos tendrán zona propia
+        return game.world->is_walkable(ZoneId::FARM_ZONE, x, y);
     }
 
     bool nearest_player(float x, float y, Target& target) override {
@@ -238,13 +298,22 @@ bool Game::damage_player(const std::string& player_name, int amount) {
 bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
+    if (connected_clients.empty() || clock.is_finished()) {
+        return false;
+    }
+
     clock.update(dt);
+
+    //para que si el dia termino se se actualicen los enemigos
+    if (clock.is_finished()) {
+        return false;
+    }
 
     for (auto& entry : players) {
         entry.second.attack_cooldown_left =
             std::max(0.0f, entry.second.attack_cooldown_left - dt);
     }
-
+    /*
     EnemyView view(*this);
     bool changed = false;
     for (auto& enemy : enemies) {
@@ -255,12 +324,17 @@ bool Game::update(float dt) {
 
     if (remove_dead_enemies_unlocked()) {
         changed = true;
-    }
-    return changed;
+    }*/
+    return true;
 }
 
 bool Game::attack(int client_id) {
     std::lock_guard<std::mutex> lock(mtx);
+
+    //si el dia termino no hay que moverse
+    if (clock.is_finished()) {
+        return false;
+    }
 
     auto client_it = connected_clients.find(client_id);
     if (client_it == connected_clients.end()) {
@@ -315,7 +389,6 @@ void Game::add_enemy(std::unique_ptr<Enemy> enemy) {
 }
 
 std::vector<EnemyState> Game::enemy_snapshot() const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     std::vector<EnemyState> state;
     state.reserve(enemies.size());
@@ -335,7 +408,6 @@ std::vector<EnemyState> Game::enemy_snapshot() const {
 }
 
 InventoryState Game::inventory_state(int client_id) const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     const std::string& player_name = connected_clients.at(client_id);
     const Player& player = players.at(player_name);
@@ -346,19 +418,24 @@ InventoryState Game::inventory_state(int client_id) const {
     const auto& stacks = player.inventory.get_stacks();
 
     for (size_t i = 0; i < stacks.size(); i++) {
-      const Stack& stack = stacks[i];
-      InventorySlotState slot;
-      slot.index = static_cast<uint8_t>(i);
-      slot.quality = stack.get_item().get_quality();
-      slot.type = stack.get_item().get_type();
-      slot.quantity = static_cast<uint8_t>(stack.get_quantity());
-      state.slot_vector.push_back(slot);
+        if (!stacks[i]) {
+            continue;
+        }
+
+        const Stack& stack = *stacks[i];
+
+        InventorySlotState slot;
+        slot.index = static_cast<uint8_t>(i);
+        slot.quality = stack.get_item().get_quality();
+        slot.type = stack.get_item().get_type();
+        slot.quantity = static_cast<uint8_t>(stack.get_quantity());
+
+        state.slot_vector.push_back(slot);
     }
     return state;
 }
 
 TimeState Game::time_state() const {
-    std::lock_guard<std::mutex> lock(mtx);
 
     TimeState state;
     state.day = static_cast<uint16_t>(clock.get_day());
@@ -366,4 +443,154 @@ TimeState Game::time_state() const {
     state.minute = static_cast<uint8_t>(clock.get_minute());
     state.finished = clock.is_finished();
     return state;
+}
+
+ServerMessage Game::game_state(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    ServerMessage msg{};
+    msg.type = MessageType::GAME_STATE;
+
+    msg.players = snapshot();
+    msg.enemies = enemy_snapshot();
+    msg.inventory = inventory_state(client_id);
+    msg.time = time_state();
+
+    return msg;
+}
+
+bool Game::confirm_next_day(int client_id) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (!clock.is_finished()) {
+        return false;
+    }
+
+    if (connected_clients.find(client_id) == connected_clients.end()) {
+        return false;
+    }
+
+    if (ready_clients.find(client_id) != ready_clients.end()) {
+        return false;
+    }
+    ready_clients.insert(client_id);
+    return true;
+}
+
+bool Game::all_players_ready_no_mutex() const {
+    if (!clock.is_finished() || connected_clients.empty()) {
+        return false;
+    }
+
+    return ready_clients.size() == connected_clients.size();
+}
+
+bool Game::all_players_ready() const {
+    std::lock_guard<std::mutex> lock(mtx);
+    return all_players_ready_no_mutex();
+}
+
+bool Game::start_next_day_game() {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!all_players_ready_no_mutex()) {
+        return false;
+    }
+    clock.start_next_day();
+    ready_clients.clear();
+    return true;
+}
+
+bool Game::player_name(int client_id, std::string& player_name) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto found = connected_clients.find(client_id);
+    if (found == connected_clients.end()) {
+        return false;
+    }
+    player_name = found->second;
+    return true;
+}
+
+bool Game::name_to_client_id(int& client_id, const std::string& player_name) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    for (const auto& [id, name] : connected_clients) {
+        if (name == player_name) {
+            client_id = id;
+            return true;
+        }
+    }
+    return false;
+}
+
+GameSaveData Game::get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    GameSaveData data;
+    data.game_code = game_code;
+    data.game_name = game_name;
+    data.owner_name = owner_name;
+    data.multiplayer = multiplayer;
+    data.day = clock.get_day();
+
+    for (const auto& [player_name, player] : players) {
+        PlayerSaveData player_data;
+        player_data.name = player_name;
+        player_data.x = player.x;
+        player_data.y = player.y;
+        player_data.health = player.health;
+        player_data.coins = player.coins;
+
+        const auto& stacks = player.inventory.get_stacks();
+
+        for (size_t i = 0; i < stacks.size(); i++) {
+            if (!stacks[i]) {
+                continue;
+            }
+
+            const Stack& stack = *stacks[i];
+
+            ItemSaveData item_data;
+            item_data.type = stack.get_item().get_type();
+            item_data.quality = stack.get_item().get_quality();
+            item_data.quantity = stack.get_quantity();
+            item_data.index = static_cast<int>(i);
+
+            player_data.inventory.push_back(item_data);
+        }
+
+        data.players.push_back(player_data);
+    }
+
+    return data;
+}
+
+
+void Game::restore_save_data(const GameSaveData& data) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    players.clear();
+    connected_clients.clear();
+    ready_clients.clear();
+    clock = GameClock(data.day, 840);
+
+    for (const PlayerSaveData& saved_player : data.players) {
+        Player player(
+            saved_player.x,
+            saved_player.y,
+            saved_player.health,
+            saved_player.coins
+        );
+
+        for (const ItemSaveData& saved_item : saved_player.inventory) {
+            Item item(saved_item.type, saved_item.quality);
+
+            if (!player.inventory.place_item(
+                    saved_item.index, item, saved_item.quantity)) {
+                throw std::runtime_error("Inventario guardado invalido");
+            }
+        }
+
+        players.emplace(saved_player.name, std::move(player));
+    }
 }

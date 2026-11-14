@@ -1,8 +1,8 @@
 #include <iostream>
-#include <utility>
 
 #include "common_src/socket.h"
 #include "server.h"
+#include "world_catalog.h"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -12,7 +12,8 @@ int main(int argc, char* argv[]) {
     try {
         const char* servername = argv[1];
 
-        Server srv = Server(Socket(servername));
+        WorldCatalog catalog;
+        Server srv = Server(Socket(servername), catalog);
 
         srv.run();
         return 0;

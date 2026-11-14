@@ -11,6 +11,7 @@
 #include "map_visual.h"
 #include "player_visual.h"
 #include "visual.h"
+#include "clock.h"
 #include "../common_src/character_appearance.h"
 
 #include <QApplication>
@@ -23,7 +24,8 @@ using SDL2pp::Window;
 
 Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
     : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
-      receiver(responses, protocol), sender(protocol, commands) {}
+      receiver(responses, protocol), sender(protocol, commands),
+      camera(SCREEN_WIDTH, SCREEN_HEIGHT) {}
 
 void Client::run(int argc, char* argv[]) {
 
@@ -38,23 +40,22 @@ void Client::run(int argc, char* argv[]) {
   }
 
   bool was_intentional = false;
+  PlayerVisual p_visual;
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());
+  Button btn("Terminar dia", visual, 200, 50);
 
-  // MapVisual map_visual;
-  PlayerVisual p_visual;
-  int width = SCREEN_WIDTH;
-  int height = SCREEN_HEIGHT;
-  Camera camera(width, height);
+  loader.load_texture("clock","client_src/data/clock.png");
+  Clock clock(loader);
 
   int it = 1;
   Chronometer chrono;
-
+  
   try {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(visual, camera, p_visual);
+      simulate_it(clock, visual, btn, p_visual);
 
       it += chrono.sleep_and_calculate_it();
     }
@@ -68,8 +69,8 @@ void Client::run(int argc, char* argv[]) {
   }
 }
 
-void Client::simulate_it(Visual &visual, Camera &camera,
-                         PlayerVisual &p_visual) {
+void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual) {
+
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (e_handler.is_disconnect(event)) {
@@ -77,31 +78,20 @@ void Client::simulate_it(Visual &visual, Camera &camera,
       running = false;
     }
 
-    ClientMessage msg = e_handler.get_next_event(event, visual, camera);
+    ClientMessage msg = e_handler.get_next_event(event, visual, camera, current_state, btn);
 
     if (msg.type != ActionType::NULL_ACTION) {
-      commands.push(msg);
+        commands.push(msg);
     }
   }
 
   // Hilo receiver se encarga de traer las respuestas del server.
   ServerMessage response;
   while (responses.try_pop(response)) {
-    if(!response.players.empty()){
-      players = response.players;
-    }
+    update(response, clock);
   }
 
-  visual.get_renderer().SetDrawColor(0, 0, 0, 255);
-
-  visual.clean();
-
-  for (const PlayerState &p : players) {
-    p_visual.draw(visual.get_renderer(), p, camera);
-    camera.update_pos(p.x, p.y, 32, 32);
-  }
-
-  visual.present();
+  render(clock, visual, btn, p_visual);
 }
 
 void Client::stop() {
@@ -128,6 +118,49 @@ bool Client::main_menu(int argc, char *argv[]) {
 
   return menu.has_exited();
 }
+
+void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual) {
+  visual.get_renderer().SetDrawColor(0, 0, 0, 255);
+  visual.clean();
+
+  for (const PlayerState &p : players) {
+    p_visual.draw(visual.get_renderer(), p, camera);
+    camera.update_pos(p.x, p.y, 32, 32);
+  }
+
+  clock.draw(visual);
+
+  if (current_state == ClientState::DAY_ENDED) {
+    visual.draw_black_overlay();
+    btn.draw(visual);
+  }
+  else if (current_state == ClientState::WAITING_OTHER_PLAYERS) {
+    visual.draw_black_overlay();
+    visual.draw_text_centered("Esparando a los demas jugadores...", r, g, b);
+  }
+
+  visual.present();
+}
+
+void Client::update(ServerMessage& response, Clock& clock) {
+  if (!response.players.empty()) {
+    players = response.players;
+  }
+
+  clock.update_from_server(response.time);
+
+  if (current_state == ClientState::PLAYING) {
+    if(clock.is_finished(response.time)) {
+      current_state = ClientState::DAY_ENDED;
+    }
+  }
+  else if (current_state == ClientState::WAITING_OTHER_PLAYERS){
+      if(!clock.is_finished(response.time)) {
+        current_state = ClientState::PLAYING;
+      }
+  }
+}
+
 
 Client::~Client() {
   stop();

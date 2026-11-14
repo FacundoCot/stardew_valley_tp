@@ -51,11 +51,16 @@ void ClientHandler::run() {
 
             switch (menu_request.type) {
                 case ActionType::CREATE_GAME:
-                    res = menu_games_monitor.create_game(client_id, menu_request.game_name, menu_request.player_name);
+                    res = menu_games_monitor.create_game(
+                        client_id, menu_request.world_name, menu_request.game_name,
+                        menu_request.player_name);
                     break;
                 case ActionType::JOIN_GAME:
                     res = menu_games_monitor.join_game(client_id, menu_request.game_code, menu_request.player_name);
                     break;
+                case ActionType::LIST_GAMES:
+                    protocol.send_message(menu_games_monitor.list_games());
+                    continue;
                 default:
                     break;
             }

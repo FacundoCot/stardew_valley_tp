@@ -87,4 +87,18 @@ public:
     void execute(GameActionHandler& handler) const override;
 };
 
+class ChatAction : public ClientAction {
+private:
+    std::string text;
+
+public:
+    explicit ChatAction(std::string text);
+
+    void execute(GameActionHandler& handler) const override;
+};
+
+class ConfirmNextDayAction : public ClientAction {
+  public:
+    void execute(GameActionHandler& handler) const override;
+};
 #endif
