@@ -87,7 +87,9 @@ void Client::simulate_it(Visual &visual, Camera &camera,
   // Hilo receiver se encarga de traer las respuestas del server.
   ServerMessage response;
   while (responses.try_pop(response)) {
-    players = response.players;
+    if(!response.players.empty()){
+      players = response.players;
+    }
   }
 
   visual.get_renderer().SetDrawColor(0, 0, 0, 255);

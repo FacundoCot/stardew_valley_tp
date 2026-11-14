@@ -6,6 +6,7 @@
 #include <QTimer>
 #include "../common_src/messages.h"
 #include <QCloseEvent>
+#include "characterpreview.h"
 
 enum Pages {
     MAIN,
@@ -38,7 +39,8 @@ class MainWindow : public QMainWindow {
         
         void customization_menu(MenuStyle new_style);
         void closeEvent(QCloseEvent* event) override;
-
+        void mainwindow_connections();
+        void character_connections();
     private slots:
         void on_click_createButton();
         void on_click_continueButton();

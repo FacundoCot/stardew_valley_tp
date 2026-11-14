@@ -8,7 +8,12 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
     ui->setupUi(this);
     
     ui->stackedWidget->setCurrentIndex(MAIN);
-    ui->titleLabel->setPixmap(QPixmap("client_src/menuSprites/upscaledMainTitle.png"));
+    ui->titleLabel->setPixmap(QPixmap("client_src/data/menu/upscaledMainTitle.png"));
+    mainwindow_connections();
+    character_connections();
+}
+
+void MainWindow::mainwindow_connections(){
     connect(timer, &QTimer::timeout, this, &MainWindow::timer_create_response);
     connect(ui->createButton, &QPushButton::clicked, this, &MainWindow::on_click_createButton);
     connect(ui->continueButton, &QPushButton::clicked, this, &MainWindow::on_click_continueButton);
@@ -19,6 +24,23 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
     connect(ui->backButton2, &QPushButton::clicked, this, &MainWindow::on_click_backButton);
     connect(ui->backButton3, &QPushButton::clicked, this, &MainWindow::on_click_backButton);
     connect(ui->startCreateButton, &QPushButton::clicked, this, &MainWindow::on_click_startCreateButton);
+}
+
+void MainWindow::character_connections(){
+    connect(ui->bodyLeft, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_body);
+    connect(ui->bodyRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_body);
+    connect(ui->hairLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_hair);
+    connect(ui->hairRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_hair);
+    connect(ui->shirtLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_shirt);
+    connect(ui->shirtRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_shirt);
+    connect(ui->pantsLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_pants);
+    connect(ui->pantsRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_pants);
+    connect(ui->hatLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_hat);
+    connect(ui->hatRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_hat);
+    connect(ui->hairColorLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_haircolor);
+    connect(ui->hairColorRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_haircolor);
+    connect(ui->skinColorLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_pantscolor);
+    connect(ui->skinColorRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_pantscolor);
 }
 
 bool MainWindow::has_exited() { return exited; }
