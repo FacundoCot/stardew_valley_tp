@@ -94,6 +94,16 @@ ClientProtocol::serialize_disconnect(const ClientMessage &msg_to_server) {
   return buffer;
 }
 
+std::string ClientProtocol::serialize_confirm_day(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t);
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+
+  return buffer;
+}
+
 std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   switch (msg_to_server.type) {
   case ActionType::CREATE_GAME:
@@ -107,6 +117,9 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
 
   case ActionType::DISCONNECT:
     return serialize_disconnect(msg_to_server);
+  
+  case ActionType::CONFIRM_NEXT_DAY:
+    return serialize_confirm_day(msg_to_server);
 
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");
@@ -192,44 +205,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
 
       response.enemies.push_back(enemy);
     }
-
-    break;
-  }
-  case MessageType::INVENTORY_STATE: {
-    uint32_t coins;
-    skt.recvall(&coins, sizeof(uint32_t));
-    response.inventory.coins = ntohl(coins);
-
-    uint8_t count;
-    skt.recvall(&count, sizeof(uint8_t));
-
-    for (uint8_t i = 0; i < count; i++) {
-      InventorySlotState slot;
-
-      skt.recvall(&slot.index, sizeof(uint8_t));
-
-      uint8_t type_raw, quality_raw;
-      skt.recvall(&type_raw, sizeof(uint8_t));
-      skt.recvall(&quality_raw, sizeof(uint8_t));
-
-      slot.type = static_cast<ItemType>(type_raw);
-      slot.quality = static_cast<Quality>(quality_raw);
-
-      skt.recvall(&slot.quantity, sizeof(uint8_t));
-
-      response.inventory.slot_vector.push_back(slot);
-    }
-    break;
-  }
-  case MessageType::TIME_STATE: {
-    uint16_t day_network;
-    skt.recvall(&day_network, sizeof(uint16_t));
-    response.time.day = ntohs(day_network);
-
-    skt.recvall(&response.time.hour, sizeof(uint8_t));
-    skt.recvall(&response.time.minute, sizeof(uint8_t));
-    skt.recvall(&response.time.finished, sizeof(uint8_t));
-    break;
+    rcv_inventory(response);
+    rcv_time_state(response);
   }
 
   case MessageType::ERROR:
@@ -260,4 +237,40 @@ std::string ClientProtocol::rcv_string() {
 void ClientProtocol::shutdown() {
   skt.shutdown(2);
   skt.close();
+}
+
+void ClientProtocol::rcv_inventory(ServerMessage &response) {
+  uint32_t coins;
+  skt.recvall(&coins, sizeof(uint32_t));
+  response.inventory.coins = ntohl(coins);
+
+  uint8_t count;
+  skt.recvall(&count, sizeof(uint8_t));
+
+  for (uint8_t i = 0; i < count; i++) {
+    InventorySlotState slot;
+
+    skt.recvall(&slot.index, sizeof(uint8_t));
+
+    uint8_t type_raw, quality_raw;
+    skt.recvall(&type_raw, sizeof(uint8_t));
+    skt.recvall(&quality_raw, sizeof(uint8_t));
+
+    slot.type = static_cast<ItemType>(type_raw);
+    slot.quality = static_cast<Quality>(quality_raw);
+
+    skt.recvall(&slot.quantity, sizeof(uint8_t));
+
+    response.inventory.slot_vector.push_back(slot);
+  }
+}
+
+void ClientProtocol::rcv_time_state(ServerMessage &response) {
+  uint16_t day_network;
+  skt.recvall(&day_network, sizeof(uint16_t));
+  response.time.day = ntohs(day_network);
+
+  skt.recvall(&response.time.hour, sizeof(uint8_t));
+  skt.recvall(&response.time.minute, sizeof(uint8_t));
+  skt.recvall(&response.time.finished, sizeof(uint8_t));
 }

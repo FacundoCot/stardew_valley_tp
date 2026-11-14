@@ -34,6 +34,12 @@ enum class EnemyKind : uint8_t {
   SKULL = 4
 };
 
+enum class ClientState : uint8_t {
+  PLAYING,
+  DAY_ENDED,
+  WAITING_OTHER_PLAYERS
+};
+
 struct EnemyState {
   EnemyKind kind;
   float x;

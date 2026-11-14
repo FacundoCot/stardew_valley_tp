@@ -18,11 +18,11 @@ bool Item::is_stackable() const {
         case ItemType::SWORD:
         case ItemType::BED:
             return false;
-            break;
+            
 
         default:
             return true;
-            break;
+            
     }
 }
 
