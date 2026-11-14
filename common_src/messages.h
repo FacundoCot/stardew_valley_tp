@@ -135,6 +135,7 @@ struct ServerMessage {
 
 struct MenuRequest {
   ActionType type;
+  std::string world_name = "por_defecto";
   std::string game_name;
   std::string game_code;
   std::string player_name;

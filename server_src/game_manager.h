@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "../common_src/map.h"
 #include "../common_src/messages.h"
 
 #include "client_registry.h"

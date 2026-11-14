@@ -6,6 +6,7 @@
 #include "../common_src/queue.h"
 #include "menu_games_monitor.h"
 #include "acceptor.h"
+#include "world_catalog.h"
 
 #include <memory>
 
@@ -18,7 +19,7 @@ private:
 
 
 public:
-  explicit Server(Socket &&skt);
+  Server(Socket &&skt, WorldCatalog& catalog);
   void run();
 };
 
