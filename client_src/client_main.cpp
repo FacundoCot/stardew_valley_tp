@@ -21,15 +21,28 @@ int main(int argc, char *argv[]) {
     const char *port = argv[2];
 
     ClientProtocol protocol = ClientProtocol(std::move(Socket(host, port)));
-    
-    Menu menu = Menu(protocol);
-    bool has_exited = menu.run(argc, argv);
-    
+
+    bool has_exited;
+    {
+      Menu menu = Menu(protocol);
+      has_exited = menu.run(argc, argv);
+
+      if (has_exited) {
+        try {
+          protocol.shutdown();
+        } catch(...) {}
+      }
+      
+    }
+
     if(!has_exited){
       EventHandler handler;
       Client client = Client(std::move(handler), std::move(protocol));
       client.run();
     }
+
+    return 0;
+
   } catch (const std::exception &e) {
     std::cerr << e.what() << "\n";
     return 1;
@@ -38,5 +51,4 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  return 0;
 }
