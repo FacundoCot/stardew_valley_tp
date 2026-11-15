@@ -598,3 +598,38 @@ void Game::restore_save_data(const GameSaveData& data) {
         players.emplace(saved_player.name, std::move(player));
     }
 }
+
+bool Game::select_slot(int client_id, int slot_index) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+    const auto& slots = player.inventory.get_stacks();
+
+    if (slot_index < 0 ||
+        static_cast<size_t>(slot_index) >= slots.size()) {
+        return false;
+    }
+
+    if (player.selected_slot == slot_index) {
+        return false;
+    }
+
+    player.selected_slot = slot_index;
+    return true;
+}
+
+int Game::get_selected_slot(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return -1;
+    }
+
+    return players.at(client_it->second).selected_slot;
+}

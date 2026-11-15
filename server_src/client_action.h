@@ -101,4 +101,15 @@ class ConfirmNextDayAction : public ClientAction {
   public:
     void execute(GameActionHandler& handler) const override;
 };
+
+class SelectSlotAction : public ClientAction {
+private:
+    int slot_index;
+
+public:
+    explicit SelectSlotAction(int slot_index);
+
+    void execute(GameActionHandler& handler) const override;
+};
+
 #endif
