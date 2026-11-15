@@ -72,17 +72,16 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
     switch (static_cast<ActionType>(op)) {
         // caso move, 1 byte de direction
         case ActionType::MOVE: {
-            uint8_t direction;
-            recv_or_throw(&direction, sizeof(direction));
+          uint8_t direction;
+          recv_or_throw(&direction, sizeof(direction));
 
-            if (direction < static_cast<uint8_t>(Direction::UP) ||
-                direction > static_cast<uint8_t>(Direction::RIGHT)) {
-                throw std::runtime_error("invalid direction");
-            }
+          if (direction < static_cast<uint8_t>(Direction::UP) ||
+            direction > static_cast<uint8_t>(Direction::RIGHT)) {
+              throw std::runtime_error("invalid direction");
+          }
 
-            return std::make_shared<MoveAction>(
-                    static_cast<Direction>(direction));
-            break;
+          return std::make_shared<MoveAction>(static_cast<Direction>(direction));
+          break;
         }
         case ActionType::ATTACK:
           return std::make_shared<AttackAction>();
@@ -98,6 +97,17 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
 
         case ActionType::CONFIRM_NEXT_DAY:
           return std::make_shared<ConfirmNextDayAction>();
+
+        case ActionType::SELECT_SLOT: {
+          uint8_t slot_index;
+          recv_or_throw(&slot_index, sizeof(slot_index));
+
+          if (slot_index >= 9) {
+            throw std::runtime_error("invalid slot index");
+          }
+
+          return std::make_shared<SelectSlotAction>(slot_index);
+        }
           
         default:
             throw std::runtime_error("invalid game operation");
@@ -132,6 +142,9 @@ void ServerProtocol::send_inventory_state(const InventoryState& inventory) {
     // Enviar monedas
     const uint32_t coins_network = htonl(inventory.coins);
     send_or_throw(&coins_network, sizeof(coins_network));
+
+    //enviar slot seleccionado
+    send_or_throw(&inventory.selected_slot, sizeof(inventory.selected_slot));
 
     // Enviar cantidad de slots ocupados
     const uint8_t count = static_cast<uint8_t>(inventory.slot_vector.size());

@@ -418,6 +418,7 @@ InventoryState Game::inventory_state(int client_id) const {
 
     InventoryState state;
     state.coins = static_cast<uint32_t>(player.coins);
+    state.selected_slot = static_cast<uint8_t>(player.selected_slot);
 
     const auto& stacks = player.inventory.get_stacks();
 
@@ -544,6 +545,7 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.y = player.y;
         player_data.health = player.health;
         player_data.coins = player.coins;
+        player_data.selected_slot = player.selected_slot;
 
         const auto& stacks = player.inventory.get_stacks();
 
@@ -585,6 +587,7 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.health,
             saved_player.coins
         );
+        player.selected_slot = saved_player.selected_slot;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
