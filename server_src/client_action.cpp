@@ -52,3 +52,7 @@ SelectSlotAction::SelectSlotAction(int slot_index): slot_index(slot_index) {}
 void SelectSlotAction::execute(GameActionHandler& handler) const {
     handler.select_slot(get_client_id(), slot_index);
 }
+
+void EnableMultiplayerAction::execute(GameActionHandler& handler) const {
+    handler.enable_multiplayer(get_client_id());
+}

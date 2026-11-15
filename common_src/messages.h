@@ -25,7 +25,8 @@ enum class ActionType : uint8_t {
   CHAT = 6,
   LIST_GAMES = 7,
   CONFIRM_NEXT_DAY = 8,
-  SELECT_SLOT = 9
+  SELECT_SLOT = 9,
+  ENABLE_MULTIPLAYER = 10
 };
 
 enum class EnemyKind : uint8_t {
@@ -64,7 +65,8 @@ enum class MessageType : uint8_t {
   ERROR = 4,
   CHAT_MESSAGE = 5,
   GAMES_LIST = 6,
-  WORLD_INFO = 7
+  WORLD_INFO = 7,
+  MULTIPLAYER_ENABLED = 8
 };
 
 struct PlayerState {

@@ -63,6 +63,7 @@ private:
     std::map<std::string, Player> players;          // nombre -> jugador
     std::map<int, std::string> connected_clients;   // client_id -> nombre
     std::set<int> ready_clients;
+    bool multiplayer_enabled = false;
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
 
@@ -85,6 +86,8 @@ public:
     explicit Game(std::shared_ptr<const World> world);
 
     bool add_player_auto(int client_id, const std::string& player_name);
+    bool enable_multiplayer();
+    bool is_multiplayer() const;
     bool move_player(int client_id, Direction direction);
     bool remove_player(int client_id);
     bool is_empty() const;
@@ -108,7 +111,8 @@ public:
     bool start_next_day_game();
     bool player_name(int client_id, std::string& player_name) const;
     bool name_to_client_id(int& client_id, const std::string& player_name) const;
-    GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const;
+    GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, 
+        const std::string& owner_name, const std::string& world_name, bool multiplayer) const;
     void restore_save_data(const GameSaveData& data);
     bool select_slot(int client_id, int slot_index);
     int get_selected_slot(int client_id) const;

@@ -111,6 +111,18 @@ bool Game::add_player_auto(int client_id, const std::string& player_name) {
   return true;
 }
 
+bool Game::is_multiplayer() const {
+    std::lock_guard<std::mutex> lock(mtx);
+    return multiplayer_enabled;
+}
+
+bool Game::enable_multiplayer() {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (multiplayer_enabled) return false;
+    multiplayer_enabled = true;
+    return true;
+}
+
 Game::MovementResult Game::move_player_unlocked(
         Player& player, float new_x, float new_y) {
     const float dx = new_x - player.x;
@@ -529,13 +541,15 @@ bool Game::name_to_client_id(int& client_id, const std::string& player_name) con
     return false;
 }
 
-GameSaveData Game::get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const {
+GameSaveData Game::get_save_data(const std::string& game_code, const std::string& game_name, 
+    const std::string& owner_name, const std::string& world_name, bool multiplayer) const {
     std::lock_guard<std::mutex> lock(mtx);
 
     GameSaveData data;
     data.game_code = game_code;
     data.game_name = game_name;
     data.owner_name = owner_name;
+    data.world_name = world_name;
     data.multiplayer = multiplayer;
     data.day = clock.get_day();
 
@@ -546,6 +560,9 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.y = player.y;
         player_data.health = player.health;
         player_data.coins = player.coins;
+        player_data.zone = player.zone;
+        // si hay una mala asignacion de la cama se va a lanzar una excepcion gracias al .at()
+        player_data.bed_index = bed_by_player.at(player_name);
         player_data.selected_slot = player.selected_slot;
 
         const auto& stacks = player.inventory.get_stacks();
@@ -579,14 +596,18 @@ void Game::restore_save_data(const GameSaveData& data) {
     players.clear();
     connected_clients.clear();
     ready_clients.clear();
+    bed_by_player.clear();
+
     clock = GameClock(data.day, 840);
+    multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
         Player player(
             saved_player.x,
             saved_player.y,
             saved_player.health,
-            saved_player.coins
+            saved_player.coins,
+            saved_player.zone
         );
         player.selected_slot = saved_player.selected_slot;
 
@@ -598,6 +619,9 @@ void Game::restore_save_data(const GameSaveData& data) {
                 throw std::runtime_error("Inventario guardado invalido");
             }
         }
+
+        bed_by_player[saved_player.name] = saved_player.bed_index;
+
 
         players.emplace(saved_player.name, std::move(player));
     }

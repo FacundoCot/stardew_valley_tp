@@ -13,6 +13,7 @@ struct GameRuntime {
     std::string game_code;
     std::string game_name;
     std::string owner_name;
+    std::string world_name;
     bool multiplayer;
     GameManager manager;
     GameLoop loop;
@@ -23,6 +24,7 @@ struct GameRuntime {
                 std::shared_ptr<Game> game_param,
                 std::string game_name_param,
                 std::string owner_name_param,
+                std::string world_name_param,
                 bool multiplayer_param);
 };
 

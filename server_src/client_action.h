@@ -112,4 +112,9 @@ public:
     void execute(GameActionHandler& handler) const override;
 };
 
+class EnableMultiplayerAction : public ClientAction {
+public:
+    void execute(GameActionHandler& handler) const override;
+};
+
 #endif

@@ -108,6 +108,8 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
 
           return std::make_shared<SelectSlotAction>(slot_index);
         }
+        case ActionType::ENABLE_MULTIPLAYER:
+          return std::make_shared<EnableMultiplayerAction>();
           
         default:
             throw std::runtime_error("invalid game operation");
@@ -227,7 +229,8 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
     switch (message.type) {
         case MessageType::GAME_CREATED:
-        case MessageType::GAME_JOINED: {
+        case MessageType::GAME_JOINED:
+        case MessageType::MULTIPLAYER_ENABLED: {
           send_string(message.game_code);
           break;
         }
