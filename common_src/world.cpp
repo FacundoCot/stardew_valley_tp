@@ -310,6 +310,10 @@ std::shared_ptr<const Zone> World::zone(ZoneId id) const {
     return found->second;
 }
 
+const std::map<ZoneId, std::shared_ptr<const Zone>>& World::zones_data() const {
+    return zones;
+}
+
 bool World::is_walkable(ZoneId id, float x, float y) const {
     const auto selected_zone = zone(id);
     return selected_zone != nullptr && selected_zone->is_walkable(x, y);

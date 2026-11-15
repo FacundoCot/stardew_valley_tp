@@ -5,3 +5,7 @@
 SocketClosed::SocketClosed(const std::string &msg_rcv) : msg(msg_rcv) {}
 
 const char *SocketClosed::what() const noexcept { return msg.c_str(); }
+
+AssetNotFound::AssetNotFound(const std::string &msg_rcv) : msg(msg_rcv) {}
+
+const char *AssetNotFound::what() const noexcept { return msg.c_str(); }

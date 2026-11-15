@@ -74,6 +74,10 @@ bool VillageZone::is_walkable(float x, float y) const {
     return tile_grid.is_floor(x, y);
 }
 
+const std::vector<Tile>& VillageZone::grid() const {
+    return tile_grid.tiles_data();
+}
+
 const std::vector<ZoneId::ZoneArea>& VillageZone::areas() const {
     return zone_areas;
 }

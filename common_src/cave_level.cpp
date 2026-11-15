@@ -55,6 +55,10 @@ bool CaveLevel::is_walkable(float x, float y) const {
     return tile_grid.is_floor(x, y);
 }
 
+const std::vector<Tile>& CaveLevel::grid() const {
+    return tile_grid.tiles_data();
+}
+
 const std::vector<std::pair<float, float>>& CaveLevel::enemy_spawns() const {
     return spawn_points;
 }

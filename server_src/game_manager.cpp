@@ -4,18 +4,24 @@
 #include <sstream>
 
 GameManager::GameManager(ClientRegistry& registry_param,
-                         std::shared_ptr<Game> game_param):
+                         std::shared_ptr<Game> game_param,
+                         SaveDisc& save_disc_param,
+                         const std::string& game_code_param,
+                         const std::string& game_name_param,
+                         const std::string& owner_name_param,
+                         bool multiplayer_param):
         registry(registry_param),
-        game(std::move(game_param)) {}
+        game(std::move(game_param)),
+        save_disc(save_disc_param),
+        game_code(game_code_param),
+        game_name(game_name_param),
+        owner_name(owner_name_param),
+        multiplayer(multiplayer_param) {}
 
 void GameManager::send_state() {
-    ServerMessage msg;
-    msg.type = MessageType::GAME_STATE;
-    msg.players = game->snapshot();
-    msg.enemies = game->enemy_snapshot();
-
     for (int id : game->player_ids()) {
-        registry.send(id, msg);
+        ServerMessage state = game->game_state(id);
+        registry.send(id, state);
     }
 }
 
@@ -26,23 +32,8 @@ void GameManager::attack_player(int client_id) {
 }
 
 void GameManager::tick(float dt) {
-    TimeState before = game->time_state();
-
-    if (game->update(dt)) {
-        send_state();
-    }
-
-    // Como update() se ejecuta varias veces por segundo, no queremos
-    // enviar el estado del reloj en cada tick, sino solo cuando cambia
-    // la hora, el minuto, el día o el estado de finalización.
-    // Para eso, comparamos el estado antes y después de actualizar el juego.
-    TimeState after = game->time_state();
-    if (before.day != after.day ||
-        before.hour != after.hour ||
-        before.minute != after.minute ||
-        before.finished != after.finished) {
-        send_time_global();
-    }
+    game->update(dt);
+    send_state();
 }
 
 void GameManager::move_player(int client_id, Direction direction) {
@@ -52,18 +43,18 @@ void GameManager::move_player(int client_id, Direction direction) {
     }
 }
 
-void GameManager::join_player(int client_id) {
+void GameManager::join_player(int /*no se necesita el client_id*/) {
     send_state();
-    send_inventory(client_id);
-    send_time(client_id);
 }
 
 void GameManager::disconnect_client(int client_id) {
     if (game->remove_player(client_id) && !game->is_empty()) {
         send_state();
+        try_start_next_day();
     }
 }
 
+/*
 void GameManager::send_inventory(int client_id) {
     ServerMessage msg{};
     msg.type = MessageType::INVENTORY_STATE;
@@ -89,6 +80,7 @@ void GameManager::send_time_global() {
         registry.send(id, msg);
     }
 }
+*/
 
 void GameManager::send_chat_global(const std::string& name, const std::string& text) {
 
@@ -210,4 +202,30 @@ void GameManager::send_chat(int client_id, const std::string& text) {
     }
 
     send_chat_global(name, text);
+}
+
+void GameManager::try_start_next_day() {
+    if (!game->start_next_day_game()) {
+        return;
+    }
+
+    try {
+        GameSaveData data = game->get_save_data(
+                game_code, game_name, owner_name, multiplayer);
+
+        save_disc.save(data);
+
+    } catch (const std::exception& e) {
+        for (int id : game->player_ids()) {
+            send_system_message(id, "Error al guardar la partida");
+        }
+    }
+    send_state();
+}
+
+void GameManager::confirm_next_day(int client_id) {
+    if (!game->confirm_next_day(client_id)) {
+        return;
+    }
+    try_start_next_day();
 }

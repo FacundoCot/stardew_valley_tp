@@ -11,8 +11,12 @@
 #include "receiver.h"
 #include "sender.h"
 #include "visual.h"
+#include "clock.h"
+#include "button.h"
 
 #include <vector>
+#include <SDL2pp/Rect.hh>
+
 
 class Client {
 
@@ -27,6 +31,13 @@ private:
   Sender sender;
 
   std::vector<PlayerState> players;
+  Camera camera;
+
+  ClientState current_state = ClientState::PLAYING;
+
+  uint8_t r = 255;
+  uint8_t g = 255;
+  uint8_t b = 255;
 
   bool running = true;
   bool was_intentional = false;
@@ -38,9 +49,11 @@ public:
 
 
   void run(int argc, char* argv[]);
-  void simulate_it(Visual &visual, Camera &camera, PlayerVisual &p_visual);
+  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual);
 
   void stop();
+  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual);
+  void update(ServerMessage& response, Clock& clock);
 
   ~Client();
 };
