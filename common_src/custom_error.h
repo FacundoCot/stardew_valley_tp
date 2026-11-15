@@ -23,4 +23,15 @@ public:
   const char *what() const noexcept override;
 };
 
+class ItemNotFound : std::exception {
+private:
+  std::string msg;
+
+public:
+  explicit ItemNotFound(const std::string &msg);
+  const char *what() const noexcept override;
+
+
+};
+
 #endif

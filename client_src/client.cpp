@@ -10,6 +10,7 @@
 #include "mainwindow.h"
 #include "map_visual.h"
 #include "player_visual.h"
+#include "inventory.h"
 #include "visual.h"
 #include "clock.h"
 #include "../common_src/character_appearance.h"
@@ -45,8 +46,9 @@ void Client::run(int argc, char* argv[]) {
   Loader loader(visual.get_renderer());
   Button btn("Terminar dia", visual, 200, 50);
 
-  loader.load_texture("clock","client_src/data/clock.png");
+  loader.load_everything();
   Clock clock(loader);
+  Inventory inventory(loader);
 
   int it = 1;
   Chronometer chrono;
@@ -55,7 +57,7 @@ void Client::run(int argc, char* argv[]) {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(clock, visual, btn, p_visual);
+      simulate_it(clock, visual, btn, p_visual, inventory, loader);
 
       it += chrono.sleep_and_calculate_it();
     }
@@ -69,7 +71,7 @@ void Client::run(int argc, char* argv[]) {
   }
 }
 
-void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual) {
+void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader) {
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -88,10 +90,10 @@ void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual
   // Hilo receiver se encarga de traer las respuestas del server.
   ServerMessage response;
   while (responses.try_pop(response)) {
-    update(response, clock);
+    update(response, clock,  inventory);
   }
 
-  render(clock, visual, btn, p_visual);
+  render(clock, visual, btn, p_visual, inventory, loader);
 }
 
 void Client::stop() {
@@ -119,7 +121,7 @@ bool Client::main_menu(int argc, char *argv[]) {
   return menu.has_exited();
 }
 
-void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual) {
+void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader) {
   visual.get_renderer().SetDrawColor(0, 0, 0, 255);
   visual.clean();
 
@@ -129,6 +131,7 @@ void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_v
   }
 
   clock.draw(visual);
+  inventory.draw_inventory(visual, loader);
 
   if (current_state == ClientState::DAY_ENDED) {
     visual.draw_black_overlay();
@@ -142,12 +145,13 @@ void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_v
   visual.present();
 }
 
-void Client::update(ServerMessage& response, Clock& clock) {
+void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory) {
   if (!response.players.empty()) {
     players = response.players;
   }
 
   clock.update_from_server(response.time);
+  inventory.update_from_server(response);
 
   if (current_state == ClientState::PLAYING) {
     if(clock.is_finished(response.time)) {
