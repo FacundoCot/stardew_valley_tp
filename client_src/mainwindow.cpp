@@ -115,7 +115,7 @@ void MainWindow::on_startCreateButton_clicked(){
     }
 
     msg.player_name_len = msg.player_name.size();
-    msg.appearance = CharacterAppearance{};
+    msg.appearance = ui->characterPreview->get_appearance();
     
     commands.push(msg);
     

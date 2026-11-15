@@ -7,15 +7,12 @@
 #include "camera.h"
 #include "eventhandler.h"
 #include "loader.h"
-#include "mainwindow.h"
 #include "map_visual.h"
 #include "player_visual.h"
 #include "inventory.h"
 #include "visual.h"
 #include "clock.h"
-#include "../common_src/character_appearance.h"
 
-#include <QApplication>
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 #include <utility>
@@ -25,20 +22,12 @@ using SDL2pp::Window;
 
 Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
     : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
-      receiver(responses, protocol), sender(protocol, commands),
+      receiver(responses, protocol), sender(commands, protocol),
       camera(SCREEN_WIDTH, SCREEN_HEIGHT) {}
 
-void Client::run(int argc, char* argv[]) {
-
+void Client::run() {
   receiver.start();
   sender.start();
-
-  bool exited = main_menu(argc, argv);
-  
-  if(exited){
-    stop();
-    return;
-  }
 
   bool was_intentional = false;
   PlayerVisual p_visual;
@@ -108,17 +97,6 @@ void Client::stop() {
 
   } catch (const std::exception &) {
   }
-}
-
-bool Client::main_menu(int argc, char *argv[]) {
-  QApplication app(argc, argv);
-
-  MainWindow menu(responses, commands);
-  menu.show();
-
-  app.exec();
-
-  return menu.has_exited();
 }
 
 void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader) {
