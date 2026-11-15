@@ -10,7 +10,7 @@
 //asi nos ahorramos tener que escribir funciones de serializacion y deserializacion para cada estructura
 //y casi no tenemos que tocar codigo para los jason 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ItemSaveData, type, quality, quantity, index)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerSaveData, name, x, y, health, coins, inventory)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerSaveData, name, x, y, health, coins, selected_slot, inventory)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, multiplayer, day, players)
 
 SaveDisc::SaveDisc(const std::filesystem::path& saves_directory):
