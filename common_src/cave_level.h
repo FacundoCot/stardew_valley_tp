@@ -21,6 +21,7 @@ public:
     int width() const override;
     int height() const override;
     bool is_walkable(float x, float y) const override;
+    const std::vector<Tile>& grid() const;
     const std::vector<std::pair<float, float>>& enemy_spawns() const;
 };
 

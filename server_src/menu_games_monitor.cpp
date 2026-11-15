@@ -10,7 +10,7 @@ MenuGamesMonitor::MenuGamesMonitor(WorldCatalog& catalog_param,
                                    ClientRegistry& registry):
     catalog(catalog_param),
     registry(registry),
-    save_disc("saves") 
+    save_disc("saves")
 {
     // Al arrancar solo se leen los datos guardados. No se construye ningun mundo.
     for (const std::string& code : save_disc.list_saves()) {
@@ -46,9 +46,10 @@ GameRuntime& MenuGamesMonitor::load_game_unlocked(const std::string& game_code) 
     auto game = std::make_shared<Game>(catalog.get("por_defecto"));
     game->restore_save_data(data);
 
-    auto runtime = std::make_unique<GameRuntime>(
-        registry, game, data.game_name, data.owner_name, data.multiplayer);
-    GameRuntime& ref = *runtime;
+        auto runtime = std::make_unique<GameRuntime>(
+        registry, save_disc, game_code, game,
+        data.game_name, data.owner_name, data.multiplayer);
+        GameRuntime& ref = *runtime;
     games[game_code] = std::move(runtime);
     saved_games.erase(game_code);
     return ref;

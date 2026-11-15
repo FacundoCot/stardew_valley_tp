@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "zone.h"
 
@@ -15,6 +16,7 @@ public:
     explicit World(std::map<ZoneId, std::shared_ptr<const Zone>> zones);
 
     std::shared_ptr<const Zone> zone(ZoneId id) const;
+    const std::map<ZoneId, std::shared_ptr<const Zone>>& zones_data() const;
     bool is_walkable(ZoneId id, float x, float y) const;
     std::optional<Portal> portal_at(ZoneId id, float x, float y) const;
 };

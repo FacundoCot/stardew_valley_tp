@@ -17,9 +17,9 @@ struct Rect {
 
 struct ZoneId {
     enum class Kind {
-        FARM,
-        VILLAGE,
-        CAVE_LEVEL
+        FARM = 0,
+        VILLAGE = 1,
+        CAVE_LEVEL = 2
     };
 
     enum class AreaType {
@@ -53,15 +53,15 @@ inline const ZoneId ZoneId::FARM_ZONE{ZoneId::Kind::FARM, 0};
 inline const ZoneId ZoneId::VILLAGE_ZONE{ZoneId::Kind::VILLAGE, 0};
 
 enum class Tile {
-    WALL,
-    FLOOR
+    WALL = 0,
+    FLOOR = 1
 };
 
 enum class PortalType {
-    STAIR,
-    DUNGEON_DOOR,
-    DUNGEON_EXIT,
-    ROAD
+    STAIR = 0,
+    DUNGEON_DOOR = 1,
+    DUNGEON_EXIT = 2,
+    ROAD = 3
 };
 
 struct Portal {

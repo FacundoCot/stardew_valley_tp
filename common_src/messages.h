@@ -62,7 +62,8 @@ enum class MessageType : uint8_t {
   GAME_STATE = 3,
   ERROR = 4,
   CHAT_MESSAGE = 5,
-  GAMES_LIST = 6
+  GAMES_LIST = 6,
+  WORLD_INFO = 7
 };
 
 struct PlayerState {
@@ -131,6 +132,7 @@ struct ServerMessage {
   TimeState time;
   ChatState chat;
   std::vector<GameInfoForMenu> games;
+  std::vector<uint8_t> world_info;
 };
 
 struct MenuRequest {

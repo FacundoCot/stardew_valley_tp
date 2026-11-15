@@ -97,6 +97,7 @@ public:
     bool all_players_ready_no_mutex() const;
 
     Queue<std::shared_ptr<ClientAction>>& get_actions_queue();
+    std::shared_ptr<const World> get_world() const;
 
     ServerMessage game_state(int client_id) const;
 

@@ -8,6 +8,7 @@
 
 #include <arpa/inet.h>
 
+#include "../common_src/world_serialization.h"
 
 ServerProtocol::ServerProtocol(Socket& skt): skt(skt) {}
 
@@ -182,6 +183,25 @@ void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) 
         uint8_t multiplayer = game.multiplayer ? 1 : 0;
         send_or_throw(&multiplayer, sizeof(multiplayer));
     }
+}
+
+void ServerProtocol::send_world_info(const World& world) {
+    /*
+     * WORLD_INFO:
+     * u8  tipo de mensaje = 7
+     * u8  cantidad de zonas
+     * por cada zona:
+     *   u8 kind, u8 level
+     *   u16 ancho, u16 alto (htons)
+     *   ancho * alto bytes de tiles, por fila
+     *   u8 cantidad de portales
+     *   por cada portal: u8 tipo, i32 celda x, i32 celda y,
+     *     u8 kind destino, u8 level destino, i32 llegada x * 100,
+     *     i32 llegada y * 100
+     *   datos propios de granja o pueblo
+     */
+    const std::vector<uint8_t> data = encode_world(world);
+    send_or_throw(data.data(), static_cast<unsigned int>(data.size()));
 }
 
 void ServerProtocol::send_message(const ServerMessage& message) {

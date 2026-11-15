@@ -223,6 +223,10 @@ Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
     return actions;
 }
 
+std::shared_ptr<const World> Game::get_world() const {
+    return world;
+}
+
 
 // --- Helpers sin lock (se llaman con mtx tomado) ---
 
