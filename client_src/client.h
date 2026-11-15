@@ -13,6 +13,7 @@
 #include "visual.h"
 #include "clock.h"
 #include "button.h"
+#include "inventory.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -49,11 +50,11 @@ public:
 
 
   void run(int argc, char* argv[]);
-  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual);
+  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader);
 
   void stop();
-  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual);
-  void update(ServerMessage& response, Clock& clock);
+  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& Inventory, Loader& loader);
+  void update(ServerMessage& response, Clock& clock, Inventory& inventory);
 
   ~Client();
 };

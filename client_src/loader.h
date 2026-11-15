@@ -15,6 +15,7 @@ public:
 explicit Loader(SDL2pp::Renderer &renderer_rcv); 
 void load_texture(const std::string& asset_name, const std::string& path);
 SDL2pp::Texture& get_texture(const std::string& name);
+void load_everything();
 
 };
 

@@ -24,7 +24,8 @@ enum class ActionType : uint8_t {
   ATTACK = 5,
   CHAT = 6,
   LIST_GAMES = 7,
-  CONFIRM_NEXT_DAY = 8
+  CONFIRM_NEXT_DAY = 8,
+  SELECT_SLOT = 9
 };
 
 enum class EnemyKind : uint8_t {
@@ -62,7 +63,8 @@ enum class MessageType : uint8_t {
   GAME_STATE = 3,
   ERROR = 4,
   CHAT_MESSAGE = 5,
-  GAMES_LIST = 6
+  GAMES_LIST = 6,
+  WORLD_INFO = 7
 };
 
 struct PlayerState {
@@ -91,6 +93,7 @@ struct InventorySlotState {
 
 struct InventoryState {
     uint32_t coins = 0;
+    uint8_t selected_slot = 0;
     std::vector<InventorySlotState> slot_vector;
 };
 
@@ -131,6 +134,7 @@ struct ServerMessage {
   TimeState time;
   ChatState chat;
   std::vector<GameInfoForMenu> games;
+  std::vector<uint8_t> world_info;
 };
 
 struct MenuRequest {
@@ -152,6 +156,7 @@ struct ClientMessage {
   CharacterAppearance appearance;
   std::string chat_text;
   std::string game_code; // momentáneo del join
+  uint8_t slot_index = 0;
 };
 
 #endif

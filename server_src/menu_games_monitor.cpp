@@ -6,26 +6,21 @@
 
 #include "client_action.h"
 
-MenuGamesMonitor::MenuGamesMonitor(WorldCatalog& catalog_param,
-                                   ClientRegistry& registry):
+MenuGamesMonitor::MenuGamesMonitor(
+    WorldCatalog& catalog_param,
+    ClientRegistry& registry_param):
     catalog(catalog_param),
-    registry(registry),
-    save_disc("saves") 
+    registry(registry_param),
+    save_disc("saves")
 {
-    // Al arrancar solo se leen los datos guardados. No se construye ningun mundo.
     for (const std::string& code : save_disc.list_saves()) {
         GameSaveData data = save_disc.load(code);
-
-        auto game = std::make_shared<Game>(world_map);
-        game->restore_save_data(data);
-
-        games[code] = std::make_unique<GameRuntime>(registry, save_disc, code, game,
-                data.game_name, data.owner_name, data.multiplayer);
 
         int saved_code = std::stoi(code);
         if (saved_code >= next_game_code) {
             next_game_code = saved_code + 1;
         }
+
         saved_games.emplace(code, std::move(data));
     }
 }
@@ -46,9 +41,10 @@ GameRuntime& MenuGamesMonitor::load_game_unlocked(const std::string& game_code) 
     auto game = std::make_shared<Game>(catalog.get("por_defecto"));
     game->restore_save_data(data);
 
-    auto runtime = std::make_unique<GameRuntime>(
-        registry, game, data.game_name, data.owner_name, data.multiplayer);
-    GameRuntime& ref = *runtime;
+        auto runtime = std::make_unique<GameRuntime>(
+        registry, save_disc, game_code, game,
+        data.game_name, data.owner_name, data.multiplayer);
+        GameRuntime& ref = *runtime;
     games[game_code] = std::move(runtime);
     saved_games.erase(game_code);
     return ref;

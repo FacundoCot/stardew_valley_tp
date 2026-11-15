@@ -20,6 +20,7 @@ public:
     int height() const override;
     bool is_walkable(float x, float y) const override;
 
+    const std::vector<Tile>& grid() const;
     const std::vector<ZoneId::ZoneArea>& areas() const;
 };
 

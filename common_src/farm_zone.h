@@ -25,6 +25,7 @@ public:
 
     const std::vector<Tile>& grid() const;
     Rect cabin() const;
+    const std::vector<std::pair<float, float>>& beds() const;
     int bed_count() const;
     std::pair<float, float> bed_position(int bed_index) const;
 };

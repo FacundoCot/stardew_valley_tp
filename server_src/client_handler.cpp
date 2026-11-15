@@ -76,6 +76,8 @@ void ClientHandler::run() {
                 continue;
             }
 
+            protocol.send_world_info(*res.game->get_world());
+
             if (!should_keep_running()) {
                 break;
             }

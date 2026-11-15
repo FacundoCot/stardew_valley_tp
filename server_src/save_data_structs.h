@@ -19,6 +19,7 @@ struct PlayerSaveData {
     float y;
     int health;
     int coins;
+    int selected_slot = 0;
     std::vector<ItemSaveData> inventory;
 };
 

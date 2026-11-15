@@ -93,6 +93,10 @@ Rect FarmZone::cabin() const {
     return cabin_position;
 }
 
+const std::vector<std::pair<float, float>>& FarmZone::beds() const {
+    return bed_spots;
+}
+
 int FarmZone::bed_count() const {
     return static_cast<int>(bed_spots.size());
 }

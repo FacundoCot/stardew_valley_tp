@@ -223,6 +223,10 @@ Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
     return actions;
 }
 
+std::shared_ptr<const World> Game::get_world() const {
+    return world;
+}
+
 
 // --- Helpers sin lock (se llaman con mtx tomado) ---
 
@@ -414,6 +418,7 @@ InventoryState Game::inventory_state(int client_id) const {
 
     InventoryState state;
     state.coins = static_cast<uint32_t>(player.coins);
+    state.selected_slot = static_cast<uint8_t>(player.selected_slot);
 
     const auto& stacks = player.inventory.get_stacks();
 
@@ -540,6 +545,7 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.y = player.y;
         player_data.health = player.health;
         player_data.coins = player.coins;
+        player_data.selected_slot = player.selected_slot;
 
         const auto& stacks = player.inventory.get_stacks();
 
@@ -581,6 +587,7 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.health,
             saved_player.coins
         );
+        player.selected_slot = saved_player.selected_slot;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
@@ -593,4 +600,39 @@ void Game::restore_save_data(const GameSaveData& data) {
 
         players.emplace(saved_player.name, std::move(player));
     }
+}
+
+bool Game::select_slot(int client_id, int slot_index) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+    const auto& slots = player.inventory.get_stacks();
+
+    if (slot_index < 0 ||
+        static_cast<size_t>(slot_index) >= slots.size()) {
+        return false;
+    }
+
+    if (player.selected_slot == slot_index) {
+        return false;
+    }
+
+    player.selected_slot = slot_index;
+    return true;
+}
+
+int Game::get_selected_slot(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return -1;
+    }
+
+    return players.at(client_it->second).selected_slot;
 }

@@ -6,6 +6,7 @@
 
 #include "../common_src/messages.h"
 #include "../common_src/socket.h"
+#include "../common_src/world.h"
 
 #include "client_action.h"
 
@@ -35,6 +36,7 @@ public:
     // automáticamente cuando no haya más referencias a ese puntero
     std::shared_ptr<ClientAction> recv_action();
     void send_message(const ServerMessage& message);
+    void send_world_info(const World& world);
     MenuRequest recv_menu_request();
 };
 

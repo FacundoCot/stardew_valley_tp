@@ -18,7 +18,7 @@ void Loader::load_texture(const std::string& asset_name, const std::string& path
         SDL2pp::Surface surface(path);
         assets.emplace(asset_name, SDL2pp::Texture(renderer, surface));
     } catch(const std::exception &e) {
-        //lanzar excepcion propia
+        std::cerr << e.what() << "\n";
     }
 
 }
@@ -27,8 +27,18 @@ SDL2pp::Texture& Loader::get_texture(const std::string& name) {
     auto t = assets.find(name);
 
     if (t == assets.end()) {
-        throw AssetNotFound(std::format("Error at Loader: Asset with name: {} is not found.", name));
+        throw AssetNotFound("Error at Loader: Asset with name: " + name + " is not found.");
     } 
 
     return t->second;
+}
+
+void Loader::load_everything() {
+    load_texture("clock","client_src/data/clock.png");
+    load_texture("Inventory", "client_src/data/InventorySlots.png");
+    load_texture("pickaxe", "client_src/data/pickaxe.png");
+    load_texture("shovel", "client_src/data/shovel.png");
+    load_texture("sword", "client_src/data/sword.png");
+    load_texture("watering_can", "client_src/data/water.png");
+    load_texture("bed", "client_src/data/Single_Bed.png");
 }

@@ -229,3 +229,9 @@ void GameManager::confirm_next_day(int client_id) {
     }
     try_start_next_day();
 }
+
+void GameManager::select_slot(int client_id, int slot_index) {
+    if (game->select_slot(client_id, slot_index)) {
+        send_state();
+    }
+}
