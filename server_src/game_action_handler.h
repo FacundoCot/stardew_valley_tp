@@ -27,6 +27,8 @@ class GameActionHandler {
 
         virtual void confirm_next_day(int client_id) = 0;
 
+        virtual void select_slot(int client_id, int slot_index) = 0;
+
         // Destructor virtual: asegura que al destruir un objeto mediante un puntero
         // a la clase padre, se ejecuten también los destructores de las clases hijas
         virtual ~GameActionHandler() = default;

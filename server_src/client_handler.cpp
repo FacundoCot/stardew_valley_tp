@@ -51,7 +51,9 @@ void ClientHandler::run() {
 
             switch (menu_request.type) {
                 case ActionType::CREATE_GAME:
-                    res = menu_games_monitor.create_game(client_id, menu_request.game_name, menu_request.player_name);
+                    res = menu_games_monitor.create_game(
+                        client_id, menu_request.world_name, menu_request.game_name,
+                        menu_request.player_name);
                     break;
                 case ActionType::JOIN_GAME:
                     res = menu_games_monitor.join_game(client_id, menu_request.game_code, menu_request.player_name);
@@ -73,6 +75,8 @@ void ClientHandler::run() {
             if (!res.success) {
                 continue;
             }
+
+            protocol.send_world_info(*res.game->get_world());
 
             if (!should_keep_running()) {
                 break;

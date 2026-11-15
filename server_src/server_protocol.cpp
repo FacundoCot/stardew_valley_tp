@@ -8,6 +8,7 @@
 
 #include <arpa/inet.h>
 
+#include "../common_src/world_serialization.h"
 
 ServerProtocol::ServerProtocol(Socket& skt): skt(skt) {}
 
@@ -184,6 +185,25 @@ void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) 
     }
 }
 
+void ServerProtocol::send_world_info(const World& world) {
+    /*
+     * WORLD_INFO:
+     * u8  tipo de mensaje = 7
+     * u8  cantidad de zonas
+     * por cada zona:
+     *   u8 kind, u8 level
+     *   u16 ancho, u16 alto (htons)
+     *   ancho * alto bytes de tiles, por fila
+     *   u8 cantidad de portales
+     *   por cada portal: u8 tipo, i32 celda x, i32 celda y,
+     *     u8 kind destino, u8 level destino, i32 llegada x * 100,
+     *     i32 llegada y * 100
+     *   datos propios de granja o pueblo
+     */
+    const std::vector<uint8_t> data = encode_world(world);
+    send_or_throw(data.data(), static_cast<unsigned int>(data.size()));
+}
+
 void ServerProtocol::send_message(const ServerMessage& message) {
     if (message.type == MessageType::GAME_STATE) {
         validate_enemies(message.enemies);
@@ -312,7 +332,9 @@ MenuRequest ServerProtocol::recv_menu_request() {
           std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
-          return MenuRequest{ActionType::CREATE_GAME, std::move(game_name), "", std::move(player_name), appearance};
+          return MenuRequest{ActionType::CREATE_GAME, "por_defecto",
+                             std::move(game_name), "", std::move(player_name),
+                             appearance};
         }
 
         case ActionType::JOIN_GAME: {
@@ -320,10 +342,13 @@ MenuRequest ServerProtocol::recv_menu_request() {
           std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
-          return MenuRequest{ActionType::JOIN_GAME, "", std::move(game_code), std::move(player_name), appearance};
+          return MenuRequest{ActionType::JOIN_GAME, "por_defecto", "",
+                             std::move(game_code), std::move(player_name),
+                             appearance};
         }
         case ActionType::LIST_GAMES:
-          return MenuRequest{ActionType::LIST_GAMES, "", "", "", {}};
+          return MenuRequest{ActionType::LIST_GAMES, "por_defecto", "", "",
+                             "", {}};
 
         default:
             throw std::runtime_error("invalid menu request");
