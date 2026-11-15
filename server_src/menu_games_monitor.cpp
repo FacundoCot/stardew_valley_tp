@@ -16,6 +16,12 @@ MenuGamesMonitor::MenuGamesMonitor(WorldCatalog& catalog_param,
     for (const std::string& code : save_disc.list_saves()) {
         GameSaveData data = save_disc.load(code);
 
+        auto game = std::make_shared<Game>(world_map);
+        game->restore_save_data(data);
+
+        games[code] = std::make_unique<GameRuntime>(registry, save_disc, code, game,
+                data.game_name, data.owner_name, data.multiplayer);
+
         int saved_code = std::stoi(code);
         if (saved_code >= next_game_code) {
             next_game_code = saved_code + 1;
