@@ -23,6 +23,8 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
   append_u16_t(buffer, msg_to_server.appearance.shirt);
   append_u16_t(buffer, msg_to_server.appearance.pants);
   append_u16_t(buffer, msg_to_server.appearance.hat);
+  append_u16_t(buffer, msg_to_server.appearance.hair_color);
+  append_u16_t(buffer, msg_to_server.appearance.pants_color);
 }
 
 std::string
@@ -173,6 +175,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
       skt.recvall(&unconscious, sizeof(uint8_t));
       player.unconscious = unconscious;
 
+      player.appearance = rcv_appearance();
+
       response.players.push_back(player);
     }
 
@@ -237,6 +241,16 @@ std::string ClientProtocol::rcv_string() {
 void ClientProtocol::shutdown() {
   skt.shutdown(2);
   skt.close();
+}
+
+CharacterAppearance ClientProtocol::rcv_appearance(){
+  uint16_t parts[7] = {};
+  for(uint16_t& p : parts){
+    skt.recvall(&p, sizeof(uint16_t));
+    p = ntohs(p);
+  }
+  
+  return CharacterAppearance{parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]};
 }
 
 void ClientProtocol::rcv_inventory(ServerMessage &response) {

@@ -15,15 +15,15 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
 
 void MainWindow::mainwindow_connections(){
     connect(timer, &QTimer::timeout, this, &MainWindow::timer_create_response);
-    connect(ui->createButton, &QPushButton::clicked, this, &MainWindow::on_click_createButton);
-    connect(ui->continueButton, &QPushButton::clicked, this, &MainWindow::on_click_continueButton);
-    connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::on_click_joinButton);
-    connect(ui->exitButton, &QPushButton::clicked, this, &MainWindow::on_click_exitButton);
-    connect(ui->submitCodeButton, &QPushButton::clicked, this, &MainWindow::on_click_submitCodeButton);
-    connect(ui->backButton1, &QPushButton::clicked, this, &MainWindow::on_click_backButton);
-    connect(ui->backButton2, &QPushButton::clicked, this, &MainWindow::on_click_backButton);
-    connect(ui->backButton3, &QPushButton::clicked, this, &MainWindow::on_click_backButton);
-    connect(ui->startCreateButton, &QPushButton::clicked, this, &MainWindow::on_click_startCreateButton);
+    connect(ui->createButton, &QPushButton::clicked, this, &MainWindow::on_createButton_clicked);
+    connect(ui->continueButton, &QPushButton::clicked, this, &MainWindow::on_continueButton_clicked);
+    connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::on_joinButton_clicked);
+    connect(ui->exitButton, &QPushButton::clicked, this, &MainWindow::on_exitButton_clicked);
+    connect(ui->submitCodeButton, &QPushButton::clicked, this, &MainWindow::on_submitCodeButton_clicked);
+    connect(ui->backButton1, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
+    connect(ui->backButton2, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
+    connect(ui->backButton3, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
+    connect(ui->startCreateButton, &QPushButton::clicked, this, &MainWindow::on_startCreateButton_clicked);
 }
 
 void MainWindow::character_connections(){
@@ -39,8 +39,8 @@ void MainWindow::character_connections(){
     connect(ui->hatRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_hat);
     connect(ui->hairColorLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_haircolor);
     connect(ui->hairColorRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_haircolor);
-    connect(ui->skinColorLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_pantscolor);
-    connect(ui->skinColorRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_pantscolor);
+    connect(ui->pantsColorLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_pantscolor);
+    connect(ui->pantsColorRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_pantscolor);
 }
 
 bool MainWindow::has_exited() { return exited; }
@@ -52,25 +52,25 @@ void MainWindow::closeEvent(QCloseEvent* event){
     event->accept();
 }
 
-void MainWindow::on_click_createButton(){
+void MainWindow::on_createButton_clicked(){
     customization_menu(MenuStyle::CREATE);
 }
 
-void MainWindow::on_click_continueButton(){
+void MainWindow::on_continueButton_clicked(){
     ui->stackedWidget->setCurrentIndex(CONTINUE);
     // consultar a servidor por partidas relacionadas a este cliente
 }
 
-void MainWindow::on_click_joinButton(){
+void MainWindow::on_joinButton_clicked(){
     ui->stackedWidget->setCurrentIndex(JOIN);
 }
 
-void MainWindow::on_click_exitButton(){
+void MainWindow::on_exitButton_clicked(){
     exited = true;
     this->close();
 }
 
-void MainWindow::on_click_submitCodeButton(){
+void MainWindow::on_submitCodeButton_clicked(){
     std::string code = ui->codeBox->text().toStdString();
     /*
     if (code.length() != 4){
@@ -89,7 +89,7 @@ void MainWindow::on_click_submitCodeButton(){
     customization_menu(MenuStyle::JOIN);
 }
 
-void MainWindow::on_click_startCreateButton(){
+void MainWindow::on_startCreateButton_clicked(){
     ClientMessage msg;
     
     msg.player_name = ui->playerNameEdit->text().trimmed().toStdString();
@@ -123,7 +123,7 @@ void MainWindow::on_click_startCreateButton(){
     timer->start(20);
 }
 
-void MainWindow::on_click_backButton(){
+void MainWindow::on_backButton_clicked(){
     ui->stackedWidget->setCurrentIndex(MAIN);
 }
 

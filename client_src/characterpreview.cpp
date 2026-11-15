@@ -15,18 +15,18 @@ CharacterPreview::CharacterPreview(QWidget* parent)
 }
 
 // llamo por cada button
-void CharacterPreview::prev_body()  { prev_part(appearance.body, BODY_COUNT); }
-void CharacterPreview::next_body()  { next_part(appearance.body, BODY_COUNT); }
-void CharacterPreview::prev_hair()  { prev_part(appearance.hair, HAIR_COUNT); }
-void CharacterPreview::next_hair()  { next_part(appearance.hair, HAIR_COUNT); }
+void CharacterPreview::prev_body() { prev_part(appearance.body, BODY_COUNT); }
+void CharacterPreview::next_body() { next_part(appearance.body, BODY_COUNT); }
+void CharacterPreview::prev_hair() { prev_part(appearance.hair, HAIR_COUNT); }
+void CharacterPreview::next_hair() { next_part(appearance.hair, HAIR_COUNT); }
 void CharacterPreview::prev_shirt() { prev_part(appearance.shirt, SHIRT_COUNT); }
 void CharacterPreview::next_shirt() { next_part(appearance.shirt, SHIRT_COUNT); }
 void CharacterPreview::prev_pants() { prev_part(appearance.pants, PANTS_COUNT); }
 void CharacterPreview::next_pants() { next_part(appearance.pants, PANTS_COUNT); }
-void CharacterPreview::prev_hat()   { prev_part(appearance.hat, HAT_COUNT); }
-void CharacterPreview::next_hat()   { next_part(appearance.hat, HAT_COUNT); }
-void CharacterPreview::prev_haircolor()  { prev_part(hair_color, COLOR_COUNT); }
-void CharacterPreview::next_haircolor()  { next_part(hair_color, COLOR_COUNT); }
+void CharacterPreview::prev_hat() { prev_part(appearance.hat, HAT_COUNT); }
+void CharacterPreview::next_hat() { next_part(appearance.hat, HAT_COUNT); }
+void CharacterPreview::prev_haircolor() { prev_part(hair_color, COLOR_COUNT); }
+void CharacterPreview::next_haircolor() { next_part(hair_color, COLOR_COUNT); }
 void CharacterPreview::prev_pantscolor() { prev_part(pants_color, COLOR_COUNT); }
 void CharacterPreview::next_pantscolor() { next_part(pants_color, COLOR_COUNT); }
 

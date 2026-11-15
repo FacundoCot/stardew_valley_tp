@@ -21,6 +21,8 @@ private:
   void send_string(const std::string &str);
 
   CharacterAppearance recv_appearance();
+  void send_appearance(const CharacterAppearance& appearance);
+  void send_appearance_part(const uint16_t part);
 
   void send_inventory_state(const InventoryState& inventory);
   void send_time_state(const TimeState& time);

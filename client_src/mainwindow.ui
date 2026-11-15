@@ -109,7 +109,7 @@ QWidget {
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <property name="sizePolicy">
@@ -1173,84 +1173,6 @@ border: 2px solid #F1B86F;</string>
                   <widget class="QWidget" name="changeColorsWidget" native="true">
                    <layout class="QVBoxLayout" name="verticalLayout_7">
                     <item>
-                     <widget class="QWidget" name="skinColorWidget" native="true">
-                      <layout class="QHBoxLayout" name="horizontalLayout_11">
-                       <item>
-                        <widget class="QPushButton" name="skinColorLeft">
-                         <property name="minimumSize">
-                          <size>
-                           <width>30</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
-                         </property>
-                         <property name="text">
-                          <string/>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLabel" name="skinColorLabel">
-                         <property name="minimumSize">
-                          <size>
-                           <width>60</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>60</width>
-                           <height>16777208</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">color: #CB4D51;</string>
-                         </property>
-                         <property name="text">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;COLOR&lt;br/&gt;DE PIEL&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                         </property>
-                         <property name="alignment">
-                          <set>Qt::AlignCenter</set>
-                         </property>
-                         <property name="indent">
-                          <number>0</number>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="skinColorRight">
-                         <property name="minimumSize">
-                          <size>
-                           <width>30</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
-                         </property>
-                         <property name="text">
-                          <string/>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QWidget" name="hairColorWidget" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_12">
                        <item>
@@ -1279,13 +1201,13 @@ border: 2px solid #F1B86F;</string>
                         <widget class="QLabel" name="hairColorLabel">
                          <property name="minimumSize">
                           <size>
-                           <width>60</width>
+                           <width>80</width>
                            <height>0</height>
                           </size>
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>60</width>
+                           <width>80</width>
                            <height>16777215</height>
                           </size>
                          </property>
@@ -1305,6 +1227,84 @@ border: 2px solid #F1B86F;</string>
                        </item>
                        <item>
                         <widget class="QPushButton" name="hairColorRight">
+                         <property name="minimumSize">
+                          <size>
+                           <width>30</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QWidget" name="pantsColorWidget" native="true">
+                      <layout class="QHBoxLayout" name="horizontalLayout_11">
+                       <item>
+                        <widget class="QPushButton" name="pantsColorLeft">
+                         <property name="minimumSize">
+                          <size>
+                           <width>30</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="pantsColorLabel">
+                         <property name="minimumSize">
+                          <size>
+                           <width>80</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>80</width>
+                           <height>16777208</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">color: #CB4D51;</string>
+                         </property>
+                         <property name="text">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;COLOR DE&lt;br/&gt;PANTALON&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                         <property name="alignment">
+                          <set>Qt::AlignCenter</set>
+                         </property>
+                         <property name="indent">
+                          <number>0</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pantsColorRight">
                          <property name="minimumSize">
                           <size>
                            <width>30</width>
