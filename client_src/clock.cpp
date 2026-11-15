@@ -4,7 +4,7 @@
 
 #include <SDL2pp/Window.hh>
 
-Clock::Clock(Loader& loader) : clock_texture(loader.get_texture("clock")), current_angle(-135.0), day(1), hour(), minutes() {}
+Clock::Clock(Loader& loader) :  clock_texture(loader.get_texture("clock")),current_angle(-135.0), day(1), hour(), minutes() {}
 
 void Clock::draw(Visual& visual) {
     int margin = 20;
