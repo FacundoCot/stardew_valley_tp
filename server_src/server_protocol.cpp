@@ -284,7 +284,11 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
             const uint8_t unconscious = player.unconscious ? 1 : 0;
             send_or_throw(&unconscious, sizeof(unconscious));
+            
+            send_appearance(player.appearance);
             }
+
+
             if (message.enemies.size() >
                 std::numeric_limits<uint16_t>::max()) {
                 throw std::runtime_error("too many enemies");
@@ -369,11 +373,27 @@ MenuRequest ServerProtocol::recv_menu_request() {
 }
 
 CharacterAppearance ServerProtocol::recv_appearance(){
-  uint16_t parts[5] = {};
+  uint16_t parts[7] = {};
   for(uint16_t& p : parts){
     recv_or_throw(&p, sizeof(uint16_t));
     p = ntohs(p);
   }
   
-  return CharacterAppearance{parts[0], parts[1], parts[2], parts[3], parts[4]};
+  return CharacterAppearance{parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]};
+}
+
+void ServerProtocol::send_appearance(const CharacterAppearance& appearance){
+    send_appearance_part(appearance.body);
+    send_appearance_part(appearance.hair);
+    send_appearance_part(appearance.shirt);
+    send_appearance_part(appearance.pants);
+    send_appearance_part(appearance.hat);
+    send_appearance_part(appearance.hair_color);
+    send_appearance_part(appearance.pants_color);
+}
+
+void ServerProtocol::send_appearance_part(const uint16_t part){
+    uint16_t temp;
+    temp = htons(part);
+    send_or_throw(&temp, sizeof(uint16_t));
 }

@@ -21,7 +21,7 @@
   </property>
   <property name="styleSheet">
    <string notr="true">#MainWindow {
-	border-image: url(&quot;client_src/menuSprites/background.png&quot;);
+	border-image: url(&quot;client_src/data/menu/background.png&quot;);
 }
 
 QWidget {
@@ -209,6 +209,9 @@ QWidget {
                <property name="contextMenuPolicy">
                 <enum>Qt::ActionsContextMenu</enum>
                </property>
+               <property name="styleSheet">
+                <string notr="true">border-image: url(&quot;client_src/data/menu/upscaledMainTitle.png&quot;);</string>
+               </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -327,15 +330,15 @@ QWidget {
                </property>
                <property name="styleSheet">
                 <string notr="true">#createButton {
-	border-image: url(&quot;client_src/menuSprites/iniciar.png&quot;);
+	border-image: url(&quot;client_src/data/menu/iniciar.png&quot;);
 }
 
 #createButton:hover {
-   border-image: url(&quot;client_src/menuSprites/iniciarHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/iniciarHover.png&quot;);
 }
 
 #createButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/iniciarPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/iniciarPress.png&quot;);
 }
 </string>
                </property>
@@ -378,15 +381,15 @@ QWidget {
                </property>
                <property name="styleSheet">
                 <string notr="true">#continueButton {
-	border-image: url(&quot;client_src/menuSprites/retomar.png&quot;);
+	border-image: url(&quot;client_src/data/menu/retomar.png&quot;);
 }
 
 #continueButton:hover {
-   border-image: url(&quot;client_src/menuSprites/retomarHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/retomarHover.png&quot;);
 }
 
 #continueButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/retomarPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/retomarPress.png&quot;);
 }
 </string>
                </property>
@@ -426,15 +429,15 @@ QWidget {
                </property>
                <property name="styleSheet">
                 <string notr="true">#joinButton {
-	border-image: url(&quot;client_src/menuSprites/unirse.png&quot;);
+	border-image: url(&quot;client_src/data/menu/unirse.png&quot;);
 }
 
 #joinButton:hover {
-   border-image: url(&quot;client_src/menuSprites/unirseHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/unirseHover.png&quot;);
 }
 
 #joinButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/unirsePress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/unirsePress.png&quot;);
 }</string>
                </property>
                <property name="text">
@@ -470,15 +473,15 @@ QWidget {
                </property>
                <property name="styleSheet">
                 <string notr="true">#exitButton {
-	border-image: url(&quot;client_src/menuSprites/salir.png&quot;);
+	border-image: url(&quot;client_src/data/menu/salir.png&quot;);
 }
 
 #exitButton:hover {
-   border-image: url(&quot;client_src/menuSprites/salirHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/salirHover.png&quot;);
 }
 
 #exitButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/salirPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/salirPress.png&quot;);
 }
 </string>
                </property>
@@ -555,7 +558,7 @@ QWidget {
              </property>
              <property name="styleSheet">
               <string notr="true">#customizeMenu {
-	border-image: url(&quot;client_src/menuSprites/woodTemplate.png&quot;);
+	border-image: url(&quot;client_src/data/menu/woodTemplate.png&quot;);
 }</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -787,7 +790,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -838,7 +841,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -866,7 +869,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -916,7 +919,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -944,7 +947,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -994,7 +997,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1022,7 +1025,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1075,7 +1078,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1103,7 +1106,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1153,7 +1156,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1169,84 +1172,6 @@ border: 2px solid #F1B86F;</string>
                  <item>
                   <widget class="QWidget" name="changeColorsWidget" native="true">
                    <layout class="QVBoxLayout" name="verticalLayout_7">
-                    <item>
-                     <widget class="QWidget" name="skinColorWidget" native="true">
-                      <layout class="QHBoxLayout" name="horizontalLayout_11">
-                       <item>
-                        <widget class="QPushButton" name="skinColorLeft">
-                         <property name="minimumSize">
-                          <size>
-                           <width>30</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
-                         </property>
-                         <property name="text">
-                          <string/>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLabel" name="skinColorLabel">
-                         <property name="minimumSize">
-                          <size>
-                           <width>60</width>
-                           <height>0</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>60</width>
-                           <height>16777208</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">color: #CB4D51;</string>
-                         </property>
-                         <property name="text">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;COLOR&lt;br/&gt;DE PIEL&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                         </property>
-                         <property name="alignment">
-                          <set>Qt::AlignCenter</set>
-                         </property>
-                         <property name="indent">
-                          <number>0</number>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="skinColorRight">
-                         <property name="minimumSize">
-                          <size>
-                           <width>30</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>40</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
-                         </property>
-                         <property name="text">
-                          <string/>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
                     <item>
                      <widget class="QWidget" name="hairColorWidget" native="true">
                       <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -1265,7 +1190,7 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowLeft.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1276,13 +1201,13 @@ border: 2px solid #F1B86F;</string>
                         <widget class="QLabel" name="hairColorLabel">
                          <property name="minimumSize">
                           <size>
-                           <width>60</width>
+                           <width>80</width>
                            <height>0</height>
                           </size>
                          </property>
                          <property name="maximumSize">
                           <size>
-                           <width>60</width>
+                           <width>80</width>
                            <height>16777215</height>
                           </size>
                          </property>
@@ -1315,7 +1240,85 @@ border: 2px solid #F1B86F;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">border-image: url(&quot;client_src/menuSprites/arrowRight.png&quot;);</string>
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QWidget" name="pantsColorWidget" native="true">
+                      <layout class="QHBoxLayout" name="horizontalLayout_11">
+                       <item>
+                        <widget class="QPushButton" name="pantsColorLeft">
+                         <property name="minimumSize">
+                          <size>
+                           <width>30</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowLeft.png&quot;);</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="pantsColorLabel">
+                         <property name="minimumSize">
+                          <size>
+                           <width>80</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>80</width>
+                           <height>16777208</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">color: #CB4D51;</string>
+                         </property>
+                         <property name="text">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;COLOR DE&lt;br/&gt;PANTALON&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                         <property name="alignment">
+                          <set>Qt::AlignCenter</set>
+                         </property>
+                         <property name="indent">
+                          <number>0</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pantsColorRight">
+                         <property name="minimumSize">
+                          <size>
+                           <width>30</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>40</width>
+                           <height>30</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-image: url(&quot;client_src/data/menu/arrowRight.png&quot;);</string>
                          </property>
                          <property name="text">
                           <string/>
@@ -1362,15 +1365,15 @@ border: 2px solid #F1B86F;</string>
                    </property>
                    <property name="styleSheet">
                     <string notr="true">#startCreateButton {
-	border-image: url(&quot;client_src/menuSprites/iniciar.png&quot;);
+	border-image: url(&quot;client_src/data/menu/iniciar.png&quot;);
 }
 
 #startCreateButton:hover {
-   border-image: url(&quot;client_src/menuSprites/iniciarHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/iniciarHover.png&quot;);
 }
 
 #startCreateButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/iniciarPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/iniciarPress.png&quot;);
 }</string>
                    </property>
                    <property name="text">
@@ -1405,15 +1408,15 @@ border: 2px solid #F1B86F;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">#backButton2 {
-   border-image: url(&quot;client_src/menuSprites/volver.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volver.png&quot;);
 }
 
 #backButton2:hover {
-   border-image: url(&quot;client_src/menuSprites/volverHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverHover.png&quot;);
 }
 
 #backButton2:pressed {
-   border-image: url(&quot;client_src/menuSprites/volverPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverPress.png&quot;);
 }</string>
                </property>
                <property name="text">
@@ -1555,7 +1558,7 @@ border: 2px solid #F1B86F;</string>
              </property>
              <property name="styleSheet">
               <string notr="true">#continueMenu {
-	border-image: url(&quot;client_src/menuSprites/woodTemplate.png&quot;);
+	border-image: url(&quot;client_src/data/menu/woodTemplate.png&quot;);
 }</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
@@ -1600,15 +1603,15 @@ border: 2px solid #F1B86F;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">#backButton1 {
-   border-image: url(&quot;client_src/menuSprites/volver.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volver.png&quot;);
 }
 
 #backButton1:hover {
-   border-image: url(&quot;client_src/menuSprites/volverHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverHover.png&quot;);
 }
 
 #backButton1:pressed {
-   border-image: url(&quot;client_src/menuSprites/volverPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverPress.png&quot;);
 }</string>
                </property>
                <property name="text">
@@ -1744,7 +1747,7 @@ border: 2px solid #F1B86F;</string>
              </property>
              <property name="styleSheet">
               <string notr="true">#codeMenu {
-	border-image: url(&quot;client_src/menuSprites/woodTemplate.png&quot;);
+	border-image: url(&quot;client_src/data/menu/woodTemplate.png&quot;);
 }</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1907,15 +1910,15 @@ border: 2px solid #F1B86F;</string>
                    </property>
                    <property name="styleSheet">
                     <string notr="true">#submitCodeButton {
-	border-image: url(&quot;client_src/menuSprites/entrar.png&quot;);
+	border-image: url(&quot;client_src/data/menu/entrar.png&quot;);
 }
 
 #submitCodeButton:hover {
-   border-image: url(&quot;client_src/menuSprites/entrarHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/entrarHover.png&quot;);
 }
 
 #submitCodeButton:pressed {
-   border-image: url(&quot;client_src/menuSprites/entrarPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/entrarPress.png&quot;);
 }</string>
                    </property>
                    <property name="text">
@@ -1950,15 +1953,15 @@ border: 2px solid #F1B86F;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">#backButton3 {
-   border-image: url(&quot;client_src/menuSprites/volver.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volver.png&quot;);
 }
 
 #backButton3:hover {
-   border-image: url(&quot;client_src/menuSprites/volverHover.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverHover.png&quot;);
 }
 
 #backButton3:pressed {
-   border-image: url(&quot;client_src/menuSprites/volverPress.png&quot;);
+   border-image: url(&quot;client_src/data/menu/volverPress.png&quot;);
 }</string>
                </property>
                <property name="text">

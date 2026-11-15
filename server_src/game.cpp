@@ -213,7 +213,8 @@ std::vector<PlayerState> Game::snapshot() const {
             player.y,
             player.health,
             MAX_HEALTH,
-            player.unconscious,
+            player.unconscious, 
+            // TODO: FALTA GUARDAR APPEARANCE
         });
     }
     return state;
