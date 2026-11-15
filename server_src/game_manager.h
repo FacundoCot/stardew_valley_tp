@@ -54,6 +54,8 @@ public:
     void send_chat(int client_id, const std::string& text) override;
 
     void confirm_next_day(int client_id) override;
+
+    void select_slot(int client_id, int slot_index) override;
 };
 
 #endif

@@ -46,3 +46,9 @@ void ChatAction::execute(GameActionHandler& handler) const {
 void ConfirmNextDayAction::execute(GameActionHandler& handler) const {
     handler.confirm_next_day(get_client_id());
 }
+
+SelectSlotAction::SelectSlotAction(int slot_index): slot_index(slot_index) {}
+
+void SelectSlotAction::execute(GameActionHandler& handler) const {
+    handler.select_slot(get_client_id(), slot_index);
+}

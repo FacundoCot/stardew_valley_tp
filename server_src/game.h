@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "common_src/farm_zone.h"
 #include "common_src/messages.h"
@@ -35,6 +36,7 @@ struct Player {
     Direction facing;
     float attack_cooldown_left;
     Storage inventory{9};
+    int selected_slot = 0;
     int coins;
     ZoneId zone;
 
@@ -107,6 +109,8 @@ public:
     bool name_to_client_id(int& client_id, const std::string& player_name) const;
     GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const;
     void restore_save_data(const GameSaveData& data);
+    bool select_slot(int client_id, int slot_index);
+    int get_selected_slot(int client_id) const;
 };
 
 #endif
