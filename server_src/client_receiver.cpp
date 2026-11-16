@@ -37,8 +37,9 @@ void ClientReceiver::run() {
 
     try {
       actions.push(disconnect);
-    } catch (const ClosedQueue &) {
-      // El servidor esta cerrando la cola.
+    } catch (const std::exception& e) {
+        std::cerr << "[SERVER] ClientReceiver: "
+                  << e.what() << std::endl;
     }
   }
 }

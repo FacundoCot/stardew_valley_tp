@@ -13,17 +13,20 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
     character_connections();
 }
 
-void MainWindow::mainwindow_connections(){
-    connect(timer, &QTimer::timeout, this, &MainWindow::timer_create_response);
-    connect(ui->createButton, &QPushButton::clicked, this, &MainWindow::on_createButton_clicked);
-    connect(ui->continueButton, &QPushButton::clicked, this, &MainWindow::on_continueButton_clicked);
-    connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::on_joinButton_clicked);
-    connect(ui->exitButton, &QPushButton::clicked, this, &MainWindow::on_exitButton_clicked);
-    connect(ui->submitCodeButton, &QPushButton::clicked, this, &MainWindow::on_submitCodeButton_clicked);
-    connect(ui->backButton1, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->backButton2, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->backButton3, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->startCreateButton, &QPushButton::clicked, this, &MainWindow::on_startCreateButton_clicked);
+void MainWindow::mainwindow_connections() {
+    // El timer no tiene conexion automatica.
+    connect(timer, &QTimer::timeout,
+            this, &MainWindow::timer_create_response);
+
+    // Los tres botones de volver comparten un mismo slot.
+    connect(ui->backButton1, &QPushButton::clicked,
+            this, &MainWindow::on_backButton_clicked);
+
+    connect(ui->backButton2, &QPushButton::clicked,
+            this, &MainWindow::on_backButton_clicked);
+
+    connect(ui->backButton3, &QPushButton::clicked,
+            this, &MainWindow::on_backButton_clicked);
 }
 
 void MainWindow::character_connections(){
