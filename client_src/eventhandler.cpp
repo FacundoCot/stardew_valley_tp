@@ -9,6 +9,8 @@
 
 ClientMessage EventHandler::get_event_to_protocol(const SDL_Event &e,
                                                   ClientMessage &msg) {
+  if (is_select_slot(e)) {return select_slot(e, msg);}
+
   switch (e.key.keysym.sym) {
   case (SDLK_w):
     msg.type = ActionType::MOVE;
@@ -90,6 +92,16 @@ void EventHandler::change_window_dimension(const SDL_Event& e, Visual& visual, C
       visual.set_is_fulscreen();
     }
   } 
+}
+
+bool EventHandler::is_select_slot(const SDL_Event& e) {
+    return e.key.keysym.sym >= (SDLK_0) &&  e.key.keysym.sym <= (SDLK_8);
+}
+
+ClientMessage EventHandler::select_slot(const SDL_Event& e, ClientMessage& msg) {
+  msg.type = ActionType::SELECT_SLOT;
+  msg.slot_index = e.key.keysym.sym - SDLK_0;
+  return msg;
 }
 
 ClientMessage EventHandler::get_mouse_event(const SDL_Event &e, Button& btn, ClientState& state) {

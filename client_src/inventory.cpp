@@ -36,9 +36,39 @@ void Inventory::draw_inventory(Visual& visual, Loader& loader) {
             visual.draw(texture, src_item_x, src_item_y, src_item_h, src_item_w, dest_item_x, 
                     dest_item_y, dest_item_h, dest_item_w);
 
+            if (slots[i].is_selected) {
+                draw_selected(visual, dest_item_x, dest_item_y, dest_item_w, dest_item_h);
+            }
+
         }
     }
+    draw_coins(visual);
+}
 
+void Inventory::update_from_server(const ServerMessage &response) {
+    for (auto &slot : slots) {
+        slot.is_empty = true;
+    }
+
+    this->coins = response.inventory.coins;
+    slots[response.inventory.selected_slot].is_selected = true;
+
+    for (const auto& server_slot : response.inventory.slot_vector) {
+        uint8_t i = server_slot.index;
+        if (i < slots.size()) {
+            slots[i].type = server_slot.type;
+            slots[i].quality = server_slot.quality;
+            slots[i].quantity = server_slot.quantity;
+            slots[i].is_empty = false;
+            if (slots[i].is_selected && i != response.inventory.selected_slot) {
+                slots[i].is_selected = false;
+            }
+        }
+    }
+}
+
+
+void Inventory::draw_coins(Visual& visual) {
     int coins_x = visual.get_window().GetWidth() - 2*72 + 50 ;
     int coins_y = 20 + 47*2;
 
@@ -50,22 +80,17 @@ void Inventory::draw_inventory(Visual& visual, Loader& loader) {
     visual.draw_text(coins_text, coins_x, coins_y, r, g, b);
 }
 
-void Inventory::update_from_server(const ServerMessage &response) {
-    for (auto &slot : slots) {
-        slot.is_empty = true;
-    }
 
-    this->coins =response.inventory.coins;
+void Inventory::draw_selected(Visual& visual, int& x, int& y, int& w, int& h) {
+    SDL2pp::Renderer& renderer = visual.get_renderer();
 
-    for (const auto& server_slot : response.inventory.slot_vector) {
-        uint8_t i = server_slot.index;
-        if (i < slots.size()) {
-            slots[i].type = server_slot.type;
-            slots[i].quality = server_slot.quality;
-            slots[i].quantity = server_slot.quantity;
-            slots[i].is_empty = false;
-        }
-    }
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+
+    renderer.SetDrawColor(255,255,255, 150);
+
+    renderer.FillRect(SDL2pp::Rect(x, y, w, h));
+
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_NONE);
 }
 
 SDL2pp::Texture& Inventory::get_texture(Loader& loader, ItemType& type) {

@@ -11,6 +11,8 @@
 class EventHandler {
 private:
   ClientMessage get_event_to_protocol(const SDL_Event &e, ClientMessage &msg);
+  ClientMessage select_slot(const SDL_Event& e, ClientMessage& msg);
+  bool is_select_slot(const SDL_Event &e);
 
 public:
   ClientMessage get_next_event(const SDL_Event &e, Visual &visual,
