@@ -213,7 +213,12 @@ void ServerProtocol::send_world_info(const World& world) {
      *     i32 llegada y * 100
      *   datos propios de granja o pueblo
      */
+    const uint8_t type = static_cast<uint8_t>(MessageType::WORLD_INFO);
+    send_or_throw(&type, sizeof(uint8_t));
+
     const std::vector<uint8_t> data = encode_world(world);
+    const uint32_t size = htonl(static_cast<uint32_t>(data.size()));
+    send_or_throw(&size, sizeof(uint32_t));
     send_or_throw(data.data(), static_cast<unsigned int>(data.size()));
 }
 

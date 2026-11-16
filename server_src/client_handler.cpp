@@ -96,7 +96,8 @@ void ClientHandler::run() {
             break;
         }
     } catch (const std::exception& e) {
-        // desconexion del cliente o error en la comunicacion
+        std::cerr << "[SERVER] ClientHandler: "
+                << e.what() << std::endl;
     }
 
     registry.remove(client_id);

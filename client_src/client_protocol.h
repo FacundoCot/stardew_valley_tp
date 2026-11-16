@@ -28,6 +28,7 @@ public:
   ServerMessage rcv_from_server();
   void rcv_inventory(ServerMessage &msg);
   void rcv_time_state(ServerMessage &msg);
+  void rcv_world_info(ServerMessage &response);
   void shutdown();
 };
 
