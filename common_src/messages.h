@@ -75,23 +75,26 @@ struct PlayerState {
     float y;
     int health;
     int max_health;
+    int energy;
+    int max_energy;
     bool unconscious;
     CharacterAppearance appearance;
 
 
     PlayerState(std::string name, float x, float y,
-                int health, int max_health, bool unconscious,
+                int health, int max_health, int energy, int max_energy, bool unconscious,
               CharacterAppearance appearance):
-        player_name(std::move(name)), x(x), y(y),
-        health(health), max_health(max_health), unconscious(unconscious), appearance(appearance) {}
+        player_name(std::move(name)), x(x), y(y), health(health), max_health(max_health), 
+        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance) {}
 
-    
+    /*
     // -- TEMPORAL, solo para que compile hasta que el server guarde el estado del CharacterAppearance en game.h
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, bool unconscious):
         player_name(std::move(name)), x(x), y(y),
         health(health), max_health(max_health), unconscious(unconscious), appearance(CharacterAppearance{}) {}
     // --
+    */
 
     PlayerState() = default;
 };

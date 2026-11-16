@@ -6,7 +6,11 @@ GameClock::GameClock(int day, double duration):
         day_duration_seconds(duration) {}
 
 bool GameClock::is_finished() const {
-    return elapsed_seconds >= day_duration_seconds;
+    return elapsed_seconds >= day_duration_seconds || ended_early ;
+}
+
+void GameClock::finish_day() {
+    ended_early = true;
 }
 
 void GameClock::update(float elapsed) {
@@ -34,6 +38,7 @@ int GameClock::elapsed_game_minutes() const {
 void GameClock::start_next_day() {
     day++;
     elapsed_seconds = 0.0;
+    ended_early = false;
 }
 
 // el juego arranca a las 6 am, por eso se suma 6 a los minutos transcurridos

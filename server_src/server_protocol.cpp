@@ -285,6 +285,13 @@ void ServerProtocol::send_message(const ServerMessage& message) {
             send_or_throw(&health, sizeof(health));
             send_or_throw(&max_health, sizeof(max_health));
 
+            // energia y energia maxima
+            const uint16_t energy = htons(static_cast<uint16_t>(player.energy));
+            const uint16_t max_energy = htons(static_cast<uint16_t>(player.max_energy));
+            send_or_throw(&energy, sizeof(energy));
+            send_or_throw(&max_energy, sizeof(max_energy));
+
+            // inconsciente si o no
             const uint8_t unconscious = player.unconscious ? 1 : 0;
             send_or_throw(&unconscious, sizeof(unconscious));
             

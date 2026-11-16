@@ -7,7 +7,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <optional>
 
 #include "common_src/farm_zone.h"
 #include "common_src/messages.h"
@@ -25,6 +24,8 @@ const int WEAKENED_HEALTH_PERCENT = 20;
 const int SWORD_DAMAGE = 25;
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
 const int MAX_ENERGY = 100;
+const int MOVE_ENERGY_COST = 1;
+const int ATTACK_ENERGY_COST = 2;
 
 inline bool is_weakened(int health) {
     return health > 0 && health * 100 <= MAX_HEALTH * WEAKENED_HEALTH_PERCENT;
@@ -44,7 +45,7 @@ struct Player {
     ZoneId zone;
     CharacterAppearance appearance;
 
-    Player(float x, float y, int health, int initial_coins = 0,
+    Player(float x, float y, int health, int initial_coins,
            ZoneId zone, CharacterAppearance appearance_param) :
         x(x), y(y), health(health), energy(MAX_ENERGY), unconscious(health == 0),
         facing(Direction::DOWN), attack_cooldown_left(0.0f),
@@ -86,6 +87,10 @@ private:
     std::vector<EnemyState> enemy_snapshot() const;
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
+
+    void check_day_end_unlocked();
+
+    bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
 
 public:
     explicit Game(std::shared_ptr<const World> world);

@@ -47,68 +47,68 @@ Game::Game(std::shared_ptr<const World> world_param):
 
 bool Game::add_player_unlocked(int client_id, const std::string &player_name,
                                ZoneId zone, float x, float y, const CharacterAppearance& appearance) {
-  if (connected_clients.count(client_id) > 0) {
-    return false;
-  }
-
-  for (const auto &[id, name] : connected_clients) {
-    if (name == player_name) {
-      return false;
+    if (connected_clients.count(client_id) > 0) {
+        return false;
     }
-  }
 
-  if (players.count(player_name) == 0) {
-      if (!world->is_walkable(zone, x, y)) {
-          return false;
-      }
-      
-      Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
+    for (const auto &[id, name] : connected_clients) {
+        if (name == player_name) {
+        return false;
+        }
+    }
 
-      player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
-      player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
-      player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
-      player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
+    if (players.count(player_name) == 0) {
+        if (!world->is_walkable(zone, x, y)) {
+            return false;
+        }
+        
+        Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
 
-      players.emplace(player_name, player);
-  }
+        player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
+        player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
+        player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
+        player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
 
-  connected_clients[client_id] = player_name;
-  return true;
+        players.emplace(player_name, player);
+    }
+
+    connected_clients[client_id] = player_name;
+    return true;
 }
 
 bool Game::add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance) {
-  std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
 
-  int bed_index;
-  const auto assigned_bed = bed_by_player.find(player_name);
-  if (assigned_bed != bed_by_player.end()) {
-      bed_index = assigned_bed->second;
-  } else {
-      bed_index = -1;
-      for (int candidate = 0; candidate < farm->bed_count(); ++candidate) {
-          bool occupied = false;
-          for (const auto& [other_player, other_bed] : bed_by_player) {
-              if (other_player != player_name && other_bed == candidate) {
-                  occupied = true;
-                  break;
-              }
-          }
-          if (!occupied) {
-              bed_index = candidate;
-              break;
-          }
-      }
-      if (bed_index < 0) {
-          return false;
-      }
-  }
+    int bed_index;
+    const auto assigned_bed = bed_by_player.find(player_name);
+    if (assigned_bed != bed_by_player.end()) {
+        bed_index = assigned_bed->second;
+    } else {
+        bed_index = -1;
+        for (int candidate = 0; candidate < farm->bed_count(); ++candidate) {
+            bool occupied = false;
+            for (const auto& [other_player, other_bed] : bed_by_player) {
+                if (other_player != player_name && other_bed == candidate) {
+                    occupied = true;
+                    break;
+                }
+            }
+            if (!occupied) {
+                bed_index = candidate;
+                break;
+            }
+        }
+        if (bed_index < 0) {
+            return false;
+        }
+    }
 
-  const auto [x, y] = farm->bed_position(bed_index);
-  if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y, appearance)) {
-      return false;
-  }
-  bed_by_player[player_name] = bed_index;
-  return true;
+    const auto [x, y] = farm->bed_position(bed_index);
+    if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y, appearance)) {
+        return false;
+    }
+    bed_by_player[player_name] = bed_index;
+    return true;
 }
 
 bool Game::is_multiplayer() const {
@@ -171,26 +171,47 @@ bool Game::move_player(int client_id, Direction direction) {
         return false;
     }
 
+    float step = PLAYER_STEP;
+    if (player.energy * 10 <= MAX_ENERGY) {
+        step = PLAYER_STEP/ 2.0f;
+    }
+
     float new_x = player.x;
     float new_y = player.y;
     switch (direction) {
-        case Direction::UP:      new_y -= PLAYER_STEP; break;
-        case Direction::DOWN:    new_y += PLAYER_STEP; break;
-        case Direction::LEFT:    new_x -= PLAYER_STEP; break;
-        case Direction::RIGHT:   new_x += PLAYER_STEP; break;
+        case Direction::UP:      new_y -= step; break;
+        case Direction::DOWN:    new_y += step; break;
+        case Direction::LEFT:    new_x -= step; break;
+        case Direction::RIGHT:   new_x += step; break;
         case Direction::DEFAULT: return false;
     }
 
     player.facing = direction;
 
-    return move_player_unlocked(player, new_x, new_y) !=
-           MovementResult::BLOCKED;
+    if (move_player_unlocked(player, new_x, new_y) == MovementResult::BLOCKED) {
+        return false;
+    }
+
+    player.energy = std::max(0, player.energy - MOVE_ENERGY_COST);
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+    }
+
+    check_day_end_unlocked();
+
+    return true;
 }
 
 bool Game::remove_player(int client_id) {
-  std::lock_guard<std::mutex> lock(mtx);
-  ready_clients.erase(client_id);
-  return connected_clients.erase(client_id) > 0;
+    std::lock_guard<std::mutex> lock(mtx);
+    ready_clients.erase(client_id);
+    const bool removed = connected_clients.erase(client_id) > 0;
+
+    if (removed) {
+        check_day_end_unlocked();
+    }
+    return removed;
 }
 
 bool Game::is_empty() const {
@@ -200,36 +221,38 @@ bool Game::is_empty() const {
 }
 
 std::vector<int> Game::player_ids() const {
-  std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
 
-  std::vector<int> ids;
-  ids.reserve(connected_clients.size());
+    std::vector<int> ids;
+    ids.reserve(connected_clients.size());
 
-  for (const auto &[id, player_name] : connected_clients) {
-    ids.push_back(id);
-  }
-  return ids;
+    for (const auto &[id, player_name] : connected_clients) {
+        ids.push_back(id);
+    }
+    return ids;
 }
 
 std::vector<PlayerState> Game::snapshot() const {
 
-  std::vector<PlayerState> state;
-  state.reserve(connected_clients.size());
+    std::vector<PlayerState> state;
+    state.reserve(connected_clients.size());
 
-  for (const auto &[id, name] : connected_clients) {
-    const Player &player = players.at(name);
+    for (const auto &[id, name] : connected_clients) {
+        const Player &player = players.at(name);
 
-        state.push_back(PlayerState{
-            name,
-            player.x,
-            player.y,
-            player.health,
-            MAX_HEALTH,
-            player.unconscious, 
-            player.appearance
-        });
-    }
-    return state;
+            state.push_back(PlayerState{
+                name,
+                player.x,
+                player.y,
+                player.health,
+                MAX_HEALTH,
+                player.energy,
+                MAX_ENERGY,
+                player.unconscious, 
+                player.appearance
+            });
+        }
+        return state;
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
@@ -251,7 +274,11 @@ bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (it == players.end() || it->second.unconscious) {
         return false;
     }
-    return apply_health(it->second, it->second.health - amount);
+    const bool changed = apply_health(it->second, it->second.health - amount);
+
+    check_day_end_unlocked();
+
+    return changed;
 }
 
 bool Game::nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const {
@@ -316,6 +343,12 @@ bool Game::update(float dt) {
     std::lock_guard<std::mutex> lock(mtx);
 
     if (connected_clients.empty() || clock.is_finished()) {
+        return false;
+    }
+
+    check_day_end_unlocked();
+
+    if (clock.is_finished()) {
         return false;
     }
 
@@ -396,6 +429,14 @@ bool Game::attack(int client_id) {
     }
 
     remove_dead_enemies_unlocked();
+
+    player.energy = std::max(0, player.energy - ATTACK_ENERGY_COST);
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+    }
+
+    check_day_end_unlocked();
 
     return true;
 }
@@ -510,11 +551,32 @@ bool Game::all_players_ready() const {
 
 bool Game::start_next_day_game() {
     std::lock_guard<std::mutex> lock(mtx);
+
     if (!all_players_ready_no_mutex()) {
         return false;
     }
+
+    for (auto& [name, player] : players) {
+        const bool slept_well = !player.unconscious && is_in_own_bed_unlocked(name, player);
+
+        const auto [bed_x, bed_y] = farm->bed_position(bed_by_player.at(name));
+
+        player.x = bed_x;
+        player.y = bed_y;
+        player.zone = ZoneId::FARM_ZONE;
+
+        player.health = slept_well ? MAX_HEALTH : MAX_HEALTH / 2;
+
+        player.energy = slept_well ? MAX_ENERGY : MAX_ENERGY / 2;
+
+        player.unconscious = false;
+        player.facing = Direction::DOWN;
+        player.attack_cooldown_left = 0.0f;
+    }
+
     clock.start_next_day();
     ready_clients.clear();
+
     return true;
 }
 
@@ -560,6 +622,7 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.x = player.x;
         player_data.y = player.y;
         player_data.health = player.health;
+        player_data.energy = player.energy;
         player_data.coins = player.coins;
         player_data.zone = player.zone;
         // si hay una mala asignacion de la cama se va a lanzar una excepcion gracias al .at()
@@ -611,7 +674,9 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.zone,
             saved_player.appearance
         );
+        // se hacen aparte porque no son parte del constructor de player
         player.selected_slot = saved_player.selected_slot;
+        player.energy = saved_player.energy;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
@@ -662,4 +727,37 @@ int Game::get_selected_slot(int client_id) const {
     }
 
     return players.at(client_it->second).selected_slot;
+}
+
+void Game::check_day_end_unlocked() {
+    if (clock.is_finished() || connected_clients.empty()) {
+        return;
+    }
+
+    for (const auto& connected : connected_clients) {
+        const std::string& name = connected.second;
+
+        if (!players.at(name).unconscious) {
+            return;
+        }
+    }
+
+    clock.finish_day();
+}
+
+bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player) const {
+
+    if (!(player.zone == ZoneId::FARM_ZONE)) {
+        return false;
+    }
+
+    const auto bed_searched = bed_by_player.find(name);
+
+    if (bed_searched == bed_by_player.end()) {
+        return false;
+    }
+
+    const auto [bed_x, bed_y] = farm->bed_position(bed_searched->second);
+
+    return std::floor(player.x) == std::floor(bed_x) && std::floor(player.y) == std::floor(bed_y);
 }

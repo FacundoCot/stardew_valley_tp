@@ -21,6 +21,7 @@ struct PlayerSaveData {
     float x;
     float y;
     int health;
+    int energy;
     int coins;
     ZoneId zone;
     int bed_index;
