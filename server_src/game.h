@@ -18,6 +18,7 @@
 #include "storage.h"
 #include "game_clock.h"
 #include "save_data_structs.h"
+#include "common_src/character_appearance.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -39,12 +40,13 @@ struct Player {
     int selected_slot = 0;
     int coins;
     ZoneId zone;
+    CharacterAppearance appearance;
 
     Player(float x, float y, int health, int initial_coins = 0,
-           ZoneId zone = ZoneId::FARM_ZONE):
+           ZoneId zone, CharacterAppearance appearance_param) :
         x(x), y(y), health(health), unconscious(health == 0),
         facing(Direction::DOWN), attack_cooldown_left(0.0f),
-        inventory(9), coins(initial_coins), zone(zone) {}
+        inventory(9), coins(initial_coins), zone(zone), appearance(appearance_param) {}
 };
 
 class Game {
@@ -73,7 +75,7 @@ private:
     bool remove_dead_enemies_unlocked();
     uint32_t get_initial_coins() const;
     bool add_player_unlocked(int client_id, const std::string& player_name,
-                             ZoneId zone, float x, float y);
+                             ZoneId zone, float x, float y, const CharacterAppearance& appearance);
     std::map<std::string, int> bed_by_player;
     MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
 
@@ -85,7 +87,7 @@ private:
 public:
     explicit Game(std::shared_ptr<const World> world);
 
-    bool add_player_auto(int client_id, const std::string& player_name);
+    bool add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance);
     bool enable_multiplayer();
     bool is_multiplayer() const;
     bool move_player(int client_id, Direction direction);

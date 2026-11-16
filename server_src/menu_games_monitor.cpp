@@ -74,11 +74,12 @@ GameRuntime::GameRuntime(ClientRegistry& registry,
 MenuResult MenuGamesMonitor::create_game(int client_id,
                                         const std::string& world_name,
                                         const std::string& game_name,
-                                        const std::string& player_name){
+                                        const std::string& player_name,
+                                        const CharacterAppearance& appearance){
     std::lock_guard<std::mutex> lock(mtx);
     auto game = std::make_shared<Game>(catalog.get(world_name));
 
-    if (!game->add_player_auto(client_id, player_name))
+    if (!game->add_player_auto(client_id, player_name, appearance))
     {
         return MenuResult{false, "No hay lugar en el mapa", "", nullptr};
     }
@@ -97,7 +98,8 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
 
 MenuResult MenuGamesMonitor::join_game(int client_id,
                                        const std::string& game_code,
-                                       const std::string& player_name) {
+                                       const std::string& player_name,
+                                       const CharacterAppearance& appearance) {
 
     std::lock_guard<std::mutex> lock(mtx);
 
@@ -125,7 +127,7 @@ MenuResult MenuGamesMonitor::join_game(int client_id,
         return MenuResult{false, std::string("No se pudo cargar la partida: ") + err.what(), "", nullptr};
     }
 
-    if (!game->add_player_auto(client_id, player_name)) {
+    if (!game->add_player_auto(client_id, player_name, appearance)) {
         return MenuResult{false, "No hay lugar en la partida", "", nullptr};
     }
 

@@ -46,7 +46,7 @@ Game::Game(std::shared_ptr<const World> world_param):
 }
 
 bool Game::add_player_unlocked(int client_id, const std::string &player_name,
-                               ZoneId zone, float x, float y) {
+                               ZoneId zone, float x, float y, const CharacterAppearance& appearance) {
   if (connected_clients.count(client_id) > 0) {
     return false;
   }
@@ -62,7 +62,7 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
           return false;
       }
       
-      Player player(x, y, MAX_HEALTH, get_initial_coins(), zone);
+      Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
 
       player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
       player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
@@ -76,7 +76,7 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
   return true;
 }
 
-bool Game::add_player_auto(int client_id, const std::string& player_name) {
+bool Game::add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance) {
   std::lock_guard<std::mutex> lock(mtx);
 
   int bed_index;
@@ -104,7 +104,7 @@ bool Game::add_player_auto(int client_id, const std::string& player_name) {
   }
 
   const auto [x, y] = farm->bed_position(bed_index);
-  if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y)) {
+  if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y, appearance)) {
       return false;
   }
   bed_by_player[player_name] = bed_index;
@@ -226,7 +226,7 @@ std::vector<PlayerState> Game::snapshot() const {
             player.health,
             MAX_HEALTH,
             player.unconscious, 
-            // TODO: FALTA GUARDAR APPEARANCE
+            player.appearance
         });
     }
     return state;
@@ -556,6 +556,7 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
     for (const auto& [player_name, player] : players) {
         PlayerSaveData player_data;
         player_data.name = player_name;
+        player_data.appearance = player.appearance;
         player_data.x = player.x;
         player_data.y = player.y;
         player_data.health = player.health;
@@ -607,7 +608,8 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.y,
             saved_player.health,
             saved_player.coins,
-            saved_player.zone
+            saved_player.zone,
+            saved_player.appearance
         );
         player.selected_slot = saved_player.selected_slot;
 
