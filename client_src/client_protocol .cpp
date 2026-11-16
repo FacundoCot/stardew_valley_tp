@@ -108,6 +108,18 @@ std::string ClientProtocol::serialize_confirm_day(const ClientMessage &msg_to_se
   return buffer;
 }
 
+std::string ClientProtocol::serialize_select_slot(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t)*2;
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+  buffer += msg_to_server.slot_index;
+
+  return buffer;
+}
+
+
 std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   switch (msg_to_server.type) {
   case ActionType::CREATE_GAME:
@@ -124,6 +136,9 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   
   case ActionType::CONFIRM_NEXT_DAY:
     return serialize_confirm_day(msg_to_server);
+
+  case ActionType::SELECT_SLOT:
+    return serialize_select_slot(msg_to_server);
 
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");

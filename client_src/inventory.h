@@ -10,7 +10,7 @@
 struct InventorySlot {
 
     uint8_t id;
-    bool is_selected;
+    bool is_selected = false;
 
     bool is_empty = true;
     ItemType type;
@@ -42,6 +42,8 @@ Inventory(Loader& loader);
 void update_position(int& screen_w, int& screen_h);
 void draw_inventory(Visual& visual, Loader& loader);
 void update_from_server(const ServerMessage &msg);
+void draw_coins(Visual& visual);
+void draw_selected(Visual& visual, int& x, int& y, int& w, int& h);
 };
 
 
