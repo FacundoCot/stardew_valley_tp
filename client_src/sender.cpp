@@ -4,8 +4,8 @@
 #include "../common_src/queue.h"
 #include "client_protocol.h"
 
-Sender::Sender(ClientProtocol &protocol_rcv, Queue<ClientMessage> &outgoing_rcv)
-    : protocol(protocol_rcv), outgoing(outgoing_rcv) {}
+Sender::Sender(Queue<ClientMessage> &outgoing_rcv, ClientProtocol &protocol_rcv)
+    : outgoing(outgoing_rcv), protocol(protocol_rcv) {}
 
 void Sender::run() {
   try {

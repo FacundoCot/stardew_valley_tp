@@ -43,16 +43,15 @@ private:
   bool running = true;
   bool was_intentional = false;
 
-  bool main_menu(int argc, char *argv[]);
+  void stop();
 
 public:
   Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol);
 
 
-  void run(int argc, char* argv[]);
+  void run();
   void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader);
 
-  void stop();
   void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& Inventory, Loader& loader);
   void update(ServerMessage& response, Clock& clock, Inventory& inventory);
 
