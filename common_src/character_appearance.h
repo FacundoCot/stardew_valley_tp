@@ -10,7 +10,7 @@ struct CharacterAppearance {
     uint16_t pants = 0;
     uint16_t hat = 0;
     uint16_t hair_color = 0;
-    uint16_t pants_color = 0;
+    uint16_t pants_color = 4;
 };
 
 #endif
