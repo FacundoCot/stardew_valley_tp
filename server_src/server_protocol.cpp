@@ -293,47 +293,34 @@ void ServerProtocol::send_message(const ServerMessage& message) {
              *   u16 vida (htons)
              *   u16 vida maxima (htons)
              */
-            if (message.players.size() >
-                std::numeric_limits<uint16_t>::max()) {
-                throw std::runtime_error("too many players");
-            }
+            // Zona y personaje del destinatario
+            send_zone_id(message.zone);
+            send_player_state(message.self_player);
 
-            const uint16_t count =
-                htons(static_cast<uint16_t>(message.players.size()));
+            // Otros jugadores visibles
+            const uint16_t count = htons(static_cast<uint16_t>(message.players.size()));
+
             send_or_throw(&count, sizeof(count));
 
-          for (const PlayerState& player : message.players) {
-            send_string(player.player_name);
+            for (const PlayerState& player : message.players) {
+              send_player_state(player);
+            }
 
-            const uint32_t x = coordinate_to_network(player.x);
-            const uint32_t y = coordinate_to_network(player.y);
+            // Jugadores para el mapa general
+            const uint16_t map_count = htons(static_cast<uint16_t>(message.map_players.size()));
 
-            send_or_throw(&x, sizeof(x));
-            send_or_throw(&y, sizeof(y));
+            send_or_throw(&map_count, sizeof(map_count));
 
-            if (player.health < 0 || player.max_health < 0 ||
-                player.health > std::numeric_limits<uint16_t>::max() ||
-                player.max_health > std::numeric_limits<uint16_t>::max()) {
-                  throw std::runtime_error("invalid health value");
-                }
-                
-            const uint16_t health = htons(static_cast<uint16_t>(player.health));
-            const uint16_t max_health = htons(static_cast<uint16_t>(player.max_health));
+            for (const MapPlayerState& player : message.map_players) {
+              send_string(player.player_name);
 
-            send_or_throw(&health, sizeof(health));
-            send_or_throw(&max_health, sizeof(max_health));
+              const uint32_t x = coordinate_to_network(player.x);
+              const uint32_t y = coordinate_to_network(player.y);
 
-            // energia y energia maxima
-            const uint16_t energy = htons(static_cast<uint16_t>(player.energy));
-            const uint16_t max_energy = htons(static_cast<uint16_t>(player.max_energy));
-            send_or_throw(&energy, sizeof(energy));
-            send_or_throw(&max_energy, sizeof(max_energy));
+              send_or_throw(&x, sizeof(x));
+              send_or_throw(&y, sizeof(y));
 
-            // inconsciente si o no
-            const uint8_t unconscious = player.unconscious ? 1 : 0;
-            send_or_throw(&unconscious, sizeof(unconscious));
-            
-            send_appearance(player.appearance);
+              send_zone_id(player.zone);
             }
 
 

@@ -232,27 +232,44 @@ std::vector<int> Game::player_ids() const {
     return ids;
 }
 
-std::vector<PlayerState> Game::snapshot() const {
-
+std::vector<PlayerState> Game::snapshot(ZoneId zone, const std::string& self_name) const {
     std::vector<PlayerState> state;
-    state.reserve(connected_clients.size());
 
     for (const auto &[id, name] : connected_clients) {
         const Player &player = players.at(name);
 
+        if(name != self_name && player.zone == zone) {
             state.push_back(PlayerState{
-                name,
-                player.x,
-                player.y,
-                player.health,
-                MAX_HEALTH,
-                player.energy,
-                MAX_ENERGY,
-                player.unconscious, 
-                player.appearance
+                    name,
+                    player.x,
+                    player.y,
+                    player.health,
+                    MAX_HEALTH,
+                    player.energy,
+                    MAX_ENERGY,
+                    player.unconscious, 
+                    player.appearance
             });
         }
-        return state;
+    }
+    return state;
+}
+
+std::vector<MapPlayerState> Game::map_snapshot() const {
+    std::vector<MapPlayerState> state;
+
+    for (const auto& [id, name] : connected_clients) {
+        const Player& player = players.at(name);
+
+        state.push_back(MapPlayerState{
+            name,
+            player.x,
+            player.y,
+            player.zone
+        });
+    }
+
+    return state;
 }
 
 Queue<std::shared_ptr<ClientAction>>& Game::get_actions_queue() {
@@ -507,10 +524,29 @@ TimeState Game::time_state() const {
 ServerMessage Game::game_state(int client_id) const {
     std::lock_guard<std::mutex> lock(mtx);
 
+    const std::string& name = connected_clients.at(client_id);
+    const Player& me = players.at(name);
+
     ServerMessage msg{};
     msg.type = MessageType::GAME_STATE;
 
-    msg.players = snapshot();
+    msg.zone = me.zone;
+
+    msg.self_player = PlayerState{
+        name,
+        me.x,
+        me.y,
+        me.health,
+        MAX_HEALTH,
+        me.energy,
+        MAX_ENERGY,
+        me.unconscious,
+        me.appearance
+    };
+
+    msg.players = snapshot(me.zone, name);
+    msg.map_players = map_snapshot();
+    
     msg.enemies = enemy_snapshot();
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();

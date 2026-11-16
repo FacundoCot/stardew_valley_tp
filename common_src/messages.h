@@ -9,6 +9,7 @@
 #include <utility>
 #include "character_appearance.h"
 #include "item_types.h"
+#include "zone.h"
 
 enum class DayFinished : uint8_t {
     NOT_FINISHED = 0,
@@ -67,6 +68,13 @@ enum class MessageType : uint8_t {
   GAMES_LIST = 6,
   WORLD_INFO = 7,
   MULTIPLAYER_ENABLED = 8
+};
+
+struct MapPlayerState {
+    std::string player_name;
+    float x;
+    float y;
+    ZoneId zone;
 };
 
 struct PlayerState {
@@ -142,7 +150,10 @@ struct GameInfoForMenu {
 struct ServerMessage {
   MessageType type;
   std::string game_code;
+  PlayerState self_player;
+  ZoneId zone{};
   std::vector<PlayerState> players;
+  std::vector<MapPlayerState> map_players;
   std::vector<EnemyState> enemies;
   uint8_t return_code = 0;
   InventoryState inventory;

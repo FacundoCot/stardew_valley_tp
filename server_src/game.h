@@ -83,7 +83,9 @@ private:
     std::map<std::string, int> bed_by_player;
     MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
 
-    std::vector<PlayerState> snapshot() const;
+    std::vector<PlayerState> snapshot(ZoneId zone, const std::string& self_name) const;
+    std::vector<MapPlayerState> map_snapshot() const;
+    
     std::vector<EnemyState> enemy_snapshot() const;
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
