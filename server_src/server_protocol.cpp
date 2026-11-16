@@ -166,24 +166,57 @@ void ServerProtocol::send_inventory_state(const InventoryState& inventory) {
 }
 
 void ServerProtocol::send_time_state(const TimeState& time) {
-    const uint16_t day_network = htons(time.day);
-    send_or_throw(&day_network, sizeof(day_network));
+  const uint16_t day_network = htons(time.day);
+  send_or_throw(&day_network, sizeof(day_network));
 
-    send_or_throw(&time.hour, sizeof(time.hour));
-    send_or_throw(&time.minute, sizeof(time.minute));
+  send_or_throw(&time.hour, sizeof(time.hour));
+  send_or_throw(&time.minute, sizeof(time.minute));
 
-    const uint8_t finished = time.finished ? static_cast<uint8_t>(DayFinished::FINISHED) : 
-                                             static_cast<uint8_t>(DayFinished::NOT_FINISHED);
-    send_or_throw(&finished, sizeof(finished));
+  const uint8_t finished = time.finished ? static_cast<uint8_t>(DayFinished::FINISHED) : 
+                                            static_cast<uint8_t>(DayFinished::NOT_FINISHED);
+  send_or_throw(&finished, sizeof(finished));
+}
+
+void ServerProtocol::send_zone_id(ZoneId zone) {
+  const uint8_t kind = static_cast<uint8_t>(zone.kind);
+  const uint8_t level = static_cast<uint8_t>(zone.level);
+
+  send_or_throw(&kind, sizeof(kind));
+  send_or_throw(&level, sizeof(level));
 }
 
 void ServerProtocol::send_chat_message(const ChatState& chat) {
-    const uint8_t kind = static_cast<uint8_t>(chat.kind);
+  const uint8_t kind = static_cast<uint8_t>(chat.kind);
 
-    send_or_throw(&kind, sizeof(kind));
+  send_or_throw(&kind, sizeof(kind));
 
-    send_string(chat.sender);
-    send_string(chat.text);
+  send_string(chat.sender);
+  send_string(chat.text);
+}
+
+void ServerProtocol::send_player_state(const PlayerState& player) {
+  send_string(player.player_name);
+
+  const uint32_t x = coordinate_to_network(player.x);
+  const uint32_t y = coordinate_to_network(player.y);
+
+  send_or_throw(&x, sizeof(x));
+  send_or_throw(&y, sizeof(y));
+
+  const uint16_t health = htons(static_cast<uint16_t>(player.health));
+  const uint16_t max_health = htons(static_cast<uint16_t>(player.max_health));
+  const uint16_t energy = htons(static_cast<uint16_t>(player.energy));
+  const uint16_t max_energy = htons(static_cast<uint16_t>(player.max_energy));
+
+  send_or_throw(&health, sizeof(health));
+  send_or_throw(&max_health, sizeof(max_health));
+  send_or_throw(&energy, sizeof(energy));
+  send_or_throw(&max_energy, sizeof(max_energy));
+
+  const uint8_t unconscious = player.unconscious ? 1 : 0;
+  send_or_throw(&unconscious, sizeof(unconscious));
+
+  send_appearance(player.appearance);
 }
 
 void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) {
