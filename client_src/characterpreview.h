@@ -5,6 +5,22 @@
 #include <QPixmap>
 #include "../common_src/character_appearance.h"
 #include <QRect>
+#include "appearance_translator.h"
+
+const int SHIRT_DX = 4;
+const int SHIRT_DY = 13;
+const int HAIR_DX = 0;
+const int HAIR_DY = -2;
+const int HAT_DX = -2;
+const int HAT_DY = -4;
+const int PANTS_DX = 0;
+const int PANTS_DY = -1;
+
+// todos los valores que mas sobresalen
+const int CANVAS_X = HAT_DX;
+const int CANVAS_Y = HAT_DY;
+const int CANVAS_W = HAT_WIDTH;
+const int CANVAS_H = BODY_HEIGHT - HAT_DY;
 
 class CharacterPreview : public QWidget {
     public:
@@ -33,9 +49,8 @@ class CharacterPreview : public QWidget {
 
     private:
         CharacterAppearance appearance;
+        AppearanceTranslator translator;
         QPixmap body_sheet, pants_sheet, shirts_sheet, hair_sheet, hats_sheet;
-        uint16_t hair_color = 0;
-        uint16_t pants_color = 4;
 
         int scale = 1;
         int origin_x = 0;
@@ -48,16 +63,12 @@ class CharacterPreview : public QWidget {
 
         int cycle(int item, int change, int amount);
 
-        QRect body_rect();
-        QRect pants_rect();
-        QRect hair_rect();
-        QRect shirt_rect();
-        QRect hat_rect();
-
         QPixmap tint(const QPixmap& sprite, int color_index);
 
         void draw_layer(QPainter& painter, const QPixmap& sheet, const QRect& src,
                     int dx, int dy, int color_index);
+
+        QRect to_QRect(Rect rect);
 };
 
 #endif

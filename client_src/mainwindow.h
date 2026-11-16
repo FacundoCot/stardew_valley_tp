@@ -39,16 +39,16 @@ class MainWindow : public QMainWindow {
         
         void customization_menu(MenuStyle new_style);
         void closeEvent(QCloseEvent* event) override;
-        void mainwindow_connections();
-        void character_connections();
+        void set_mainwindow_connections();
+        void set_character_connections();
     private slots:
         void on_createButton_clicked();
         void on_continueButton_clicked();
         void on_joinButton_clicked();
         void on_exitButton_clicked();
         void on_submitCodeButton_clicked();
-        void on_backButton_clicked();
         void on_startCreateButton_clicked();
+        void backButton_clicked();
         void timer_create_response();
     public:
         explicit MainWindow(Queue<ServerMessage>& responses, Queue<ClientMessage>& commands, QWidget* parent = nullptr);

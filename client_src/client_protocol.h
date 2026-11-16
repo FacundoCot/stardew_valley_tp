@@ -16,6 +16,7 @@ private:
   std::string serialize_move(const ClientMessage &msg_to_server);
   std::string serialize_disconnect(const ClientMessage &msg_to_server);
   std::string serialize_confirm_day(const ClientMessage &msg_to_server);
+  std::string serialize_select_slot(const ClientMessage &msg_to_server);
 
   void append_u16_t(std::string& buffer, uint16_t appearance_item);
   void serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer);
@@ -28,6 +29,7 @@ public:
   ServerMessage rcv_from_server();
   void rcv_inventory(ServerMessage &msg);
   void rcv_time_state(ServerMessage &msg);
+  void rcv_world_info(ServerMessage &response);
   void shutdown();
 };
 

@@ -3,6 +3,7 @@
 #include "../common_src/define.h"
 #include "../common_src/socket.h"
 
+#include "menu.h"
 #include "client.h"
 #include "client_protocol.h"
 #include "eventhandler.h"
@@ -19,17 +20,35 @@ int main(int argc, char *argv[]) {
     const char *host = argv[1];
     const char *port = argv[2];
 
-    EventHandler handler;
     ClientProtocol protocol = ClientProtocol(std::move(Socket(host, port)));
-    Chronometer chrono;
 
-    Client client = Client(std::move(handler), std::move(protocol));
+    bool has_exited;
+    {
+      Menu menu = Menu(protocol);
+      has_exited = menu.run(argc, argv);
 
-    client.run(argc, argv);
+      if (has_exited) {
+        try {
+          protocol.shutdown();
+        } catch(...) {}
+      }
+      
+    }
+
+    if(!has_exited){
+      EventHandler handler;
+      Client client = Client(std::move(handler), std::move(protocol));
+      client.run();
+    }
+
     return 0;
 
   } catch (const std::exception &e) {
     std::cerr << e.what() << "\n";
     return 1;
+  } catch (...){
+    std::cerr << "Error desconocido." << "\n";
+    return 1;
   }
+
 }

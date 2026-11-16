@@ -17,6 +17,7 @@ void ClientProtocol::append_u16_t(std::string &buffer, uint16_t appearance_item)
   buffer.append(reinterpret_cast<const char*>(&appendable), sizeof(uint16_t));
 }
 
+
 void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer){
   append_u16_t(buffer, msg_to_server.appearance.body);
   append_u16_t(buffer, msg_to_server.appearance.hair);
@@ -26,6 +27,7 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
   append_u16_t(buffer, msg_to_server.appearance.hair_color);
   append_u16_t(buffer, msg_to_server.appearance.pants_color);
 }
+
 
 std::string
 ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
@@ -106,6 +108,18 @@ std::string ClientProtocol::serialize_confirm_day(const ClientMessage &msg_to_se
   return buffer;
 }
 
+std::string ClientProtocol::serialize_select_slot(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t)*2;
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+  buffer += msg_to_server.slot_index;
+
+  return buffer;
+}
+
+
 std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   switch (msg_to_server.type) {
   case ActionType::CREATE_GAME:
@@ -122,6 +136,9 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   
   case ActionType::CONFIRM_NEXT_DAY:
     return serialize_confirm_day(msg_to_server);
+
+  case ActionType::SELECT_SLOT:
+    return serialize_select_slot(msg_to_server);
 
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");
@@ -171,7 +188,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
       player.health = ntohs(health);
       player.max_health = ntohs(max_health);
 
-      uint16_t unconscious;
+      uint8_t unconscious;
       skt.recvall(&unconscious, sizeof(uint8_t));
       player.unconscious = unconscious;
 
@@ -211,7 +228,11 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
     rcv_inventory(response);
     rcv_time_state(response);
+    break;
   }
+  case MessageType::WORLD_INFO:
+    rcv_world_info(response);
+    break;
 
   case MessageType::ERROR:
     break;
@@ -258,6 +279,10 @@ void ClientProtocol::rcv_inventory(ServerMessage &response) {
   skt.recvall(&coins, sizeof(uint32_t));
   response.inventory.coins = ntohl(coins);
 
+  uint8_t selected_slot;
+  skt.recvall(&selected_slot, sizeof(uint8_t));
+  response.inventory.selected_slot = selected_slot;
+
   uint8_t count;
   skt.recvall(&count, sizeof(uint8_t));
 
@@ -287,4 +312,18 @@ void ClientProtocol::rcv_time_state(ServerMessage &response) {
   skt.recvall(&response.time.hour, sizeof(uint8_t));
   skt.recvall(&response.time.minute, sizeof(uint8_t));
   skt.recvall(&response.time.finished, sizeof(uint8_t));
+}
+
+void ClientProtocol::rcv_world_info(ServerMessage &response) {
+  uint32_t size_net;
+  skt.recvall(&size_net, sizeof(uint32_t));
+
+  uint32_t size = ntohl(size_net);
+
+  std::vector<uint8_t> world_info_net(size);
+
+  skt.recvall(world_info_net.data(), size);
+
+  response.world_info = std::move(world_info_net);
+
 }

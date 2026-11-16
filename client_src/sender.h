@@ -8,11 +8,11 @@
 
 class Sender : public Thread {
 private:
-  ClientProtocol &protocol;
   Queue<ClientMessage> &outgoing;
+  ClientProtocol &protocol;
 
 public:
-  Sender(ClientProtocol &protocol_rcv, Queue<ClientMessage> &outgoing_rcv);
+  Sender(Queue<ClientMessage> &outgoing_rcv, ClientProtocol &protocol_rcv);
 
   void run() override;
 };
