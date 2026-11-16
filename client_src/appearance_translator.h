@@ -2,6 +2,7 @@
 #define APPEARANCE_TRANSLATOR_H
 
 #include <stdint.h>
+#include "../common_src/character_appearance.h"
 
 const int BODY_COUNT = 2;// 0 = masculino, 1 = femenino
 const int HAIR_COUNT = 80;
@@ -39,22 +40,9 @@ const int SHIRT_ITEM_H = 32;
 const int HAT_PER_ROW = 12;
 const int HAT_ITEM_H = 80; // se apilan de a 4 (c/u de altura 20)
 
-const int SHIRT_DX = 4;
-const int SHIRT_DY = 13;
-const int HAIR_DX = 0;
-const int HAIR_DY = -2;
-const int HAT_DX = -2;
-const int HAT_DY = -4;
-const int PANTS_DX = 0;
-const int PANTS_DY = -1;
-
 const int FEMALE_DY = 1;
 
-// todos los valores que mas sobresalen
-const int CANVAS_X = HAT_DX;
-const int CANVAS_Y = HAT_DY;
-const int CANVAS_W = HAT_WIDTH;
-const int CANVAS_H = BODY_HEIGHT - HAT_DY;
+// dibujar en orden Body -> Pants -> Shirt -> Hair -> Hat
 
 const uint16_t COLORS[COLOR_COUNT][3] = {
     {40, 40, 50}, // negro
@@ -65,6 +53,32 @@ const uint16_t COLORS[COLOR_COUNT][3] = {
     {60, 110, 200}, // azul
     {80, 170, 90}, // verde
     {200, 90, 160} // rosa
+};
+
+struct Rect {
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+
+    Rect(int x, int y, int w, int h) : 
+        x(static_cast<uint16_t>(x)), 
+        y(static_cast<uint16_t>(y)), 
+        width(static_cast<uint16_t>(w)), 
+        height(static_cast<uint16_t>(h)) {}
+};
+
+class AppearanceTranslator {
+  public:
+    explicit AppearanceTranslator(CharacterAppearance& appearance);
+    
+    Rect body_rect();
+    Rect hair_rect();
+    Rect shirt_rect();
+    Rect pants_rect();
+    Rect hat_rect();
+  private:
+    const CharacterAppearance& appearance;
 };
 
 #endif

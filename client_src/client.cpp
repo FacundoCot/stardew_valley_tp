@@ -79,7 +79,10 @@ void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual
   // Hilo receiver se encarga de traer las respuestas del server.
   ServerMessage response;
   while (responses.try_pop(response)) {
-    update(response, clock,  inventory);
+
+      if (response.type == MessageType::GAME_STATE) {
+          update(response, clock, inventory);
+      }
   }
 
   render(clock, visual, btn, p_visual, inventory, loader);

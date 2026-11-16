@@ -9,24 +9,25 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
     
     ui->stackedWidget->setCurrentIndex(MAIN);
     ui->titleLabel->setPixmap(QPixmap("client_src/data/menu/upscaledMainTitle.png"));
-    mainwindow_connections();
-    character_connections();
+    set_mainwindow_connections();
+    set_character_connections();
 }
 
-void MainWindow::mainwindow_connections(){
-    connect(timer, &QTimer::timeout, this, &MainWindow::timer_create_response);
-    connect(ui->createButton, &QPushButton::clicked, this, &MainWindow::on_createButton_clicked);
-    connect(ui->continueButton, &QPushButton::clicked, this, &MainWindow::on_continueButton_clicked);
-    connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::on_joinButton_clicked);
-    connect(ui->exitButton, &QPushButton::clicked, this, &MainWindow::on_exitButton_clicked);
-    connect(ui->submitCodeButton, &QPushButton::clicked, this, &MainWindow::on_submitCodeButton_clicked);
-    connect(ui->backButton1, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->backButton2, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->backButton3, &QPushButton::clicked, this, &MainWindow::on_backButton_clicked);
-    connect(ui->startCreateButton, &QPushButton::clicked, this, &MainWindow::on_startCreateButton_clicked);
+void MainWindow::set_mainwindow_connections() {
+    connect(timer, &QTimer::timeout,
+            this, &MainWindow::timer_create_response);
+
+    connect(ui->backButton1, &QPushButton::clicked,
+            this, &MainWindow::backButton_clicked);
+
+    connect(ui->backButton2, &QPushButton::clicked,
+            this, &MainWindow::backButton_clicked);
+
+    connect(ui->backButton3, &QPushButton::clicked,
+            this, &MainWindow::backButton_clicked);
 }
 
-void MainWindow::character_connections(){
+void MainWindow::set_character_connections(){
     connect(ui->bodyLeft, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_body);
     connect(ui->bodyRight, &QPushButton::clicked, ui->characterPreview, &CharacterPreview::next_body);
     connect(ui->hairLeft,  &QPushButton::clicked, ui->characterPreview, &CharacterPreview::prev_hair);
@@ -123,7 +124,7 @@ void MainWindow::on_startCreateButton_clicked(){
     timer->start(20);
 }
 
-void MainWindow::on_backButton_clicked(){
+void MainWindow::backButton_clicked(){
     ui->stackedWidget->setCurrentIndex(MAIN);
 }
 
