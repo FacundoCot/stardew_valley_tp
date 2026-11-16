@@ -24,6 +24,7 @@ const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
 const int SWORD_DAMAGE = 25;
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
+const int MAX_ENERGY = 100;
 
 inline bool is_weakened(int health) {
     return health > 0 && health * 100 <= MAX_HEALTH * WEAKENED_HEALTH_PERCENT;
@@ -33,6 +34,7 @@ struct Player {
     float x;
     float y;
     int health;
+    int energy;
     bool unconscious;
     Direction facing;
     float attack_cooldown_left;
@@ -44,7 +46,7 @@ struct Player {
 
     Player(float x, float y, int health, int initial_coins = 0,
            ZoneId zone, CharacterAppearance appearance_param) :
-        x(x), y(y), health(health), unconscious(health == 0),
+        x(x), y(y), health(health), energy(MAX_ENERGY), unconscious(health == 0),
         facing(Direction::DOWN), attack_cooldown_left(0.0f),
         inventory(9), coins(initial_coins), zone(zone), appearance(appearance_param) {}
 };
@@ -70,6 +72,7 @@ private:
     Queue<std::shared_ptr<ClientAction>> actions;
 
     // Versiones SIN lock: solo se llaman con mtx ya tomado
+    
     bool damage_player_unlocked(const std::string& player_name, int amount);
     bool nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const;
     bool remove_dead_enemies_unlocked();
