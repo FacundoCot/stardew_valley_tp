@@ -9,6 +9,7 @@ GameManager::GameManager(ClientRegistry& registry_param,
                          const std::string& game_code_param,
                          const std::string& game_name_param,
                          const std::string& owner_name_param,
+                         const std::string& world_name_param,
                          bool multiplayer_param):
         registry(registry_param),
         game(std::move(game_param)),
@@ -16,6 +17,7 @@ GameManager::GameManager(ClientRegistry& registry_param,
         game_code(game_code_param),
         game_name(game_name_param),
         owner_name(owner_name_param),
+        world_name(world_name_param),
         multiplayer(multiplayer_param) {}
 
 void GameManager::send_state() {
@@ -211,7 +213,7 @@ void GameManager::try_start_next_day() {
 
     try {
         GameSaveData data = game->get_save_data(
-                game_code, game_name, owner_name, multiplayer);
+                game_code, game_name, owner_name, world_name, game->is_multiplayer());
 
         save_disc.save(data);
 
@@ -234,4 +236,14 @@ void GameManager::select_slot(int client_id, int slot_index) {
     if (game->select_slot(client_id, slot_index)) {
         send_state();
     }
+}
+
+void GameManager::enable_multiplayer(int client_id) {
+    game->enable_multiplayer();
+
+    ServerMessage msg{};
+    msg.type = MessageType::MULTIPLAYER_ENABLED;
+    msg.game_code = game_code;
+
+    registry.send(client_id, msg);
 }

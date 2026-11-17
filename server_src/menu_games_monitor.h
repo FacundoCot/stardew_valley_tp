@@ -35,11 +35,13 @@ public:
     MenuResult create_game(int client_id,
                        const std::string& world_name,
                        const std::string& game_name,
-                       const std::string& player_name);
+                       const std::string& player_name,
+                       const CharacterAppearance& appearance);
 
     MenuResult join_game(int client_id,
                         const std::string& game_code,
-                        const std::string& player_name);
+                        const std::string& player_name,
+                        const CharacterAppearance& appearance);
 
     ServerMessage list_games();
     };

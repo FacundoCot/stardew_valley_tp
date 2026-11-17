@@ -6,6 +6,7 @@ private:
     int day;
     double elapsed_seconds;
     double day_duration_seconds;
+    bool ended_early = false;
 
     int elapsed_game_minutes() const;
 
@@ -20,6 +21,7 @@ public:
 
     bool is_finished() const;
     void start_next_day();
+    void finish_day();
 };
 
 #endif

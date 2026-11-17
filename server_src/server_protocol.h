@@ -28,6 +28,8 @@ private:
   void send_time_state(const TimeState& time);
   void send_chat_message(const ChatState& chat);
   void send_games_list(const std::vector<GameInfoForMenu>& games);
+  void send_zone_id(ZoneId zone);
+  void send_player_state(const PlayerState& player);
 public:
   explicit ServerProtocol(Socket &skt);
 

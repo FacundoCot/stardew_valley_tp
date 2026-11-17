@@ -7,7 +7,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <optional>
 
 #include "common_src/farm_zone.h"
 #include "common_src/messages.h"
@@ -18,11 +17,15 @@
 #include "storage.h"
 #include "game_clock.h"
 #include "save_data_structs.h"
+#include "common_src/character_appearance.h"
 
 const int MAX_HEALTH = 100;
 const int WEAKENED_HEALTH_PERCENT = 20;
 const int SWORD_DAMAGE = 25;
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
+const int MAX_ENERGY = 100;
+const int MOVE_ENERGY_COST = 1;
+const int ATTACK_ENERGY_COST = 2;
 
 inline bool is_weakened(int health) {
     return health > 0 && health * 100 <= MAX_HEALTH * WEAKENED_HEALTH_PERCENT;
@@ -32,6 +35,7 @@ struct Player {
     float x;
     float y;
     int health;
+    int energy;
     bool unconscious;
     Direction facing;
     float attack_cooldown_left;
@@ -39,12 +43,13 @@ struct Player {
     int selected_slot = 0;
     int coins;
     ZoneId zone;
+    CharacterAppearance appearance;
 
-    Player(float x, float y, int health, int initial_coins = 0,
-           ZoneId zone = ZoneId::FARM_ZONE):
-        x(x), y(y), health(health), unconscious(health == 0),
+    Player(float x, float y, int health, int initial_coins,
+           ZoneId zone, CharacterAppearance appearance_param) :
+        x(x), y(y), health(health), energy(MAX_ENERGY), unconscious(health == 0),
         facing(Direction::DOWN), attack_cooldown_left(0.0f),
-        inventory(9), coins(initial_coins), zone(zone) {}
+        inventory(9), coins(initial_coins), zone(zone), appearance(appearance_param) {}
 };
 
 class Game {
@@ -63,28 +68,38 @@ private:
     std::map<std::string, Player> players;          // nombre -> jugador
     std::map<int, std::string> connected_clients;   // client_id -> nombre
     std::set<int> ready_clients;
+    bool multiplayer_enabled = false;
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
 
     // Versiones SIN lock: solo se llaman con mtx ya tomado
+    
     bool damage_player_unlocked(const std::string& player_name, int amount);
     bool nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const;
     bool remove_dead_enemies_unlocked();
     uint32_t get_initial_coins() const;
     bool add_player_unlocked(int client_id, const std::string& player_name,
-                             ZoneId zone, float x, float y);
+                             ZoneId zone, float x, float y, const CharacterAppearance& appearance);
     std::map<std::string, int> bed_by_player;
     MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
 
-    std::vector<PlayerState> snapshot() const;
+    std::vector<PlayerState> snapshot(ZoneId zone, const std::string& self_name) const;
+    std::vector<MapPlayerState> map_snapshot() const;
+    
     std::vector<EnemyState> enemy_snapshot() const;
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
 
+    void check_day_end_unlocked();
+
+    bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
+
 public:
     explicit Game(std::shared_ptr<const World> world);
 
-    bool add_player_auto(int client_id, const std::string& player_name);
+    bool add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance);
+    bool enable_multiplayer();
+    bool is_multiplayer() const;
     bool move_player(int client_id, Direction direction);
     bool remove_player(int client_id);
     bool is_empty() const;
@@ -108,7 +123,8 @@ public:
     bool start_next_day_game();
     bool player_name(int client_id, std::string& player_name) const;
     bool name_to_client_id(int& client_id, const std::string& player_name) const;
-    GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, const std::string& owner_name, bool multiplayer) const;
+    GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, 
+        const std::string& owner_name, const std::string& world_name, bool multiplayer) const;
     void restore_save_data(const GameSaveData& data);
     bool select_slot(int client_id, int slot_index);
     int get_selected_slot(int client_id) const;

@@ -9,9 +9,11 @@
 //definimos estas macros para que nlohmann::json pueda serializar y deserializar nuestras estructuras de datos
 //asi nos ahorramos tener que escribir funciones de serializacion y deserializacion para cada estructura
 //y casi no tenemos que tocar codigo para los jason 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ZoneId, kind, level)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CharacterAppearance, body, hair, shirt, pants, hat, hair_color, pants_color)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ItemSaveData, type, quality, quantity, index)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerSaveData, name, x, y, health, coins, selected_slot, inventory)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, multiplayer, day, players)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerSaveData, name, appearance, x, y, health, energy, coins, zone, bed_index, selected_slot, inventory)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, world_name, multiplayer, day, players)
 
 SaveDisc::SaveDisc(const std::filesystem::path& saves_directory):
         saves_directory(saves_directory) {

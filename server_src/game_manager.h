@@ -19,6 +19,7 @@ private:
     std::string game_code;
     std::string game_name;
     std::string owner_name;
+    std::string world_name;
     bool multiplayer;
 
     void send_state();
@@ -39,6 +40,7 @@ public:
             const std::string& game_code,
             const std::string& game_name,
             const std::string& owner_name,
+            const std::string& world_name,
             bool multiplayer);
 
     void move_player(int client_id, Direction direction) override;
@@ -56,6 +58,8 @@ public:
     void confirm_next_day(int client_id) override;
 
     void select_slot(int client_id, int slot_index) override;
+
+    void enable_multiplayer(int client_id) override;
 };
 
 #endif

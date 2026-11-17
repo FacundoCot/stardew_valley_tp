@@ -9,6 +9,7 @@
 #include <utility>
 #include "character_appearance.h"
 #include "item_types.h"
+#include "zone.h"
 
 enum class DayFinished : uint8_t {
     NOT_FINISHED = 0,
@@ -25,7 +26,8 @@ enum class ActionType : uint8_t {
   CHAT = 6,
   LIST_GAMES = 7,
   CONFIRM_NEXT_DAY = 8,
-  SELECT_SLOT = 9
+  SELECT_SLOT = 9,
+  ENABLE_MULTIPLAYER = 10
 };
 
 enum class EnemyKind : uint8_t {
@@ -64,7 +66,15 @@ enum class MessageType : uint8_t {
   ERROR = 4,
   CHAT_MESSAGE = 5,
   GAMES_LIST = 6,
-  WORLD_INFO = 7
+  WORLD_INFO = 7,
+  MULTIPLAYER_ENABLED = 8
+};
+
+struct MapPlayerState {
+    std::string player_name;
+    float x;
+    float y;
+    ZoneId zone;
 };
 
 struct PlayerState {
@@ -73,23 +83,26 @@ struct PlayerState {
     float y;
     int health;
     int max_health;
+    int energy;
+    int max_energy;
     bool unconscious;
     CharacterAppearance appearance;
 
 
     PlayerState(std::string name, float x, float y,
-                int health, int max_health, bool unconscious,
+                int health, int max_health, int energy, int max_energy, bool unconscious,
               CharacterAppearance appearance):
-        player_name(std::move(name)), x(x), y(y),
-        health(health), max_health(max_health), unconscious(unconscious), appearance(appearance) {}
+        player_name(std::move(name)), x(x), y(y), health(health), max_health(max_health), 
+        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance) {}
 
-    
+    /*
     // -- TEMPORAL, solo para que compile hasta que el server guarde el estado del CharacterAppearance en game.h
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, bool unconscious):
         player_name(std::move(name)), x(x), y(y),
         health(health), max_health(max_health), unconscious(unconscious), appearance(CharacterAppearance{}) {}
     // --
+    */
 
     PlayerState() = default;
 };
@@ -137,7 +150,10 @@ struct GameInfoForMenu {
 struct ServerMessage {
   MessageType type;
   std::string game_code;
+  PlayerState self_player;
+  ZoneId zone{};
   std::vector<PlayerState> players;
+  std::vector<MapPlayerState> map_players;
   std::vector<EnemyState> enemies;
   uint8_t return_code = 0;
   InventoryState inventory;
