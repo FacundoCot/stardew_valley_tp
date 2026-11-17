@@ -12,6 +12,7 @@
 #include "inventory.h"
 #include "visual.h"
 #include "clock.h"
+#include "health_energy.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
@@ -34,8 +35,10 @@ void Client::run() {
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());
   Button btn("Terminar dia", visual, 200, 50);
+  
 
   loader.load_everything();
+  HealthEnergy h_and_e(loader);
   Clock clock(loader);
   Inventory inventory(loader);
 
@@ -46,7 +49,7 @@ void Client::run() {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(clock, visual, btn, p_visual, inventory, loader);
+      simulate_it(clock, visual, btn, p_visual, inventory, loader, h_and_e);
 
       it += chrono.sleep_and_calculate_it();
     }
@@ -60,7 +63,8 @@ void Client::run() {
   }
 }
 
-void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader) {
+void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, 
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e) {
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -81,11 +85,11 @@ void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual
   while (responses.try_pop(response)) {
 
       if (response.type == MessageType::GAME_STATE) {
-          update(response, clock, inventory);
+          update(response, clock, inventory, h_and_e);
       }
   }
 
-  render(clock, visual, btn, p_visual, inventory, loader);
+  render(clock, visual, btn, p_visual, inventory, loader, h_and_e);
 }
 
 void Client::stop() {
@@ -102,7 +106,9 @@ void Client::stop() {
   }
 }
 
-void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader) {
+void Client::render(Clock& clock, Visual& visual, Button& btn, 
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e) {
+
   visual.get_renderer().SetDrawColor(0, 0, 0, 255);
   visual.clean();
 
@@ -113,6 +119,7 @@ void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_v
 
   clock.draw(visual);
   inventory.draw_inventory(visual, loader);
+  h_and_e.draw(visual);
 
   if (current_state == ClientState::DAY_ENDED) {
     visual.draw_black_overlay();
@@ -126,13 +133,14 @@ void Client::render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_v
   visual.present();
 }
 
-void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory) {
+void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory, HealthEnergy& h_and_e) {
   if (!response.players.empty()) {
     players = response.players;
   }
 
   clock.update_from_server(response.time);
   inventory.update_from_server(response);
+  h_and_e.update(response);
 
   if (current_state == ClientState::PLAYING) {
     if(clock.is_finished(response.time)) {

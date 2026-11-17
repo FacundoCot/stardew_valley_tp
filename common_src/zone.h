@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-struct Rect {
+struct RectCabin {
     int x;
     int y;
     int width;
