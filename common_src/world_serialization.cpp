@@ -159,7 +159,7 @@ std::vector<uint8_t> encode_world(const World& world) {
         }
 
         if (const auto* farm = dynamic_cast<const FarmZone*>(zone.get())) {
-            const Rect cabin = farm->cabin();
+            const Rectangle cabin = farm->cabin();
             append_i32(data, cabin.x);
             append_i32(data, cabin.y);
             append_i32(data, cabin.width);

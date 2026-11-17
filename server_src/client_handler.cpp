@@ -62,6 +62,12 @@ void ClientHandler::run() {
                 case ActionType::LIST_GAMES:
                     protocol.send_message(menu_games_monitor.list_games());
                     continue;
+                case ActionType::USERNAME: {
+                    ServerMessage msg{};
+                    msg.type = MessageType::USERNAME;
+                    protocol.send_message(msg);
+                    continue;
+                    }
                 default:
                     break;
             }

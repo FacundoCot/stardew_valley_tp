@@ -6,12 +6,12 @@
 #include <stdexcept>
 #include <utility>
 
-bool Rect::contains_cell(int column, int row) const {
+bool Rectangle::contains_cell(int column, int row) const {
     return column >= x && row >= y && column < x + width &&
            row < y + height;
 }
 
-bool Rect::contains(float px, float py) const {
+bool Rectangle::contains(float px, float py) const {
     return contains_cell(static_cast<int>(std::floor(px)),
                          static_cast<int>(std::floor(py)));
 }

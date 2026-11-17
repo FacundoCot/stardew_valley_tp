@@ -107,6 +107,6 @@ void CharacterPreview::paintEvent(QPaintEvent*) {
     }
 }
 
-QRect CharacterPreview::to_QRect(Rect rect){
+QRect CharacterPreview::to_QRect(Translator::Rect rect){
     return QRect(rect.x, rect.y, rect.width, rect.height);
 }

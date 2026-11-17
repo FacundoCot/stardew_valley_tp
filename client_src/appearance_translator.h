@@ -55,28 +55,30 @@ const uint16_t COLORS[COLOR_COUNT][3] = {
     {200, 90, 160} // rosa
 };
 
-struct Rect {
-    uint16_t x;
-    uint16_t y;
-    uint16_t width;
-    uint16_t height;
-
-    Rect(int x, int y, int w, int h) : 
-        x(static_cast<uint16_t>(x)), 
-        y(static_cast<uint16_t>(y)), 
-        width(static_cast<uint16_t>(w)), 
-        height(static_cast<uint16_t>(h)) {}
-};
+namespace Translator { // por un conflicto con el Rect en common_src/zone.cpp
+    struct Rect {
+        uint16_t x;
+        uint16_t y;
+        uint16_t width;
+        uint16_t height;
+    
+        Rect(int x, int y, int w, int h) : 
+            x(static_cast<uint16_t>(x)), 
+            y(static_cast<uint16_t>(y)), 
+            width(static_cast<uint16_t>(w)), 
+            height(static_cast<uint16_t>(h)) {}
+    };
+}
 
 class AppearanceTranslator {
   public:
     explicit AppearanceTranslator(CharacterAppearance& appearance);
     
-    Rect body_rect();
-    Rect hair_rect();
-    Rect shirt_rect();
-    Rect pants_rect();
-    Rect hat_rect();
+    Translator::Rect body_rect();
+    Translator::Rect hair_rect();
+    Translator::Rect shirt_rect();
+    Translator::Rect pants_rect();
+    Translator::Rect hat_rect();
   private:
     const CharacterAppearance& appearance;
 };

@@ -17,7 +17,7 @@ std::pair<float, float> cell_center(float x, float y) {
 }  // namespace
 
 FarmZone::FarmZone(int width, int height, std::vector<Tile> tiles,
-                   Rect cabin,
+                   Rectangle cabin,
                    std::vector<std::pair<float, float>> bed_spots_param,
                    std::vector<Portal> portals):
         Zone(std::move(portals)),
@@ -89,7 +89,7 @@ const std::vector<Tile>& FarmZone::grid() const {
     return tile_grid.tiles_data();
 }
 
-Rect FarmZone::cabin() const {
+Rectangle FarmZone::cabin() const {
     return cabin_position;
 }
 
