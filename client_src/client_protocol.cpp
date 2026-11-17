@@ -27,7 +27,7 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
   append_u16_t(buffer, msg_to_server.appearance.hair_color);
   append_u16_t(buffer, msg_to_server.appearance.pants_color);
 }
-
+    
 
 std::string
 ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
@@ -181,38 +181,39 @@ ServerMessage ClientProtocol::rcv_from_server() {
     response.game_code = rcv_string();
     break;
   case MessageType::GAME_STATE: {
-    uint16_t count;
-    skt.recvall(&count, sizeof(uint16_t));
-    count = ntohs(count);
 
-    for (uint16_t i = 0; i < count; i++) {
-      PlayerState player;
+
+    response.zone = rcv_zone_id();
+    response.self_player = rcv_player_state();
+
+    uint16_t count_player;
+    skt.recvall(&count_player, sizeof(uint16_t));
+    count_player = ntohs(count_player);
+
+    for(uint16_t i = 0; i < count_player; i++) {
+      response.players.push_back(rcv_player_state());
+    }
+
+    uint16_t map_count;
+    skt.recvall(&map_count, sizeof(uint16_t));
+    map_count = ntohs(map_count);
+
+    for (uint16_t i = 0; i < map_count; i++) {
+      MapPlayerState player;
+
       player.player_name = rcv_string();
 
       uint32_t coordinate;
+
       skt.recvall(&coordinate, sizeof(uint32_t));
-      float x = ntohl(coordinate) / 100.0f;
+      player.x = ntohl(coordinate) / 100.0f;
+
       skt.recvall(&coordinate, sizeof(uint32_t));
-      float y = ntohl(coordinate) / 100.0f;
+      player.y = ntohl(coordinate) / 100.0f;
 
-      player.x = x;
-      player.y = y;
+      player.zone = rcv_zone_id();
 
-      uint16_t health, max_health;
-      skt.recvall(&health, sizeof(uint16_t));
-      skt.recvall(&max_health, sizeof(uint16_t));
-      player.health = ntohs(health);
-      player.max_health = ntohs(max_health);
-
-      uint8_t unconscious;
-      skt.recvall(&unconscious, sizeof(uint8_t));
-      player.unconscious = unconscious;
-
-      player.appearance = rcv_appearance();
-
-      response.players.push_back(player);
     }
-
 
     uint16_t enemy_count;
     skt.recvall(&enemy_count, sizeof(uint16_t));
@@ -258,6 +259,18 @@ ServerMessage ClientProtocol::rcv_from_server() {
   }
 
   return response;
+}
+
+ZoneId ClientProtocol::rcv_zone_id() {
+    ZoneId zone;
+    uint8_t kind, lvl;
+    skt.recvall(&kind, sizeof(uint8_t));
+    skt.recvall(&lvl, sizeof(uint8_t));
+
+    zone.kind = static_cast<ZoneId::Kind>(kind);
+    zone.level = lvl;
+
+    return zone;
 }
 
 std::string ClientProtocol::rcv_string() {
@@ -343,4 +356,40 @@ void ClientProtocol::rcv_world_info(ServerMessage &response) {
 
   response.world_info = std::move(world_info_net);
 
+}
+
+PlayerState ClientProtocol::rcv_player_state() {
+    PlayerState player;
+    player.player_name = rcv_string();
+
+    uint32_t coordinate;
+    skt.recvall(&coordinate, sizeof(uint32_t));
+    float x = ntohl(coordinate) / 100.0f;
+    skt.recvall(&coordinate, sizeof(uint32_t));
+    float y = ntohl(coordinate) / 100.0f;
+
+    player.x = x;
+    player.y = y;
+
+    uint16_t health, max_health;
+    skt.recvall(&health, sizeof(uint16_t));
+    skt.recvall(&max_health, sizeof(uint16_t));
+    player.health = ntohs(health);
+    player.max_health = ntohs(max_health);
+
+    uint16_t energy, max_energy;
+    skt.recvall(&energy, sizeof(uint16_t));
+    skt.recvall(&max_energy, sizeof(uint16_t));
+
+    player.energy = htons(energy);
+    player.max_energy = htons(max_energy);
+
+    uint8_t unconscious;
+    skt.recvall(&unconscious, sizeof(uint8_t));
+    player.unconscious = unconscious;
+
+    player.appearance = rcv_appearance();
+
+    return player;
+  
 }

@@ -1,11 +1,28 @@
 #ifndef DIMENSIONS_H
 #define DIMENSIONS_H   
+#include "visual.h"
 
+struct DimensionsStruct {
+    int x;
+    int y;
+    int w;
+    int h;
+};
 
-const int x_inv_slot = 0;
-const int y_inv_slot = 64;
-const int w_inv_slot = 15;
-const int h_inv_slot = 15;
+class Dimensions {
+private:
+const uint8_t scale = 2;
+
+const int w_clock = 72*scale;
+const int h_clock = 59*scale;
+const int margin = 20;
+
+public:
+
+DimensionsStruct get_clock_dimensions(Visual& visual);
+
+};
+
 
 
 
