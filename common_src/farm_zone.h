@@ -9,12 +9,12 @@
 class FarmZone : public Zone {
 private:
     TileGrid tile_grid;
-    Rect cabin_position;
+    RectCabin cabin_position;
     std::vector<std::pair<float, float>> bed_spots;
 
 public:
     FarmZone(int width, int height, std::vector<Tile> tiles,
-             Rect cabin,
+             RectCabin cabin,
              std::vector<std::pair<float, float>> bed_spots,
              std::vector<Portal> portals = {});
 
@@ -24,7 +24,7 @@ public:
     bool is_walkable(float x, float y) const override;
 
     const std::vector<Tile>& grid() const;
-    Rect cabin() const;
+    RectCabin cabin() const;
     const std::vector<std::pair<float, float>>& beds() const;
     int bed_count() const;
     std::pair<float, float> bed_position(int bed_index) const;

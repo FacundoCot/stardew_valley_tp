@@ -32,7 +32,7 @@ std::shared_ptr<const Zone> build_farm() {
         {PortalType::DUNGEON_DOOR, {90, 70},
          {ZoneId::Kind::CAVE_LEVEL, 1}, {1.5f, 1.5f}}};
     return std::make_shared<const FarmZone>(
-        ZONE_WIDTH, ZONE_HEIGHT, std::move(tiles), Rect{10, 10, 12, 9},
+        ZONE_WIDTH, ZONE_HEIGHT, std::move(tiles), RectCabin{10, 10, 12, 9},
         std::vector<std::pair<float, float>>{
             {12.5f, 12.5f}, {19.5f, 12.5f},
             {12.5f, 16.5f}, {19.5f, 16.5f}},
