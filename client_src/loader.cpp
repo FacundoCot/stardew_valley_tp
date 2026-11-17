@@ -41,4 +41,5 @@ void Loader::load_everything() {
     load_texture("sword", "client_src/data/sword.png");
     load_texture("watering_can", "client_src/data/water.png");
     load_texture("bed", "client_src/data/Single_Bed.png");
+    load_texture("ground", "client_src/data/assets/Farm/Environment/ground.png");
 }

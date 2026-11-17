@@ -2,6 +2,9 @@
 
 #include "../common_src/define.h"
 #include "../common_src/socket.h"
+#include "../common_src/queue.h"
+#include "../common_src/messages.h"
+#include "receiver.h"
 
 #include "menu.h"
 #include "client.h"
@@ -21,25 +24,32 @@ int main(int argc, char *argv[]) {
     const char *port = argv[2];
 
     ClientProtocol protocol = ClientProtocol(std::move(Socket(host, port)));
-
+    Queue<ServerMessage> responses;
+    Receiver receiver(responses, protocol);
+    receiver.start();
+    
     bool has_exited;
     {
-      Menu menu = Menu(protocol);
+      Menu menu = Menu(protocol, responses);
       has_exited = menu.run(argc, argv);
-
-      if (has_exited) {
-        try {
-          protocol.shutdown();
-        } catch(...) {}
-      }
       
     }
 
     if(!has_exited){
       EventHandler handler;
-      Client client = Client(std::move(handler), std::move(protocol));
+      Client client = Client(std::move(handler), responses, protocol);
       client.run();
     }
+
+    receiver.stop();
+
+    try {
+      protocol.shutdown();
+    } catch (std::exception &) {
+    }
+
+    responses.close();
+    receiver.join();
 
     return 0;
 

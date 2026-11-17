@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "loader.h"
 #include "player_visual.h"
+#include "map_constants.h"
 
 using SDL2pp::Rect;
 using SDL2pp::Renderer;
@@ -16,8 +17,8 @@ void PlayerVisual::draw(Renderer &renderer,
   // Texture& player = loader.get_texture("character");
   const Rect &r = camera.get_rect();
 
-  int x_screen = static_cast<int>(std::round(state.x)) - r.x;
-  int y_screen = static_cast<int>(std::round(state.y)) - r.y;
+  int x_screen = static_cast<int>(std::round(state.x)*TILE_SIZE) - r.x;
+  int y_screen = static_cast<int>(std::round(state.y)*TILE_SIZE) - r.y;
 
   Rect destino(x_screen, y_screen, 32, 32);
 

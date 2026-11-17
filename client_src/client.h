@@ -14,6 +14,7 @@
 #include "clock.h"
 #include "button.h"
 #include "inventory.h"
+#include "map_visual.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -24,11 +25,10 @@ class Client {
 private:
   EventHandler e_handler;
 
-  Queue<ServerMessage> responses;
+  Queue<ServerMessage>& responses;
   Queue<ClientMessage> commands;
 
-  ClientProtocol protocol;
-  Receiver receiver;
+  ClientProtocol& protocol;
   Sender sender;
 
   std::vector<PlayerState> players;
@@ -46,13 +46,13 @@ private:
   void stop();
 
 public:
-  Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol);
+  Client(EventHandler &&e_handler_rcv, Queue<ServerMessage>& responses, ClientProtocol &protocol);
 
 
   void run();
-  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader);
+  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader, MapVisual& m_visual);
 
-  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& Inventory, Loader& loader);
+  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, MapVisual& m_visual);
   void update(ServerMessage& response, Clock& clock, Inventory& inventory);
 
   ~Client();
