@@ -32,8 +32,9 @@ FarmZone::FarmZone(int width, int height, std::vector<Tile> tiles,
 
     for (int row = cabin.y; row < cabin.y + cabin.height; ++row) {
         for (int column = cabin.x; column < cabin.x + cabin.width; ++column) {
-            if (!tile_grid.is_floor(column + 0.5f, row + 0.5f)) {
-                throw std::invalid_argument("la cabania debe estar en el piso");
+            if (!tile_grid.is_walkable(column + 0.5f, row + 0.5f)) {
+                throw std::invalid_argument(
+                    "la cabania debe estar sobre tiles caminables");
             }
         }
     }
@@ -45,9 +46,9 @@ FarmZone::FarmZone(int width, int height, std::vector<Tile> tiles,
     for (auto& bed : bed_spots) {
         const auto cell = cell_of(bed.first, bed.second);
         if (!cabin.contains(bed.first, bed.second) ||
-            !tile_grid.is_floor(bed.first, bed.second)) {
+            !tile_grid.is_walkable(bed.first, bed.second)) {
             throw std::invalid_argument(
-                "la cama debe estar dentro de la cabania y en piso");
+                "la cama debe estar dentro de la cabania y sobre un tile caminable");
         }
         if (!occupied.insert(cell).second) {
             throw std::invalid_argument("dos camas ocupan la misma celda");
@@ -82,7 +83,7 @@ int FarmZone::height() const {
 }
 
 bool FarmZone::is_walkable(float x, float y) const {
-    return tile_grid.is_floor(x, y);
+    return tile_grid.is_walkable(x, y);
 }
 
 const std::vector<Tile>& FarmZone::grid() const {
