@@ -119,6 +119,19 @@ std::string ClientProtocol::serialize_select_slot(const ClientMessage &msg_to_se
   return buffer;
 }
 
+std::string ClientProtocol::serialize_username(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.player_name.size();
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+
+  uint16_t name_len_net = htons(static_cast<uint16_t>(msg_to_server.player_name.size()));
+  buffer.append(reinterpret_cast<const char *>(&name_len_net), sizeof(uint16_t));
+  buffer += msg_to_server.player_name;
+
+  return buffer;
+}
 
 std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   switch (msg_to_server.type) {
@@ -139,6 +152,9 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
 
   case ActionType::SELECT_SLOT:
     return serialize_select_slot(msg_to_server);
+
+  case ActionType::USERNAME:
+    return serialize_username(msg_to_server);
 
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");
@@ -234,7 +250,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
   case MessageType::WORLD_INFO:
     rcv_world_info(response);
     break;
-
+  case MessageType::USERNAME:
+    break;
   case MessageType::ERROR:
     break;
   default:
