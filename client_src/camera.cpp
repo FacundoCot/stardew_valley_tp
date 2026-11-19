@@ -2,13 +2,13 @@
 #include "../common_src/define.h"
 #include "visual.h"
 
-Camera::Camera(const int &map_width, const int &map_height)
-    : view(0, 0, 1920, 1080), width_map(map_width), height_map(map_height) {}
+Camera::Camera(/*const int &map_width, const int &map_height*/)
+    : view(0, 0, 1920, 1080), width_map(1920), height_map(1080)  {}
 
-void Camera::update_pos(float player_x, float player_y, int player_w,
+void Camera::update_pos(PlayerState& player, int player_w,
                         int player_h) {
-  view.x = static_cast<int>(player_x + player_w / 2) - view.w / 2;
-  view.y = static_cast<int>(player_y + player_h / 2) - view.h / 2;
+  view.x = static_cast<int>(player.x + player_w / 2) - view.w / 2;
+  view.y = static_cast<int>(player.y + player_h / 2) - view.h / 2;
 
   if (view.w >= width_map) {
     view.x = 0;
