@@ -2,13 +2,13 @@
 #define EDITOR_MAINWINDOW_H
 
 #include <vector>
-#include <QGraphicsScene>
+
 #include <QMainWindow>
 
-const int CAVE_LEVELS = 10;
+class MapScene;
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 class MainWindow: public QMainWindow {
@@ -16,17 +16,16 @@ class MainWindow: public QMainWindow {
 
 private:
     Ui::MainWindow* ui;
-
-    std::vector<QGraphicsScene*> scenes;
+    std::vector<MapScene*> scenes;
 
 private slots:
     void change_zone(int index);
-    void change_layer(/*const QString& layer*/);
+    void change_layer(int index);
     void change_tool(bool painting);
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-    virtual ~MainWindow();
+    ~MainWindow() override;
 };
 
 #endif

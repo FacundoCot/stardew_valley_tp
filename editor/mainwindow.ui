@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="centralLayout">
     <item>
-     <widget class="QGraphicsView" name="mapView"/>
+     <widget class="QGraphicsView" name="mapGraphicsView"/>
     </item>
    </layout>
   </widget>
@@ -29,32 +29,32 @@
      <height>19</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuArchivo">
+   <widget class="QMenu" name="fileMenu">
     <property name="title">
      <string>Archivo</string>
     </property>
-    <addaction name="actionNuevo"/>
-    <addaction name="actionAbrir"/>
-    <addaction name="actionGuardar"/>
+    <addaction name="newAction"/>
+    <addaction name="openAction"/>
+    <addaction name="saveAction"/>
    </widget>
-   <widget class="QMenu" name="menuMapa">
+   <widget class="QMenu" name="mapMenu">
     <property name="title">
      <string>Mapa</string>
     </property>
-    <addaction name="actionValidar"/>
+    <addaction name="validateAction"/>
    </widget>
-   <addaction name="menuArchivo"/>
-   <addaction name="menuMapa"/>
+   <addaction name="fileMenu"/>
+   <addaction name="mapMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="paletteDock">
+  <widget class="QDockWidget" name="paletteDockWidget">
    <property name="windowTitle">
     <string>Paleta</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="paletteContents">
+   <widget class="QWidget" name="paletteWidget">
     <layout class="QVBoxLayout" name="paletteLayout">
      <item>
       <widget class="QLabel" name="zoneLabel">
@@ -64,7 +64,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="zoneCombo"/>
+      <widget class="QComboBox" name="zoneComboBox"/>
      </item>
      <item>
       <widget class="QLabel" name="layerLabel">
@@ -74,7 +74,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="layerCombo"/>
+      <widget class="QComboBox" name="layerComboBox"/>
      </item>
      <item>
       <widget class="QLabel" name="sheetLabel">
@@ -84,10 +84,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="sheetCombo"/>
+      <widget class="QComboBox" name="sheetComboBox"/>
      </item>
      <item>
-      <widget class="QGraphicsView" name="sheetView">
+      <widget class="QGraphicsView" name="sheetGraphicsView">
        <property name="minimumSize">
         <size>
          <width>280</width>
@@ -97,7 +97,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="toolPaint">
+      <widget class="QRadioButton" name="paintRadioButton">
        <property name="text">
         <string>Pintar</string>
        </property>
@@ -107,7 +107,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="toolErase">
+      <widget class="QRadioButton" name="eraseRadioButton">
        <property name="text">
         <string>Borrar</string>
        </property>
@@ -116,22 +116,22 @@
     </layout>
    </widget>
   </widget>
-  <action name="actionNuevo">
+  <action name="newAction">
    <property name="text">
     <string>Nuevo</string>
    </property>
   </action>
-  <action name="actionAbrir">
+  <action name="openAction">
    <property name="text">
     <string>Abrir...</string>
    </property>
   </action>
-  <action name="actionGuardar">
+  <action name="saveAction">
    <property name="text">
     <string>Guardar...</string>
    </property>
   </action>
-  <action name="actionValidar">
+  <action name="validateAction">
    <property name="text">
     <string>Validar</string>
    </property>
