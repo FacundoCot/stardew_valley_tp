@@ -6,9 +6,13 @@
 #include "camera.h"
 #include "loader.h"
 #include "player_visual.h"
+<<<<<<< HEAD
 #include "appearance_translator.h"
 #include "characterpreview.h"
 
+=======
+#include "map_constants.h"
+>>>>>>> origin/feat-client-map-view
 
 using SDL2pp::Renderer;
 
@@ -21,8 +25,8 @@ void PlayerVisual::draw( const PlayerState &state,
 
   const SDL2pp::Rect &r = camera.get_rect();
 
-  int x_screen = static_cast<int>(std::round(state.x)) - r.x;
-  int y_screen = static_cast<int>(std::round(state.y)) - r.y;
+  int x_screen = static_cast<int>(std::round(state.x)*TILE_SIZE) - r.x;
+  int y_screen = static_cast<int>(std::round(state.y)*TILE_SIZE) - r.y;
   
   CharacterAppearance ap = state.appearance;
   AppearanceTranslator translator(ap);
@@ -33,6 +37,7 @@ void PlayerVisual::draw( const PlayerState &state,
       state.y,
       -100
     });
+
 
   PlayerAnim &anim = it_map->second;
 

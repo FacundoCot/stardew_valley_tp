@@ -46,6 +46,5 @@ void Loader::load_everything() {
     load_texture("hats", "client_src/data/assets/Characters/StardewValley/hats.png");
     load_texture("hair", "client_src/data/assets/Characters/StardewValley/hairstyles.png");
     load_texture("bodies", "client_src/data/assets/Characters/StardewValley/bodies.png");
+    load_texture("ground", "client_src/data/assets/Farm/Environment/ground.png");
 }
-
-

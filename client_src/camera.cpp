@@ -1,14 +1,16 @@
 #include "camera.h"
 #include "../common_src/define.h"
 #include "visual.h"
+#include "map_constants.h"
 
 Camera::Camera(/*const int &map_width, const int &map_height*/)
     : view(0, 0, 1920, 1080), width_map(1920), height_map(1080)  {}
 
 void Camera::update_pos(PlayerState& player, int player_w,
                         int player_h) {
-  view.x = static_cast<int>(player.x + player_w / 2) - view.w / 2;
-  view.y = static_cast<int>(player.y + player_h / 2) - view.h / 2;
+
+  view.x = static_cast<int>(player.x + player_w / 2)*TILE_SIZE - view.w / 2;
+  view.y = static_cast<int>(player.y + player_h / 2)*TILE_SIZE - view.h / 2;
 
   if (view.w >= width_map) {
     view.x = 0;

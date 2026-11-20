@@ -4,6 +4,7 @@
 #include "../common_src/define.h"
 #include "../common_src/messages.h"
 #include "../common_src/queue.h"
+#include "../common_src/world_serialization.h"
 #include "camera.h"
 #include "eventhandler.h"
 #include "loader.h"
@@ -14,6 +15,7 @@
 #include "clock.h"
 #include "health_energy.h"
 
+
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 #include <utility>
@@ -21,24 +23,40 @@
 using SDL2pp::Renderer;
 using SDL2pp::Window;
 
-Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
-    : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
-      receiver(responses, protocol), sender(commands, protocol),
+Client::Client(EventHandler &&e_handler_rcv, Queue<ServerMessage>& responses,ClientProtocol &protocol_rcv)
+    : e_handler(std::move(e_handler_rcv)), responses(responses), protocol(protocol_rcv),
+      sender(commands, protocol),
       camera(/*SCREEN_WIDTH, SCREEN_HEIGHT*/) {}
 
 void Client::run() {
-  receiver.start();
   sender.start();
 
-  bool was_intentional = false;
-  
+  bool world_loaded = false;
+
+  SerializedWorld world;
+  ServerMessage first_msg;
+
+  while(!world_loaded) {
+    first_msg = responses.pop();
+    if (first_msg.type == MessageType::WORLD_INFO) {
+      world = decode_world(first_msg.world_info);
+      world_loaded = true;
+    } 
+    
+  }
+
+  if (!world_loaded) {
+    throw std::runtime_error("Error at running Client: cannot load world!");
+  }
+
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());
+  loader.load_everything();
+
+  MapVisual map_visual(visual, loader, std::move(world));
   PlayerVisual p_visual(visual.get_renderer(), loader);
   Button btn("Terminar dia", visual, 200, 50);
   
-
-  loader.load_everything();
   HealthEnergy h_and_e(loader);
   Clock clock(loader);
   Inventory inventory(loader);
@@ -50,7 +68,7 @@ void Client::run() {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(clock, visual, btn, p_visual, inventory, loader, h_and_e, it);
+      simulate_it(clock, visual, btn, p_visual, inventory, loader, h_and_e, it, map_visual);
 
       it += chrono.sleep_and_calculate_it();
     }
@@ -65,7 +83,7 @@ void Client::run() {
 }
 
 void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, 
-  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it) {
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it, MapVisual& m_visual) {
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -90,28 +108,21 @@ void Client::simulate_it(Clock& clock, Visual& visual, Button& btn,
       }
   }
 
-  render(clock, visual, btn, p_visual, inventory, loader, h_and_e, it);
+  render(clock, visual, btn, p_visual, inventory, loader, h_and_e, it, m_visual);
 }
 
 void Client::stop() {
-  responses.close();
   commands.close();
-
-  receiver.stop();
   sender.stop();
-
-  try {
-    protocol.shutdown();
-
-  } catch (const std::exception &) {
-  }
 }
 
 void Client::render(Clock& clock, Visual& visual, Button& btn, 
-  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it) {
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it, MapVisual& m_visual) {
 
   visual.get_renderer().SetDrawColor(0, 0, 0, 255);
   visual.clean();
+
+  m_visual.draw_map(camera);
 
   for (const PlayerState &p : players) {
     p_visual.draw(p, camera, it);
@@ -140,7 +151,7 @@ void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory,
     players = response.players;
   }
   self = response.self_player;
-  camera.update_pos(response.self_player, 32, 32);
+  camera.update_pos(self, 32, 32);
 
   clock.update_from_server(response.time);
   inventory.update_from_server(response);
@@ -161,6 +172,5 @@ void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory,
 
 Client::~Client() {
   stop();
-  receiver.join();
   sender.join();
 }
