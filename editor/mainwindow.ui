@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1200</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Editor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <item>
+     <widget class="QGraphicsView" name="mapView"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1200</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuArchivo">
+    <property name="title">
+     <string>Archivo</string>
+    </property>
+    <addaction name="actionNuevo"/>
+    <addaction name="actionAbrir"/>
+    <addaction name="actionGuardar"/>
+   </widget>
+   <widget class="QMenu" name="menuMapa">
+    <property name="title">
+     <string>Mapa</string>
+    </property>
+    <addaction name="actionValidar"/>
+   </widget>
+   <addaction name="menuArchivo"/>
+   <addaction name="menuMapa"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="paletteDock">
+   <property name="windowTitle">
+    <string>Paleta</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="paletteContents">
+    <layout class="QVBoxLayout" name="paletteLayout">
+     <item>
+      <widget class="QLabel" name="zoneLabel">
+       <property name="text">
+        <string>Zona</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="zoneCombo"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="layerLabel">
+       <property name="text">
+        <string>Capa</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="layerCombo"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="sheetLabel">
+       <property name="text">
+        <string>Hoja de tiles</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="sheetCombo"/>
+     </item>
+     <item>
+      <widget class="QGraphicsView" name="sheetView">
+       <property name="minimumSize">
+        <size>
+         <width>280</width>
+         <height>280</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="toolPaint">
+       <property name="text">
+        <string>Pintar</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="toolErase">
+       <property name="text">
+        <string>Borrar</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionNuevo">
+   <property name="text">
+    <string>Nuevo</string>
+   </property>
+  </action>
+  <action name="actionAbrir">
+   <property name="text">
+    <string>Abrir...</string>
+   </property>
+  </action>
+  <action name="actionGuardar">
+   <property name="text">
+    <string>Guardar...</string>
+   </property>
+  </action>
+  <action name="actionValidar">
+   <property name="text">
+    <string>Validar</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

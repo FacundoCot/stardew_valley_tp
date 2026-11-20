@@ -159,9 +159,16 @@ if(GAME_SERVER)
 endif()
 
 if(MAP_EDITOR)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(map_editor)
-
+    
     # Make them depend on game_common lib
     add_dependencies(map_editor game_common SDL2pp::SDL2pp)
 
@@ -172,10 +179,10 @@ if(MAP_EDITOR)
     set_project_warnings(map_editor ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # add libSDL2pp's headers
-    target_include_directories(map_editor PRIVATE ${libSDL2pp_SOURCE_DIR})
+    target_include_directories(map_editor PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/editor) 
 
     # Link the game_common lib target
-    target_link_libraries(map_editor game_common SDL2pp::SDL2pp)
+    target_link_libraries(map_editor game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
 endif()
 
 
