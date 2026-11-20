@@ -41,4 +41,11 @@ void Loader::load_everything() {
     load_texture("sword", "client_src/data/sword.png");
     load_texture("watering_can", "client_src/data/water.png");
     load_texture("bed", "client_src/data/Single_Bed.png");
+    load_texture("shirts", "client_src/data/assets/Characters/StardewValley/shirts.png");
+    load_texture("pants", "client_src/data/assets/Characters/StardewValley/pants.png");
+    load_texture("hats", "client_src/data/assets/Characters/StardewValley/hats.png");
+    load_texture("hair", "client_src/data/assets/Characters/StardewValley/hairstyles.png");
+    load_texture("bodies", "client_src/data/assets/Characters/StardewValley/bodies.png");
 }
+
+
