@@ -14,6 +14,7 @@
 #include "clock.h"
 #include "button.h"
 #include "inventory.h"
+#include "health_energy.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -50,10 +51,13 @@ public:
 
 
   void run();
-  void simulate_it(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& inventory, Loader& loader);
+  void simulate_it(Clock& clock, Visual& visual, Button& btn, 
+    PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e);
 
-  void render(Clock& clock, Visual& visual, Button& btn, PlayerVisual& p_visual, Inventory& Inventory, Loader& loader);
-  void update(ServerMessage& response, Clock& clock, Inventory& inventory);
+  void render(Clock& clock, Visual& visual, Button& btn, 
+    PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, HealthEnergy& h_and_e);
+
+  void update(ServerMessage& response, Clock& clock, Inventory& inventory, HealthEnergy& h_and_e);
 
   ~Client();
 };

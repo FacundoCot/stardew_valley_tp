@@ -28,9 +28,9 @@ VillageZone::VillageZone(int width, int height, std::vector<Tile> tiles,
         }
         for (int row = area.y; row < area.y + area.height; ++row) {
             for (int column = area.x; column < area.x + area.width; ++column) {
-                if (!tile_grid.is_floor(column + 0.5f, row + 0.5f)) {
+                if (!tile_grid.is_walkable(column + 0.5f, row + 0.5f)) {
                     throw std::invalid_argument(
-                        "todas las celdas del area deben ser piso");
+                        "todas las celdas del area deben ser caminables");
                 }
                 for (const Portal& portal : get_portals()) {
                     if (portal.cell == std::pair<int, int>{column, row}) {
@@ -71,7 +71,7 @@ int VillageZone::height() const {
 }
 
 bool VillageZone::is_walkable(float x, float y) const {
-    return tile_grid.is_floor(x, y);
+    return tile_grid.is_walkable(x, y);
 }
 
 const std::vector<Tile>& VillageZone::grid() const {

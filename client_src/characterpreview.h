@@ -68,7 +68,7 @@ class CharacterPreview : public QWidget {
         void draw_layer(QPainter& painter, const QPixmap& sheet, const QRect& src,
                     int dx, int dy, int color_index);
 
-        QRect to_QRect(Rect rect);
+        QRect to_QRect(Translator::Rect rect);
 };
 
 #endif

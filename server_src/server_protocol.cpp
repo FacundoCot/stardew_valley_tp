@@ -234,19 +234,23 @@ void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) 
 }
 
 void ServerProtocol::send_world_info(const World& world) {
-    /*
+        /*
      * WORLD_INFO:
      * u8  tipo de mensaje = 7
-     * u8  cantidad de zonas
-     * por cada zona:
-     *   u8 kind, u8 level
-     *   u16 ancho, u16 alto (htons)
-     *   ancho * alto bytes de tiles, por fila
-     *   u8 cantidad de portales
-     *   por cada portal: u8 tipo, i32 celda x, i32 celda y,
-     *     u8 kind destino, u8 level destino, i32 llegada x * 100,
-     *     i32 llegada y * 100
-     *   datos propios de granja o pueblo
+     * u32 tamaño del bloque que sigue (htonl)
+     * bloque:
+     *   u8  version del formato = 8
+     *   u8  cantidad de zonas
+     *   por cada zona:
+     *     u8 kind, u8 level
+     *     u16 ancho, u16 alto (htons)
+     *     ancho * alto bytes de tiles (0=wall, 1=floor,
+     *       2=grass, 3=path, 4=tree)
+     *     u8 cantidad de portales
+     *     por cada portal: u8 tipo, i32 celda x, i32 celda y,
+     *       u8 kind destino, u8 level destino, i32 llegada x * 100,
+     *       i32 llegada y * 100
+     *     datos propios de granja o pueblo
      */
     const uint8_t type = static_cast<uint8_t>(MessageType::WORLD_INFO);
     send_or_throw(&type, sizeof(uint8_t));
@@ -367,6 +371,8 @@ void ServerProtocol::send_message(const ServerMessage& message) {
         case MessageType::GAMES_LIST:
           send_games_list(message.games);
           break;
+        case MessageType::USERNAME:
+          break;
         case MessageType::ERROR:
           break;
         default:
@@ -401,11 +407,28 @@ MenuRequest ServerProtocol::recv_menu_request() {
         case ActionType::LIST_GAMES:
           return MenuRequest{ActionType::LIST_GAMES, "por_defecto", "", "",
                              "", {}};
-
+        
+        case ActionType::USERNAME: {
+            std::string name = recv_string();
+            return MenuRequest{ActionType::USERNAME, "por defecto", "", "", name, CharacterAppearance{}};
+          }
         default:
             throw std::runtime_error("invalid menu request");
     }
 }
+
+
+/*std::string ClientProtocol::serialize_username(const ClientMessage &msg_to_server) {
+  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.player_name.length();
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+  buffer += msg_to_server.player_name.length();
+  buffer += msg_to_server.player_name;
+
+  return buffer;
+}*/
 
 CharacterAppearance ServerProtocol::recv_appearance(){
   uint16_t parts[7] = {};
