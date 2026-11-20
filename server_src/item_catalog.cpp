@@ -11,7 +11,7 @@ bool ItemCatalog::is_crop(ItemType type) const {
            type == ItemType::PUMPKIN;
 }
 
-int ItemCatalog::quality_multiplier(Quality quality) const {
+float ItemCatalog::quality_multiplier(Quality quality) const {
     switch (quality) {
         case Quality::BASE: return 1.0;
         case Quality::GOOD: return 1.25;
@@ -57,59 +57,13 @@ std::optional<int> ItemCatalog::get_sell_price(ItemType type, Quality quality) c
         return std::nullopt;
     }
 
-    int base_price = *it->second.base_sell_price;
+    float base_price = *it->second.base_sell_price;
 
     if (!is_crop(type)) {
         return base_price;
     }
 
-    return base_price * quality_multiplier(quality);
-}
-
-bool ItemCatalog::merchant_buys(MerchantType merchant,
-                                ItemType type) const {
-    switch (merchant) {
-        case MerchantType::PIERRE:
-            return is_crop(type) ||
-                   type == ItemType::MILK ||
-                   type == ItemType::EGG;
-
-        case MerchantType::CLINT:
-            return type == ItemType::COAL ||
-                   type == ItemType::LAPIS_LAZULI ||
-                   type == ItemType::SILVER ||
-                   type == ItemType::GOLD;
-
-        case MerchantType::ROBIN:
-            return false;
-
-        case MerchantType::MARNIE:
-            return false;
-    }
-
-    return false;
-}
-
-bool ItemCatalog::merchant_sells(MerchantType merchant,
-                                 ItemType type) const {
-    switch (merchant) {
-        case MerchantType::PIERRE:
-            return type == ItemType::STRAWBERRY_SEED ||
-                   type == ItemType::ONION_SEED ||
-                   type == ItemType::POTATO_SEED ||
-                   type == ItemType::PUMPKIN_SEED;
-
-        case MerchantType::ROBIN:
-            return type == ItemType::CHEST;
-
-        case MerchantType::MARNIE:
-            return false;
-
-        case MerchantType::CLINT:
-            return false;
-    }
-
-    return false;
+    return static_cast<int>(base_price * quality_multiplier(quality));
 }
 
 ItemCatalog::ItemCatalog(const GameConfig& config) {
@@ -147,4 +101,8 @@ std::optional<ItemType> ItemCatalog::get_item_type(const std::string& name) cons
         }
     }
     return std::nullopt;
+}
+
+const std::string& ItemCatalog::get_item_name(ItemType type) const {
+    return entries.at(type).name;
 }

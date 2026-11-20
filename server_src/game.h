@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "common_src/farm_zone.h"
 #include "common_src/messages.h"
@@ -20,13 +21,13 @@
 #include "common_src/character_appearance.h"
 #include "game_config.h"
 #include "item_catalog.h"
+#include "merchant.h"
 
 //const int MAX_HEALTH = 100; //elim
 const int WEAKENED_HEALTH_PERCENT = 20;
 //const int SWORD_DAMAGE = 25; //elim
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
 //const int MAX_ENERGY = 100; //elim
-const int MOVE_ENERGY_COST = 1;
 const int ATTACK_ENERGY_COST = 2;
 
 inline bool is_weakened(int health, int max_health) {
@@ -46,6 +47,7 @@ struct Player {
     int coins;
     ZoneId zone;
     CharacterAppearance appearance;
+    std::optional<MerchantType> active_merchant;
 
 Player(float x, float y, int health, int initial_energy,
        int initial_coins, ZoneId zone,
@@ -70,6 +72,7 @@ private:
     std::shared_ptr<const FarmZone> farm;
     GameConfig config;
     ItemCatalog item_catalog;
+    std::map<MerchantType, std::unique_ptr<Merchant>> merchants;
     GameClock clock;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::map<std::string, Player> players;          // nombre -> jugador
@@ -100,6 +103,8 @@ private:
     void check_day_end_unlocked();
 
     bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
+
+    bool near_merchant_unlocked(const Player& player, MerchantType merchant) const;
 
 public:
     explicit Game(std::shared_ptr<const World> world, const GameConfig& config);
@@ -137,8 +142,13 @@ public:
     int get_selected_slot(int client_id) const;
 
     //compras y ventas
-    bool buy_item(int client_id, MerchantType merchant, ItemType type, int quantity);
-    bool sell_item(int client_id, MerchantType merchant, ItemType type, int quantity);
+    bool buy_item(int client_id, MerchantType merchant, const std::string& product, int quantity);
+    bool sell_item(int client_id, MerchantType merchant, const std::string& product, int quantity);
+
+    //npcs
+    bool interact_with_merchant(int client_id, MerchantType merchant);
+    std::optional<MerchantType> get_active_merchant(int client_id) const;
+    std::optional<std::string> get_merchant_catalog(int client_id) const;
 };
 
 #endif

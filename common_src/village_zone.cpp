@@ -7,11 +7,14 @@
 
 VillageZone::VillageZone(int width, int height, std::vector<Tile> tiles,
                          std::vector<Portal> portals,
-                         std::vector<ZoneId::ZoneArea> areas_param):
+                         std::vector<ZoneId::ZoneArea> areas_param,
+                         std::vector<MerchantPosition> merchants_param):
         Zone(std::move(portals)),
         tile_grid(width, height, std::move(tiles)),
-        zone_areas(std::move(areas_param)) {
+        zone_areas(std::move(areas_param)),
+        merchant_positions(std::move(merchants_param)) {
     validate_portals(tile_grid);
+    validate_merchants();
 
     for (const Portal& portal : get_portals()) {
         if (portal.type != PortalType::ROAD &&
@@ -80,4 +83,33 @@ const std::vector<Tile>& VillageZone::grid() const {
 
 const std::vector<ZoneId::ZoneArea>& VillageZone::areas() const {
     return zone_areas;
+}
+
+const std::vector<MerchantPosition>& VillageZone::merchants() const {
+    return merchant_positions;
+}
+
+void VillageZone::validate_merchants() const {
+    std::set<MerchantType> seen_merchants;
+
+    for (const MerchantPosition& merchant : merchant_positions) {
+        // validamos que este en una posicion caminable
+        if (!tile_grid.is_walkable(merchant.x, merchant.y)) {
+            throw std::invalid_argument("Posicion de comerciante invalida");
+        }
+
+        // validamos que no se repitan los comerciantes
+        if (!seen_merchants.insert(merchant.type).second) {
+            throw std::invalid_argument("Comerciante duplicado");
+        }
+
+        const auto cell = tile_grid.cell(merchant.x, merchant.y);
+
+        // vemos que no esten encima de portales
+        for (const Portal& portal : get_portals()) {
+            if (portal.cell == cell) {
+                throw std::invalid_argument("Comerciante sobre un portal");
+            }
+        }
+    }
 }

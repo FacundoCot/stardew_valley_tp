@@ -8,13 +8,6 @@
 #include "../common_src/item_types.h"
 #include "game_config.h"
 
-enum class MerchantType {
-    PIERRE,
-    ROBIN,
-    MARNIE,
-    CLINT
-};
-
 struct CatalogEntry {
     std::string name;
     ItemType type;
@@ -29,7 +22,7 @@ private:
     void add_entry(ItemType type, const std::string& name, const GameConfig& config);
 
     bool is_crop(ItemType type) const;
-    int quality_multiplier(Quality quality) const;
+    float quality_multiplier(Quality quality) const;
 
 public:
     explicit ItemCatalog(const GameConfig& config);
@@ -37,10 +30,8 @@ public:
     std::optional<int> get_buy_price(ItemType type) const;
     std::optional<int> get_sell_price(ItemType type, Quality quality) const;
 
-    bool merchant_sells(MerchantType merchant, ItemType type) const;
-    bool merchant_buys(MerchantType merchant, ItemType type) const;
-
     std::optional<ItemType> get_item_type(const std::string& name) const;
+    const std::string& get_item_name(ItemType type) const;
 };
 
 #endif
