@@ -11,10 +11,10 @@
 namespace {
     const float PLAYER_STEP = 5.1f;
 
-    bool apply_health(Player& player, int health) {
+    bool apply_health(Player& player, int health, int max_health) {
         int new_life = health;
         if (new_life < 0) new_life = 0;
-        if (new_life > MAX_HEALTH) new_life = MAX_HEALTH;
+        if (new_life > max_health) new_life = max_health;
 
         if (new_life == player.health) {
             return false;
@@ -33,8 +33,12 @@ uint32_t Game::get_initial_coins() const {
     return static_cast<uint32_t>(rand() % 101);
 }
 
-Game::Game(std::shared_ptr<const World> world_param):
-        world(std::move(world_param)), clock(1, 840) {
+Game::Game(std::shared_ptr<const World> world_param,
+           const GameConfig& config_param):
+        world(std::move(world_param)),
+        config(config_param),
+        item_catalog(config),
+        clock(1, config.day_duration_seconds) {
     if (world == nullptr) {
         throw std::invalid_argument("el mundo no puede ser nulo");
     }
@@ -62,7 +66,7 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
             return false;
         }
         
-        Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
+        Player player(x, y, config.initial_health, config.initial_energy, get_initial_coins(), zone, appearance);
 
         player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
         player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
@@ -172,7 +176,7 @@ bool Game::move_player(int client_id, Direction direction) {
     }
 
     float step = PLAYER_STEP;
-    if (player.energy * 10 <= MAX_ENERGY) {
+    if (player.energy * 10 <= config.initial_energy) {
         step = PLAYER_STEP/ 2.0f;
     }
 
@@ -244,9 +248,9 @@ std::vector<PlayerState> Game::snapshot(ZoneId zone, const std::string& self_nam
                     player.x,
                     player.y,
                     player.health,
-                    MAX_HEALTH,
+                    config.initial_health,
                     player.energy,
-                    MAX_ENERGY,
+                    config.initial_energy,
                     player.unconscious, 
                     player.appearance
             });
@@ -291,7 +295,7 @@ bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (it == players.end() || it->second.unconscious) {
         return false;
     }
-    const bool changed = apply_health(it->second, it->second.health - amount);
+    const bool changed = apply_health(it->second, it->second.health - amount, config.initial_health);
 
     check_day_end_unlocked();
 
@@ -429,7 +433,8 @@ bool Game::attack(int client_id) {
 
     player.attack_cooldown_left = PLAYER_ATTACK_COOLDOWN;
 
-    const int damage = is_weakened(player.health) ? SWORD_DAMAGE / 2 : SWORD_DAMAGE;
+    const int damage = is_weakened(player.health, config.initial_health) ? 
+                            config.sword_damage / 2 : config.sword_damage;
     const int target_cell_x = static_cast<int>(std::floor(target_x));
     const int target_cell_y = static_cast<int>(std::floor(target_y));
 
@@ -537,9 +542,9 @@ ServerMessage Game::game_state(int client_id) const {
         me.x,
         me.y,
         me.health,
-        MAX_HEALTH,
+        config.initial_health,
         me.energy,
-        MAX_ENERGY,
+        config.initial_energy,
         me.unconscious,
         me.appearance
     };
@@ -601,9 +606,9 @@ bool Game::start_next_day_game() {
         player.y = bed_y;
         player.zone = ZoneId::FARM_ZONE;
 
-        player.health = slept_well ? MAX_HEALTH : MAX_HEALTH / 2;
+        player.health = slept_well ? config.initial_health : config.initial_health / 2;
 
-        player.energy = slept_well ? MAX_ENERGY : MAX_ENERGY / 2;
+        player.energy = slept_well ? config.initial_energy : config.initial_energy / 2;
 
         player.unconscious = false;
         player.facing = Direction::DOWN;
@@ -698,7 +703,7 @@ void Game::restore_save_data(const GameSaveData& data) {
     ready_clients.clear();
     bed_by_player.clear();
 
-    clock = GameClock(data.day, 840);
+    clock = GameClock(data.day, config.day_duration_seconds);
     multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
@@ -706,13 +711,13 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.x,
             saved_player.y,
             saved_player.health,
+            saved_player.energy,
             saved_player.coins,
             saved_player.zone,
             saved_player.appearance
         );
         // se hacen aparte porque no son parte del constructor de player
         player.selected_slot = saved_player.selected_slot;
-        player.energy = saved_player.energy;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
@@ -796,4 +801,112 @@ bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player)
     const auto [bed_x, bed_y] = farm->bed_position(bed_searched->second);
 
     return std::floor(player.x) == std::floor(bed_x) && std::floor(player.y) == std::floor(bed_y);
+}
+
+bool Game::buy_item(int client_id, MerchantType merchant, ItemType type, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.unconscious) {
+        return false;
+    }
+
+    if (!item_catalog.merchant_sells(merchant, type)) {
+        return false;
+    }
+
+    auto price = item_catalog.get_buy_price(type);
+
+    if (!price) {
+        return false;
+    }
+
+    const int total = *price * quantity;
+
+    if (total > player.coins) {
+        return false;
+    }
+
+    Item item(type, Quality::BASE);
+
+    if (!player.inventory.can_add_item(item, quantity)) {
+        return false;
+    }
+
+    player.inventory.add_item(item, quantity);
+    player.coins -= total;
+
+    return true;
+}
+
+bool Game::sell_item(int client_id, MerchantType merchant, ItemType type, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.unconscious || !item_catalog.merchant_buys(merchant, type)) {
+        return false;
+    }
+
+    std::map<Quality, int> quantities_to_sell;
+    int remaining = quantity;
+
+    for (const auto& slot : player.inventory.get_stacks()) {
+        if (!slot || slot->get_item().get_type() != type) {
+            continue;
+        }
+
+        int quantity_to_sell = std::min(remaining, slot->get_quantity());
+        Quality quality = slot->get_item().get_quality();
+
+        quantities_to_sell[quality] += quantity_to_sell;
+        remaining -= quantity_to_sell;
+
+        if (remaining == 0) {
+            break;
+        }
+    }
+
+    if (remaining != 0) {
+        return false;
+    }
+
+    int total = 0;
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        auto price = item_catalog.get_sell_price(type, quality);
+
+        if (!price) {
+            return false;
+        }
+
+        total += *price * amount;
+    }
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        Item item(type, quality);
+
+        if (!player.inventory.remove_quantity(item, amount)) {
+            throw std::logic_error("Error al retirar los objetos vendidos");
+        }
+    }
+
+    player.coins += total;
+
+    return true;
 }

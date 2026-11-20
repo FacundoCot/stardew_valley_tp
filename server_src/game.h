@@ -18,17 +18,19 @@
 #include "game_clock.h"
 #include "save_data_structs.h"
 #include "common_src/character_appearance.h"
+#include "game_config.h"
+#include "item_catalog.h"
 
-const int MAX_HEALTH = 100;
+//const int MAX_HEALTH = 100; //elim
 const int WEAKENED_HEALTH_PERCENT = 20;
-const int SWORD_DAMAGE = 25;
+//const int SWORD_DAMAGE = 25; //elim
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
-const int MAX_ENERGY = 100;
+//const int MAX_ENERGY = 100; //elim
 const int MOVE_ENERGY_COST = 1;
 const int ATTACK_ENERGY_COST = 2;
 
-inline bool is_weakened(int health) {
-    return health > 0 && health * 100 <= MAX_HEALTH * WEAKENED_HEALTH_PERCENT;
+inline bool is_weakened(int health, int max_health) {
+    return health > 0 && health * 100 <= max_health * WEAKENED_HEALTH_PERCENT;
 }
 
 struct Player {
@@ -45,11 +47,14 @@ struct Player {
     ZoneId zone;
     CharacterAppearance appearance;
 
-    Player(float x, float y, int health, int initial_coins,
-           ZoneId zone, CharacterAppearance appearance_param) :
-        x(x), y(y), health(health), energy(MAX_ENERGY), unconscious(health == 0),
-        facing(Direction::DOWN), attack_cooldown_left(0.0f),
-        inventory(9), coins(initial_coins), zone(zone), appearance(appearance_param) {}
+Player(float x, float y, int health, int initial_energy,
+       int initial_coins, ZoneId zone,
+       CharacterAppearance appearance_param) :
+    x(x), y(y), health(health), energy(initial_energy),
+    unconscious(health == 0 || initial_energy == 0),
+    facing(Direction::DOWN), attack_cooldown_left(0.0f),
+    inventory(9), coins(initial_coins), zone(zone),
+    appearance(appearance_param) {}
 };
 
 class Game {
@@ -63,6 +68,8 @@ private:
 
     std::shared_ptr<const World> world;
     std::shared_ptr<const FarmZone> farm;
+    GameConfig config;
+    ItemCatalog item_catalog;
     GameClock clock;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::map<std::string, Player> players;          // nombre -> jugador
@@ -95,7 +102,7 @@ private:
     bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
 
 public:
-    explicit Game(std::shared_ptr<const World> world);
+    explicit Game(std::shared_ptr<const World> world, const GameConfig& config);
 
     bool add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance);
     bool enable_multiplayer();
@@ -128,6 +135,10 @@ public:
     void restore_save_data(const GameSaveData& data);
     bool select_slot(int client_id, int slot_index);
     int get_selected_slot(int client_id) const;
+
+    //compras y ventas
+    bool buy_item(int client_id, MerchantType merchant, ItemType type, int quantity);
+    bool sell_item(int client_id, MerchantType merchant, ItemType type, int quantity);
 };
 
 #endif

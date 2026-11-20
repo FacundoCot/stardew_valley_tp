@@ -11,12 +11,14 @@
 #include "server_structs.h"
 #include "save_disc.h"
 #include "world_catalog.h"
+#include "game_config.h"
 
 class MenuGamesMonitor {
 private:
     std::mutex mtx;
     WorldCatalog& catalog;
     ClientRegistry& registry;
+    const GameConfig& config;
     SaveDisc save_disc;
     std::map<std::string, std::unique_ptr<GameRuntime>> games;
     // Partidas guardadas que todavia no se cargaron: el mundo no se construye
@@ -30,7 +32,8 @@ private:
 
 public:
     explicit MenuGamesMonitor(WorldCatalog& catalog,
-                              ClientRegistry& registry);
+                              ClientRegistry& registry,
+                              const GameConfig& config);
 
     MenuResult create_game(int client_id,
                        const std::string& world_name,
