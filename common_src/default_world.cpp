@@ -47,7 +47,7 @@ std::shared_ptr<const Zone> build_farm() {
         {150, 86}, {152, 86}, {154, 86},
         {151, 87}, {153, 87},
         {152, 88}, {154, 88}};
-    for (const auto [column, row] : farm_trees) {
+    for (const auto& [column, row] : farm_trees) {
         tiles[static_cast<size_t>(row * ZONE_WIDTH + column)] = Tile::TREE;
     }
 
@@ -74,14 +74,20 @@ std::shared_ptr<const Zone> build_village() {
         {10, 10}, {11, 10}, {12, 10},
         {168, 20}, {169, 20}, {170, 20},
         {20, 100}, {21, 100}, {22, 100}};
-    for (const auto [column, row] : village_trees) {
+    for (const auto& [column, row] : village_trees) {
         tiles[static_cast<size_t>(row * ZONE_WIDTH + column)] = Tile::TREE;
     }
     return std::make_shared<const VillageZone>(
         ZONE_WIDTH, ZONE_HEIGHT, std::move(tiles),
         std::vector<Portal>{{PortalType::ROAD, {0, 60},
                              ZoneId::FARM_ZONE, {178.5f, 60.5f}}},
-        std::vector<ZoneId::ZoneArea>{});
+        std::vector<ZoneId::ZoneArea>{},
+        std::vector<MerchantPosition>{
+        {MerchantType::PIERRE, 40.5f, 58.5f},
+        {MerchantType::CLINT, 48.5f, 58.5f},
+        {MerchantType::ROBIN, 56.5f, 58.5f},
+        {MerchantType::MARNIE, 64.5f, 58.5f}
+    });
 }
 
 std::shared_ptr<const Zone> build_cave(int level) {

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "../common_src/messages.h"
+#include "../common_src/merchant_pos.h"
 
 class GameActionHandler;
 
@@ -114,6 +115,16 @@ public:
 
 class EnableMultiplayerAction : public ClientAction {
 public:
+    void execute(GameActionHandler& handler) const override;
+};
+
+class InteractMerchantAction : public ClientAction {
+private:
+    MerchantType merchant;
+
+public:
+    explicit InteractMerchantAction(MerchantType merchant);
+
     void execute(GameActionHandler& handler) const override;
 };
 

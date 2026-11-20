@@ -8,9 +8,11 @@
 
 MenuGamesMonitor::MenuGamesMonitor(
     WorldCatalog& catalog_param,
-    ClientRegistry& registry_param):
+    ClientRegistry& registry_param,
+    const GameConfig& config_param):
     catalog(catalog_param),
     registry(registry_param),
+    config(config_param),
     save_disc("saves")
 {
     for (const std::string& code : save_disc.list_saves()) {
@@ -38,7 +40,7 @@ GameRuntime& MenuGamesMonitor::load_game_unlocked(const std::string& game_code) 
     const GameSaveData& data = saved->second;
 
     // TODO: el guardado debe persistir el nombre del mundo.
-    auto game = std::make_shared<Game>(catalog.get(data.world_name));
+    auto game = std::make_shared<Game>(catalog.get(data.world_name), config);
     game->restore_save_data(data);
 
         auto runtime = std::make_unique<GameRuntime>(
@@ -77,7 +79,7 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
                                         const std::string& player_name,
                                         const CharacterAppearance& appearance){
     std::lock_guard<std::mutex> lock(mtx);
-    auto game = std::make_shared<Game>(catalog.get(world_name));
+    auto game = std::make_shared<Game>(catalog.get(world_name), config);
 
     if (!game->add_player_auto(client_id, player_name, appearance))
     {
