@@ -33,6 +33,7 @@ private:
   Sender sender;
 
   std::vector<PlayerState> players;
+  PlayerState self;
   Camera camera;
 
   ClientState current_state = ClientState::PLAYING;
@@ -52,10 +53,10 @@ public:
 
   void run();
   void simulate_it(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e);
+    PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it);
 
   void render(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, HealthEnergy& h_and_e);
+    PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, HealthEnergy& h_and_e, int& it);
 
   void update(ServerMessage& response, Clock& clock, Inventory& inventory, HealthEnergy& h_and_e);
 

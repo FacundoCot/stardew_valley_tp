@@ -24,16 +24,17 @@ using SDL2pp::Window;
 Client::Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol_rcv)
     : e_handler(std::move(e_handler_rcv)), protocol(std::move(protocol_rcv)),
       receiver(responses, protocol), sender(commands, protocol),
-      camera(SCREEN_WIDTH, SCREEN_HEIGHT) {}
+      camera(/*SCREEN_WIDTH, SCREEN_HEIGHT*/) {}
 
 void Client::run() {
   receiver.start();
   sender.start();
 
   bool was_intentional = false;
-  PlayerVisual p_visual;
+  
   Visual visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT);
   Loader loader(visual.get_renderer());
+  PlayerVisual p_visual(visual.get_renderer(), loader);
   Button btn("Terminar dia", visual, 200, 50);
   
 
@@ -49,7 +50,7 @@ void Client::run() {
     while (running) {
       // lógica de chronometer para calcular frames
 
-      simulate_it(clock, visual, btn, p_visual, inventory, loader, h_and_e);
+      simulate_it(clock, visual, btn, p_visual, inventory, loader, h_and_e, it);
 
       it += chrono.sleep_and_calculate_it();
     }
@@ -64,7 +65,7 @@ void Client::run() {
 }
 
 void Client::simulate_it(Clock& clock, Visual& visual, Button& btn, 
-  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e) {
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it) {
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -89,7 +90,7 @@ void Client::simulate_it(Clock& clock, Visual& visual, Button& btn,
       }
   }
 
-  render(clock, visual, btn, p_visual, inventory, loader, h_and_e);
+  render(clock, visual, btn, p_visual, inventory, loader, h_and_e, it);
 }
 
 void Client::stop() {
@@ -107,15 +108,16 @@ void Client::stop() {
 }
 
 void Client::render(Clock& clock, Visual& visual, Button& btn, 
-  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e) {
+  PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it) {
 
   visual.get_renderer().SetDrawColor(0, 0, 0, 255);
   visual.clean();
 
   for (const PlayerState &p : players) {
-    p_visual.draw(visual.get_renderer(), p, camera);
-    camera.update_pos(p.x, p.y, 32, 32);
+    p_visual.draw(p, camera, it);
   }
+
+  p_visual.draw(self, camera, it);
 
   clock.draw(visual);
   inventory.draw_inventory(visual, loader);
@@ -137,6 +139,8 @@ void Client::update(ServerMessage& response, Clock& clock, Inventory& inventory,
   if (!response.players.empty()) {
     players = response.players;
   }
+  self = response.self_player;
+  camera.update_pos(response.self_player, 32, 32);
 
   clock.update_from_server(response.time);
   inventory.update_from_server(response);
