@@ -3,23 +3,20 @@
 #include <algorithm>
 #include <cmath>
 
-#include <QBrush>
-#include <QGraphicsRectItem>
-#include <QGraphicsSceneMouseEvent>
+#include <QGraphicsPixmapItem>
 #include <QLineF>
-
-#include <QPainter>
 #include <QPen>
 
-#include "common_src/define.h"
+#include "common_src/define.h" 
 
 MapScene::MapScene(int map_columns, int map_rows, QObject* parent):
         QGraphicsScene(parent),
         columns(map_columns),
         rows(map_rows),
-        tool(Tool::PAINT),
+        tool(PAINT),
         layer(LAYER_GROUND),
-        layer_cells(LAYER_COUNT, std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)) {
+        layer_cells(LAYER_COUNT,
+                    std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)) {
     setSceneRect(0, 0, columns * TILE_SIZE, rows * TILE_SIZE);
 }
 
@@ -31,26 +28,16 @@ void MapScene::set_layer(int new_layer) {
     layer = new_layer;
 }
 
-int MapScene::to_cell(qreal coordinate) const {
-    return static_cast<int>(std::floor(coordinate / TILE_SIZE));
+void MapScene::set_tile(const QPixmap& new_tile) {
+    tile = new_tile;
 }
 
 QStringList MapScene::layer_names() const {
-    return {"Piso", "Pared", "Objeto", "Decoración"};
+    return {"ground", "walls", "objects", "decor"};
 }
 
-QColor MapScene::layer_color(int layer_index) const {
-    // completamente provisorio, solo pintaría assets
-    if (layer_index == LAYER_WALLS) {
-        return QColor(110, 110, 110);
-    }
-    if (layer_index == LAYER_OBJECTS) {
-        return QColor(150, 100, 50);
-    }
-    if (layer_index == LAYER_DECOR) {
-        return QColor(230, 150, 70);
-    }
-    return QColor(90, 160, 90);  // el layer_ground
+int MapScene::to_cell(qreal coordinate) const {
+    return static_cast<int>(std::floor(coordinate / TILE_SIZE));
 }
 
 void MapScene::drawBackground(QPainter* painter, const QRectF& rect) {
@@ -58,9 +45,9 @@ void MapScene::drawBackground(QPainter* painter, const QRectF& rect) {
     painter->setPen(QPen(QColor(255, 255, 255, 40)));
 
     const int first_column = std::max(0, to_cell(rect.left()));
-    const int last_column = std::min(columns, to_cell(rect.right()));
+    const int last_column = std::min(columns, to_cell(rect.right()) + 1);
     const int first_row = std::max(0, to_cell(rect.top()));
-    const int last_row = std::min(rows, to_cell(rect.bottom()));
+    const int last_row = std::min(rows, to_cell(rect.bottom()) + 1);
 
     for (int column = first_column; column <= last_column; ++column) {
         const qreal x = column * TILE_SIZE;
@@ -90,7 +77,7 @@ void MapScene::apply_at(const QPointF& position) {
     if (column < 0 || row < 0 || column >= columns || row >= rows) {
         return;
     }
-    if (tool == Tool::PAINT) {
+    if (tool == PAINT) {
         paint_cell(column, row);
     } else {
         erase_cell(column, row);
@@ -98,14 +85,13 @@ void MapScene::apply_at(const QPointF& position) {
 }
 
 void MapScene::paint_cell(int column, int row) {
-    const int index = row * columns + column;
-    if (layer_cells[layer][index] != nullptr) {
-        return;  // esa celda ya esta pintada en esta capa
+    if (tile.isNull()) {
+        return;
     }
+    erase_cell(column, row);  // reemplazo si ya había algo en la capa
 
-    QGraphicsRectItem* item = addRect(0, 0, TILE_SIZE, TILE_SIZE,
-                                      QPen(Qt::NoPen),
-                                      QBrush(layer_color(layer)));
+    const int index = row * columns + column;
+    QGraphicsPixmapItem* item = addPixmap(tile);
     item->setPos(column * TILE_SIZE, row * TILE_SIZE);
     item->setZValue(layer);
     layer_cells[layer][index] = item;
@@ -113,10 +99,12 @@ void MapScene::paint_cell(int column, int row) {
 
 void MapScene::erase_cell(int column, int row) {
     const int index = row * columns + column;
+
     QGraphicsItem* item = layer_cells[layer][index];
     if (item == nullptr) {
-        return;  // no habia nada que borrar
+        return;
     }
+
     removeItem(item);
     delete item;
     layer_cells[layer][index] = nullptr;
