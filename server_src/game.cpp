@@ -7,14 +7,17 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdexcept>
+#include <sstream>
+
+#include "common_src/village_zone.h"
 
 namespace {
     const float PLAYER_STEP = 5.1f;
 
-    bool apply_health(Player& player, int health) {
+    bool apply_health(Player& player, int health, int max_health) {
         int new_life = health;
         if (new_life < 0) new_life = 0;
-        if (new_life > MAX_HEALTH) new_life = MAX_HEALTH;
+        if (new_life > max_health) new_life = max_health;
 
         if (new_life == player.health) {
             return false;
@@ -33,8 +36,12 @@ uint32_t Game::get_initial_coins() const {
     return static_cast<uint32_t>(rand() % 101);
 }
 
-Game::Game(std::shared_ptr<const World> world_param):
-        world(std::move(world_param)), clock(1, 840) {
+Game::Game(std::shared_ptr<const World> world_param,
+           const GameConfig& config_param):
+        world(std::move(world_param)),
+        config(config_param),
+        item_catalog(config),
+        clock(1, config.day_duration_seconds) {
     if (world == nullptr) {
         throw std::invalid_argument("el mundo no puede ser nulo");
     }
@@ -43,6 +50,12 @@ Game::Game(std::shared_ptr<const World> world_param):
     if (farm == nullptr) {
         throw std::invalid_argument("el mundo tiene que tener granja");
     }
+
+    //inicializo los comerciantes
+    merchants.emplace(MerchantType::PIERRE, std::make_unique<Pierre>(item_catalog));
+    merchants.emplace(MerchantType::CLINT, std::make_unique<Clint>(item_catalog));
+    merchants.emplace(MerchantType::ROBIN, std::make_unique<Robin>(item_catalog));
+    merchants.emplace(MerchantType::MARNIE, std::make_unique<Marnie>(item_catalog));
 }
 
 bool Game::add_player_unlocked(int client_id, const std::string &player_name,
@@ -62,7 +75,7 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
             return false;
         }
         
-        Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
+        Player player(x, y, config.initial_health, config.initial_energy, get_initial_coins(), zone, appearance);
 
         player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
         player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
@@ -173,7 +186,7 @@ bool Game::move_player(int client_id, Direction direction) {
     }
 
     float step = PLAYER_STEP;
-    if (player.energy * 10 <= MAX_ENERGY) {
+    if (player.energy * 10 <= config.initial_energy) {
         step = PLAYER_STEP/ 2.0f;
     }
 
@@ -193,10 +206,8 @@ bool Game::move_player(int client_id, Direction direction) {
         return false;
     }
 
-    player.energy = std::max(0, player.energy - MOVE_ENERGY_COST);
-
-    if (player.energy == 0) {
-        player.unconscious = true;
+    if (player.active_merchant && !near_merchant_unlocked(player, *player.active_merchant)) {
+        player.active_merchant.reset();
     }
 
     check_day_end_unlocked();
@@ -206,7 +217,19 @@ bool Game::move_player(int client_id, Direction direction) {
 
 bool Game::remove_player(int client_id) {
     std::lock_guard<std::mutex> lock(mtx);
+    //elimino de ready para el dia sig
     ready_clients.erase(client_id);
+
+    // elimino su active_merchant
+    auto client_it = connected_clients.find(client_id);
+    if (client_it != connected_clients.end()) {
+        auto player_it = players.find(client_it->second);
+
+        if (player_it != players.end()) {
+            player_it->second.active_merchant.reset();
+        }
+    }   
+
     const bool removed = connected_clients.erase(client_id) > 0;
 
     if (removed) {
@@ -245,9 +268,9 @@ std::vector<PlayerState> Game::snapshot(ZoneId zone, const std::string& self_nam
                     player.x,
                     player.y,
                     player.health,
-                    MAX_HEALTH,
+                    config.initial_health,
                     player.energy,
-                    MAX_ENERGY,
+                    config.initial_energy,
                     player.unconscious, 
                     player.appearance
             });
@@ -292,7 +315,7 @@ bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (it == players.end() || it->second.unconscious) {
         return false;
     }
-    const bool changed = apply_health(it->second, it->second.health - amount);
+    const bool changed = apply_health(it->second, it->second.health - amount, config.initial_health);
 
     check_day_end_unlocked();
 
@@ -430,7 +453,8 @@ bool Game::attack(int client_id) {
 
     player.attack_cooldown_left = PLAYER_ATTACK_COOLDOWN;
 
-    const int damage = is_weakened(player.health) ? SWORD_DAMAGE / 2 : SWORD_DAMAGE;
+    const int damage = is_weakened(player.health, config.initial_health) ? 
+                            config.sword_damage / 2 : config.sword_damage;
     const int target_cell_x = static_cast<int>(std::floor(target_x));
     const int target_cell_y = static_cast<int>(std::floor(target_y));
 
@@ -538,9 +562,9 @@ ServerMessage Game::game_state(int client_id) const {
         me.x,
         me.y,
         me.health,
-        MAX_HEALTH,
+        config.initial_health,
         me.energy,
-        MAX_ENERGY,
+        config.initial_energy,
         me.unconscious,
         me.appearance
     };
@@ -602,13 +626,15 @@ bool Game::start_next_day_game() {
         player.y = bed_y;
         player.zone = ZoneId::FARM_ZONE;
 
-        player.health = slept_well ? MAX_HEALTH : MAX_HEALTH / 2;
+        player.health = slept_well ? config.initial_health : config.initial_health / 2;
 
-        player.energy = slept_well ? MAX_ENERGY : MAX_ENERGY / 2;
+        player.energy = slept_well ? config.initial_energy : config.initial_energy / 2;
 
         player.unconscious = false;
         player.facing = Direction::DOWN;
         player.attack_cooldown_left = 0.0f;
+
+        player.active_merchant.reset();
     }
 
     clock.start_next_day();
@@ -699,7 +725,7 @@ void Game::restore_save_data(const GameSaveData& data) {
     ready_clients.clear();
     bed_by_player.clear();
 
-    clock = GameClock(data.day, 840);
+    clock = GameClock(data.day, config.day_duration_seconds);
     multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
@@ -707,13 +733,13 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.x,
             saved_player.y,
             saved_player.health,
+            saved_player.energy,
             saved_player.coins,
             saved_player.zone,
             saved_player.appearance
         );
         // se hacen aparte porque no son parte del constructor de player
         player.selected_slot = saved_player.selected_slot;
-        player.energy = saved_player.energy;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
@@ -797,4 +823,297 @@ bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player)
     const auto [bed_x, bed_y] = farm->bed_position(bed_searched->second);
 
     return std::floor(player.x) == std::floor(bed_x) && std::floor(player.y) == std::floor(bed_y);
+}
+
+bool Game::buy_item(int client_id, MerchantType merchant, const std::string& product, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto itemt = item_catalog.get_item_type(product);
+    if (!itemt) {
+        return false;
+    }
+    ItemType type = *itemt;
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.active_merchant != merchant || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    if (player.unconscious) {
+        return false;
+    }
+
+    auto merchant_it = merchants.find(merchant);
+
+    if (merchant_it == merchants.end()) {
+        return false;
+    }
+
+    auto price = merchant_it->second->get_buy_price(type);
+
+    if (!price) {
+        return false;
+    }
+
+    const int total = *price * quantity;
+
+    if (total > player.coins) {
+        return false;
+    }
+
+    Item item(type, Quality::BASE);
+
+    if (!player.inventory.can_add_item(item, quantity)) {
+        return false;
+    }
+
+    player.inventory.add_item(item, quantity);
+    player.coins -= total;
+
+    return true;
+}
+
+bool Game::sell_item(int client_id, MerchantType merchant, const std::string& product, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto itemt = item_catalog.get_item_type(product);
+    if (!itemt) {
+        return false;
+    }
+    ItemType type = *itemt;
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.active_merchant != merchant || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    auto merchant_it = merchants.find(merchant);
+
+    if (merchant_it == merchants.end()) {
+        return false;
+    }
+
+    if (player.unconscious || !merchant_it->second->buys(type)) {
+        return false;
+    }
+
+    std::map<Quality, int> quantities_to_sell;
+    int remaining = quantity;
+
+    for (const auto& slot : player.inventory.get_stacks()) {
+        if (!slot || slot->get_item().get_type() != type) {
+            continue;
+        }
+
+        int quantity_to_sell = std::min(remaining, slot->get_quantity());
+        Quality quality = slot->get_item().get_quality();
+
+        quantities_to_sell[quality] += quantity_to_sell;
+        remaining -= quantity_to_sell;
+
+        if (remaining == 0) {
+            break;
+        }
+    }
+
+    if (remaining != 0) {
+        return false;
+    }
+
+    int total = 0;
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        auto price = merchant_it->second->get_sell_price(type, quality);
+
+        if (!price) {
+            return false;
+        }
+
+        total += *price * amount;
+    }
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        Item item(type, quality);
+
+        if (!player.inventory.remove_quantity(item, amount)) {
+            throw std::logic_error("Error al retirar los objetos vendidos");
+        }
+    }
+
+    player.coins += total;
+
+    return true;
+}
+
+bool Game::near_merchant_unlocked(const Player& player, MerchantType merchant) const {
+
+    if (player.zone != ZoneId::VILLAGE_ZONE) {
+        return false;
+    }
+
+    // tengo un puntero a zone, pero quiero uno a la clase hija village, se que existe
+    // entonces hago un cast y convertimos de tipo zone a tipo village con 
+    // static_pointer_cast
+    auto village = std::static_pointer_cast<const VillageZone>(world->zone(ZoneId::VILLAGE_ZONE));
+
+    for (const auto& position : village->merchants()) {
+        if (position.type == merchant) {
+            constexpr float MAX_DISTANCE = 6.0f;
+            // nos devuelve la distancia entre el jugador y el comerciante
+            float distance = std::hypot(player.x - position.x, 
+                                        player.y - position.y);
+
+            return distance <= MAX_DISTANCE;
+        }
+    }
+
+    return false;
+}
+
+bool Game::interact_with_merchant(int client_id, MerchantType merchant) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished() || merchants.find(merchant) == merchants.end()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return false;
+    }
+
+    Player& player = player_it->second;
+
+    if (player.unconscious || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    player.active_merchant = merchant;
+
+    return true;
+}
+
+std::optional<MerchantType> Game::get_active_merchant(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return std::nullopt;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return std::nullopt;
+    }
+
+    auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return std::nullopt;
+    }
+
+    const Player& player = player_it->second;
+
+    if (player.unconscious || !player.active_merchant) {
+        return std::nullopt;
+    }
+
+    if (!near_merchant_unlocked(player, *player.active_merchant)) {
+        return std::nullopt;
+    }
+
+    return player.active_merchant;
+}
+
+std::optional<std::string> Game::get_merchant_catalog(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return std::nullopt;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return std::nullopt;
+    }
+
+    auto player_it = players.find(client_it->second);
+    if (player_it == players.end()) {
+        return std::nullopt;
+    }
+
+    const Player& player = player_it->second;
+
+    if (player.unconscious || !player.active_merchant ||
+        !near_merchant_unlocked(player, *player.active_merchant)) {
+        return std::nullopt;
+    }
+
+    auto merchant_it = merchants.find(*player.active_merchant);
+    if (merchant_it == merchants.end()) {
+        return std::nullopt;
+    }
+
+    const Merchant& merchant = *merchant_it->second;
+
+    std::ostringstream catalog;
+
+    catalog << "Items for sale:\n";
+
+    bool has_sales = false;
+
+    for (ItemType type : merchant.get_items_for_sale()) {
+        auto price = merchant.get_buy_price(type);
+
+        if (price) {
+            catalog << item_catalog.get_item_name(type) << ": " << *price << " coins\n";
+            has_sales = true;
+        }
+    }
+
+    if (!has_sales) {
+        catalog << "None\n";
+    }
+
+    catalog << "Items accepted for sale (base quality prices):\n";
+
+    bool has_purchases = false;
+
+    for (ItemType type : merchant.get_items_to_buy()) {
+        auto price = merchant.get_sell_price(type, Quality::BASE);
+
+        if (price) {
+            catalog << item_catalog.get_item_name(type) << ": " << *price << " coins\n";
+            has_purchases = true;
+        }
+    }
+
+    if (!has_purchases) {
+        catalog << "None\n";
+    }
+
+    return catalog.str();
 }

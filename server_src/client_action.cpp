@@ -56,3 +56,10 @@ void SelectSlotAction::execute(GameActionHandler& handler) const {
 void EnableMultiplayerAction::execute(GameActionHandler& handler) const {
     handler.enable_multiplayer(get_client_id());
 }
+
+InteractMerchantAction::InteractMerchantAction(MerchantType merchant):
+        merchant(merchant) {}
+
+void InteractMerchantAction::execute(GameActionHandler& handler) const {
+    handler.interact_merchant(get_client_id(), merchant);
+}

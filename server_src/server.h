@@ -7,6 +7,7 @@
 #include "menu_games_monitor.h"
 #include "acceptor.h"
 #include "world_catalog.h"
+#include "game_config.h"
 
 #include <memory>
 
@@ -19,7 +20,7 @@ private:
 
 
 public:
-  Server(Socket &&skt, WorldCatalog& catalog);
+  Server(Socket&& skt, WorldCatalog& catalog, const GameConfig& config);
   void run();
 };
 

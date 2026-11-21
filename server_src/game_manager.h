@@ -60,6 +60,8 @@ public:
     void select_slot(int client_id, int slot_index) override;
 
     void enable_multiplayer(int client_id) override;
+
+    void interact_merchant(int client_id, MerchantType merchant) override;
 };
 
 #endif

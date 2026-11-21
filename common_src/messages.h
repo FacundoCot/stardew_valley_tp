@@ -28,7 +28,8 @@ enum class ActionType : uint8_t {
   CONFIRM_NEXT_DAY = 8,
   SELECT_SLOT = 9,
   ENABLE_MULTIPLAYER = 10,
-  USERNAME = 11
+  USERNAME = 11,
+  INTERACT_MERCHANT = 12
 };
 
 enum class EnemyKind : uint8_t {

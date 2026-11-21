@@ -110,6 +110,17 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
         }
         case ActionType::ENABLE_MULTIPLAYER:
           return std::make_shared<EnableMultiplayerAction>();
+        
+        case ActionType::INTERACT_MERCHANT: {
+          uint8_t merchant_type;
+          recv_or_throw(&merchant_type, sizeof(merchant_type));
+
+          if (merchant_type > static_cast<uint8_t>(MerchantType::CLINT)) {
+            throw std::runtime_error("invalid merchant");
+          }
+
+          return std::make_shared<InteractMerchantAction>(static_cast<MerchantType>(merchant_type));
+        }
           
         default:
             throw std::runtime_error("invalid game operation");

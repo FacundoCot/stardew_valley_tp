@@ -1,0 +1,26 @@
+[jugador]
+vida_inicial = 100
+energia_inicial = 100
+dano_espada = 25
+
+[tiempo]
+duracion_dia_segundos = 840
+
+[precios_compra]
+semilla_frutilla = 10
+semilla_cebolla = 5
+semilla_papa = 10
+semilla_calabaza = 20
+cofre = 50
+
+[precios_venta]
+frutilla = 25
+cebolla = 12
+papa = 18
+calabaza = 50
+carbon = 10
+lapislazuli = 40
+plata = 50
+oro = 80
+leche = 30
+huevo = 3
