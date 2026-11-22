@@ -5,21 +5,16 @@
 #include <filesystem>
 #include <string>
 
+#include <QAction>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QGraphicsView>
 #include <QRadioButton>
 #include <QStatusBar>
 #include <QString>
 
+#include "map_file.h"
 #include "ui_mainwindow.h"
-
-const int CAVE_LEVELS = 10;
-
-// totalmente provisional
-const int MAP_COLUMNS = 180;
-const int MAP_ROWS = 120;
-
-const std::string ASSETS_PATH = "client_src/data/assets";
 
 MainWindow::MainWindow(QWidget* parent):
         QMainWindow(parent), ui(new Ui::MainWindow), sheet_scene(nullptr) {
@@ -58,10 +53,9 @@ MainWindow::MainWindow(QWidget* parent):
             &MainWindow::change_tool);
     connect(ui->sheetComboBox, &QComboBox::currentIndexChanged, this,
             &MainWindow::change_sheet);
-}
-
-MainWindow::~MainWindow() {
-    delete ui;
+    connect(ui->selectionSizeComboBox, &QComboBox::currentIndexChanged, this,
+            &MainWindow::change_selection_size);
+    connect(ui->saveAction, &QAction::triggered, this, &MainWindow::save_map);
 }
 
 void MainWindow::fill_sheet_list() {
@@ -132,8 +126,39 @@ void MainWindow::change_sheet(int index) {
     }
 }
 
-void MainWindow::change_tile(const QPixmap& tile) {
-    for (MapScene* scene: scenes) {
-        scene->set_tile(tile);
+void MainWindow::change_tile(const QPixmap& tile, int row, int column) {
+    std::string& sheet_name = sheet_names.at(ui->sheetComboBox->currentIndex());
+    for (MapScene* scene : scenes) {
+        scene->set_tile(tile, sheet_name, row, column);
     }
 }
+
+void MainWindow::change_selection_size(int index) {
+    if (index < 0) {
+        return;
+    }
+
+    sheet_scene->set_selection_size(index + 1);
+}
+
+void MainWindow::save_map() {
+    QString chosen = QFileDialog::getSaveFileName(this, "Guardar mapa", "", "Mapas (*.toml)");
+    if (chosen.isEmpty()) {
+        return;  // el usuario cancelo
+    }
+    if (!chosen.endsWith(".toml")) {
+        chosen += ".toml";
+    }
+
+    std::string file_path = chosen.toStdString();
+    std::string map_name = std::filesystem::path(file_path).stem().string();
+
+    MapFile map_file;
+    if (map_file.save(file_path, map_name, MAP_COLUMNS, MAP_ROWS, scenes)) {
+        ui->statusbar->showMessage(QString::fromStdString("Mapa guardado en " + file_path));
+    } else {
+        ui->statusbar->showMessage(QString::fromStdString("No se pudo guardar " + file_path));
+    }
+}
+
+MainWindow::~MainWindow() { delete ui; }

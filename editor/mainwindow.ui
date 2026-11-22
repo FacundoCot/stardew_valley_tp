@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="fileMenu">
@@ -94,6 +94,32 @@
          <height>280</height>
         </size>
        </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="selectionSizeLabel">
+       <property name="text">
+        <string>Tamaño de selección:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="selectionSizeComboBox">
+       <item>
+        <property name="text">
+         <string>16x16</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>32x32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>48x48</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
