@@ -231,6 +231,7 @@ void ServerProtocol::send_player_state(const PlayerState& player) {
 }
 
 void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) {
+
     uint16_t count = htons(static_cast<uint16_t>(games.size()));
     send_or_throw(&count, sizeof(count));
 
@@ -241,6 +242,9 @@ void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) 
 
         uint8_t multiplayer = game.multiplayer ? 1 : 0;
         send_or_throw(&multiplayer, sizeof(multiplayer));
+
+        send_string(game.player_name);
+        send_appearance(game.appearance);
     }
 }
 
@@ -398,21 +402,19 @@ MenuRequest ServerProtocol::recv_menu_request() {
     switch (static_cast<ActionType>(op)) {
         case ActionType::CREATE_GAME: {
           std::string game_name = recv_string();
-          std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
           return MenuRequest{ActionType::CREATE_GAME, "por_defecto",
-                             std::move(game_name), "", std::move(player_name),
+                             std::move(game_name), "", "",
                              appearance};
         }
 
         case ActionType::JOIN_GAME: {
           std::string game_code = recv_string();
-          std::string player_name = recv_string();
           CharacterAppearance appearance = recv_appearance();
 
           return MenuRequest{ActionType::JOIN_GAME, "por_defecto", "",
-                             std::move(game_code), std::move(player_name),
+                             std::move(game_code), "",
                              appearance};
         }
         case ActionType::LIST_GAMES:

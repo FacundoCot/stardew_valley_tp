@@ -642,6 +642,19 @@ bool Game::start_next_day_game() {
     return true;
 }
 
+std::optional<CharacterAppearance> Game::appearance_for(const std::string& player_name) const {
+
+    std::lock_guard<std::mutex> lock(mtx);
+
+    const auto it = players.find(player_name);
+
+    if (it == players.end()) {
+        return std::nullopt;
+    }
+
+    return it->second.appearance;
+}
+
 bool Game::player_name(int client_id, std::string& player_name) const {
     std::lock_guard<std::mutex> lock(mtx);
 

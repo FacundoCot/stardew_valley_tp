@@ -148,6 +148,8 @@ struct GameInfoForMenu {
     std::string game_name;
     std::string owner_name;
     bool multiplayer;
+    std::string player_name;
+    CharacterAppearance appearance;
 };
 
 struct ServerMessage {

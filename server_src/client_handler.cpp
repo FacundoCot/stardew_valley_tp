@@ -49,32 +49,59 @@ void ClientHandler::run() {
             res.success = false;
             res.error = "invalid menu request";
 
+            if (menu_request.type == ActionType::USERNAME) {
+                ServerMessage response{};
+
+                if (registry.register_username(client_id, menu_request.player_name)) {
+                    username = menu_request.player_name;
+                    response.type = MessageType::USERNAME;
+                } else {
+                    response.type = MessageType::ERROR;
+                }
+
+                protocol.send_message(response);
+                continue;
+            }
+
+            if (username.empty()) {
+                ServerMessage error{};
+                error.type = MessageType::ERROR;
+                protocol.send_message(error);
+                continue;
+            }
+
+
             switch (menu_request.type) {
                 case ActionType::CREATE_GAME:
                     res = menu_games_monitor.create_game(
-                        client_id, menu_request.world_name, menu_request.game_name,
-                        menu_request.player_name, menu_request.appearance);
+                        client_id,
+                        menu_request.world_name,
+                        menu_request.game_name,
+                        username,
+                        menu_request.appearance
+                    );
                     break;
+
                 case ActionType::JOIN_GAME:
-                    res = menu_games_monitor.join_game(client_id, menu_request.game_code, 
-                        menu_request.player_name, menu_request.appearance);
+                    res = menu_games_monitor.join_game(
+                        client_id,
+                        menu_request.game_code,
+                        username,
+                        menu_request.appearance
+                    );
                     break;
+
                 case ActionType::LIST_GAMES:
-                    protocol.send_message(menu_games_monitor.list_games());
+                    protocol.send_message(menu_games_monitor.list_games(username)
+                    );
                     continue;
-                case ActionType::USERNAME: {
-                    ServerMessage msg{};
-                    msg.type = MessageType::USERNAME;
-                    protocol.send_message(msg);
-                    continue;
-                    }
+
                 default:
                     break;
             }
 
             if (res.success) {
                 game = res.game;
-                player_name = menu_request.player_name;
             }
             
             send_menu_result(res, menu_request.type, protocol);

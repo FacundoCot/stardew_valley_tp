@@ -140,29 +140,48 @@ MenuResult MenuGamesMonitor::join_game(int client_id,
     return MenuResult{true, "", game_code, game};
 }
 
-ServerMessage MenuGamesMonitor::list_games() {
+
+ServerMessage MenuGamesMonitor::list_games(const std::string& username) {
     std::lock_guard<std::mutex> lock(mtx);
 
     ServerMessage msg{};
     msg.type = MessageType::GAMES_LIST;
 
     for (const auto& [code, runtime] : games) {
-        GameInfoForMenu game_info;
-        game_info.game_code = code;
-        game_info.game_name = runtime->game_name;
-        game_info.owner_name = runtime->owner_name;
-        game_info.multiplayer = runtime->game->is_multiplayer();
-        msg.games.push_back(game_info);
+        const auto appearance = runtime->game->appearance_for(username);
+
+        if (!appearance) {
+            continue;
+        }
+
+        GameInfoForMenu info{};
+        info.game_code = code;
+        info.game_name = runtime->game_name;
+        info.owner_name = runtime->owner_name;
+        info.multiplayer = runtime->game->is_multiplayer();
+        info.player_name = username;
+        info.appearance = *appearance;
+
+        msg.games.push_back(info);
     }
 
-    // Las partidas guardadas que todavia no se cargaron tambien se listan.
     for (const auto& [code, data] : saved_games) {
-        GameInfoForMenu game_info;
-        game_info.game_code = code;
-        game_info.game_name = data.game_name;
-        game_info.owner_name = data.owner_name;
-        game_info.multiplayer = data.multiplayer;
-        msg.games.push_back(game_info);
+
+        for (const PlayerSaveData& player : data.players) {
+
+            if (player.name == username) {
+                GameInfoForMenu info{};
+                info.game_code = code;
+                info.game_name = data.game_name;
+                info.owner_name = data.owner_name;
+                info.multiplayer = data.multiplayer;
+                info.player_name = player.name;
+                info.appearance = player.appearance;
+
+                msg.games.push_back(info);
+                break;
+            }
+        }
     }
 
     return msg;

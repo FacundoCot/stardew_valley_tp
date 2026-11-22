@@ -156,6 +156,9 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   case ActionType::USERNAME:
     return serialize_username(msg_to_server);
 
+  case ActionType::LIST_GAMES:
+    return std::string(1, static_cast<char>(ActionType::LIST_GAMES));
+
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");
   }
@@ -245,6 +248,29 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
     rcv_inventory(response);
     rcv_time_state(response);
+    break;
+  }
+  case MessageType::GAMES_LIST: {
+    uint16_t count;
+    skt.recvall(&count, sizeof(count));
+    count = ntohs(count);
+
+    for (uint16_t i = 0; i < count; i++) {
+        GameInfoForMenu game{};
+
+        game.game_code = rcv_string();
+        game.game_name = rcv_string();
+        game.owner_name = rcv_string();
+
+        uint8_t multiplayer;
+        skt.recvall(&multiplayer, sizeof(multiplayer));
+        game.multiplayer = multiplayer != 0;
+
+        game.player_name = rcv_string();
+        game.appearance = rcv_appearance();
+
+        response.games.push_back(game);
+    }
     break;
   }
   case MessageType::WORLD_INFO:
