@@ -77,11 +77,12 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
         
         Player player(x, y, config.initial_health, config.initial_energy, get_initial_coins(), zone, appearance);
 
-        player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
-        player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
-        player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
         player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
-
+        player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
+        player.inventory.add_item(Item(ItemType::SHOVEL, Quality::BASE), 1);
+        player.inventory.add_item(Item(ItemType::WATERING_CAN, Quality::BASE), 1);
+        
+        
         players.emplace(player_name, player);
     }
 
