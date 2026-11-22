@@ -29,51 +29,31 @@ void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, st
 }
     
 
-std::string
-ClientProtocol::serialize_create_game(const ClientMessage &msg_to_server) {
-  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.game_name.length() +
-                   sizeof(uint16_t) + msg_to_server.player_name.length();
-  std::string buffer;
-  buffer.reserve(len_msg);
+std::string ClientProtocol::serialize_create_game(const ClientMessage& msg_to_server) {
+    std::string buffer;
 
-  buffer += static_cast<uint8_t>(msg_to_server.type);
+    buffer += static_cast<char>(ActionType::CREATE_GAME);
 
-  uint16_t game_name_len_net = htons(msg_to_server.game_name_len);
-  buffer.append(reinterpret_cast<const char *>(&game_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.game_name;
+    append_u16_t(buffer, static_cast<uint16_t>(msg_to_server.game_name.size()));
+    buffer += msg_to_server.game_name;
 
-  uint16_t player_name_len_net = htons(msg_to_server.player_name_len);
-  buffer.append(reinterpret_cast<const char *>(&player_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.player_name;
+    serialize_appearance(msg_to_server, buffer);
 
-  serialize_appearance(msg_to_server, buffer);
-
-  return buffer;
+    return buffer;
 }
 
-std::string
-ClientProtocol::serialize_join_game(const ClientMessage &msg_to_server) {
-  size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) +
-      msg_to_server.player_name.length();
-  std::string buffer;
-  buffer.reserve(len_msg);
+std::string ClientProtocol::serialize_join_game(const ClientMessage& msg_to_server) {
 
-  buffer += static_cast<uint8_t>(msg_to_server.type);
+    std::string buffer;
 
-  uint16_t code_len_net = htons(static_cast<uint16_t>(msg_to_server.game_code.size()));
-  buffer.append(reinterpret_cast<const char *>(&code_len_net), sizeof(uint16_t));
-  buffer += msg_to_server.game_code;
+    buffer += static_cast<char>(ActionType::JOIN_GAME);
 
-  uint16_t player_name_len_net = htons(msg_to_server.player_name_len);
-  buffer.append(reinterpret_cast<const char *>(&player_name_len_net),
-                sizeof(uint16_t));
-  buffer += msg_to_server.player_name;
+    append_u16_t(buffer, static_cast<uint16_t>(msg_to_server.game_code.size()));
+    buffer += msg_to_server.game_code;
 
-  serialize_appearance(msg_to_server, buffer);
+    serialize_appearance(msg_to_server, buffer);
 
-  return buffer;
+    return buffer;
 }
 
 std::string ClientProtocol::serialize_move(const ClientMessage &msg_to_server) {
