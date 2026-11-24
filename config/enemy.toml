@@ -1,0 +1,86 @@
+[esqueleto]
+vida = 30
+dano = 10
+velocidad = 2.0
+cooldown_ataque = 1.0
+rango_ataque = 1.0
+tiempo_revivir = 10.0
+
+[[esqueleto.drops]]
+item = "oro"
+cantidad_min = 1
+cantidad_max = 2
+probabilidad = 0.5
+
+[orco]
+vida = 50
+dano = 12
+velocidad = 2.5
+cooldown_ataque = 1.2
+rango_ataque = 1.0
+grupo_min = 3
+grupo_max = 6
+
+[[orco.drops]]
+item = "oro"
+cantidad_min = 1
+cantidad_max = 3
+probabilidad = 0.4
+
+[[orco.drops]]
+item = "plata"
+cantidad_min = 1
+cantidad_max = 1
+probabilidad = 0.2
+
+[vampira]
+vida = 40
+dano = 8
+velocidad = 3.5
+cooldown_ataque = 1.0
+rango_ataque = 1.0
+
+[[vampira.drops]]
+item = "oro"
+cantidad_min = 2
+cantidad_max = 4
+probabilidad = 0.6
+
+[vampiro]
+vida = 60
+dano = 15
+velocidad = 2.0
+cooldown_ataque = 1.0
+rango_ataque = 1.0
+
+[vampiro.sangre]
+radio_incidente = 3.0
+tiempo_revivir = 5.0
+
+[[vampiro.drops]]
+item = "oro"
+cantidad_min = 2
+cantidad_max = 4
+probabilidad = 0.6
+
+[frenesi]
+multiplicador = 2.0
+
+[calavera]
+cooldown_disparo = 2.0
+alcance_disparo = 8.0
+
+[calavera.llama_azul]
+dano = 10
+velocidad = 4.0
+
+[calavera.llama_verde]
+dano = 20
+velocidad = 2.0
+
+[spawn]
+esqueletos_min = 2
+esqueletos_max = 5
+parejas_vampiros_min = 1
+parejas_vampiros_max = 3
+calaveras_por_nivel = 1

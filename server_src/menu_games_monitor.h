@@ -12,6 +12,7 @@
 #include "save_disc.h"
 #include "world_catalog.h"
 #include "game_config.h"
+#include "enemy_config.h"
 
 class MenuGamesMonitor {
 private:
@@ -19,6 +20,7 @@ private:
     WorldCatalog& catalog;
     ClientRegistry& registry;
     const GameConfig& config;
+    const EnemyConfig& enemy_config;
     SaveDisc save_disc;
     std::map<std::string, std::unique_ptr<GameRuntime>> games;
     // Partidas guardadas que todavia no se cargaron: el mundo no se construye
@@ -33,7 +35,8 @@ private:
 public:
     explicit MenuGamesMonitor(WorldCatalog& catalog,
                               ClientRegistry& registry,
-                              const GameConfig& config);
+                              const GameConfig& config,
+                              const EnemyConfig& enemy_config);
 
     MenuResult create_game(int client_id,
                        const std::string& world_name,
