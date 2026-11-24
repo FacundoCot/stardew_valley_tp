@@ -16,6 +16,7 @@
 #include "inventory.h"
 #include "health_energy.h"
 #include "map_visual.h"
+#include "menu_in_game.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -24,7 +25,7 @@
 class Client {
 
 private:
-  EventHandler e_handler;
+  
 
   Queue<ServerMessage>& responses;
   Queue<ClientMessage> commands;
@@ -35,6 +36,16 @@ private:
   std::vector<PlayerState> players;
   PlayerState self;
   Camera camera;
+  Visual visual; 
+  Loader loader;
+  PlayerVisual p_visual;
+  HealthEnergy h_and_e;
+  Clock clock;
+  Inventory inventory;
+  MenuInGame menu_game;
+  EventHandler e_handler;
+
+  ZoneId zone_player;
 
   ClientState current_state = ClientState::PLAYING;
 
@@ -48,17 +59,15 @@ private:
   void stop();
 
 public:
-  Client(EventHandler &&e_handler_rcv, Queue<ServerMessage>& responses, ClientProtocol &protocol);
+  Client(Queue<ServerMessage>& responses, ClientProtocol &protocol);
 
 
   void run();
-  void simulate_it(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e, int& it, MapVisual& m_visual);
+  void simulate_it(Button& btn, int& it, MapVisual& m_visual);
 
-  void render(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, HealthEnergy& h_and_e, int& it, MapVisual& m_visual);
+  void render(Button& btn, int& it, MapVisual& m_visual);
 
-  void update(ServerMessage& response, Clock& clock, Inventory& inventory, HealthEnergy& h_and_e);
+  void update(ServerMessage& response);
 
   ~Client();
 };

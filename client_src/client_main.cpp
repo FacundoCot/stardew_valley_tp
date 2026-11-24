@@ -5,6 +5,7 @@
 #include "../common_src/queue.h"
 #include "../common_src/messages.h"
 #include "receiver.h"
+#include "menu_in_game.h"
 
 #include "menu.h"
 #include "client.h"
@@ -36,8 +37,7 @@ int main(int argc, char *argv[]) {
     }
 
     if(!has_exited){
-      EventHandler handler;
-      Client client = Client(std::move(handler), responses, protocol);
+      Client client = Client(responses, protocol);
       client.run();
     }
 

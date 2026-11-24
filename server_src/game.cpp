@@ -7,9 +7,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdexcept>
+#include <iostream>
 
 namespace {
-    const float PLAYER_STEP = 5.1f;
+    const float PLAYER_STEP = 1.0f;
 
     bool apply_health(Player& player, int health) {
         int new_life = health;
@@ -135,9 +136,7 @@ Game::MovementResult Game::move_player_unlocked(
         const float t = static_cast<float>(i) / static_cast<float>(steps);
         const float step_x = player.x + dx * t;
         const float step_y = player.y + dy * t;
-        if (!world->is_walkable(player.zone, step_x, step_y)) {
-            return MovementResult::BLOCKED;
-        }
+
         const auto portal = world->portal_at(player.zone, step_x, step_y);
         if (portal.has_value()) {
             player.zone = portal->destination;
@@ -145,6 +144,11 @@ Game::MovementResult Game::move_player_unlocked(
             player.y = portal->arrival.second;
             return MovementResult::TRANSPORTED;
         }
+
+        if (!world->is_walkable(player.zone, step_x, step_y)) {
+            return MovementResult::BLOCKED;
+        }
+
     }
     player.x = new_x;
     player.y = new_y;

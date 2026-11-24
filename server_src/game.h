@@ -24,7 +24,7 @@ const int WEAKENED_HEALTH_PERCENT = 20;
 const int SWORD_DAMAGE = 25;
 const float PLAYER_ATTACK_COOLDOWN = 0.5f;  // segundos
 const int MAX_ENERGY = 100;
-const int MOVE_ENERGY_COST = 1;
+const int MOVE_ENERGY_COST = 0;
 const int ATTACK_ENERGY_COST = 2;
 
 inline bool is_weakened(int health) {
