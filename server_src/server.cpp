@@ -2,9 +2,10 @@
 
 #include <iostream>
 #include <utility>
-Server::Server(Socket&& skt, WorldCatalog& catalog, const GameConfig& config) : 
+Server::Server(Socket&& skt, WorldCatalog& catalog, const GameConfig& config,
+               const EnemyConfig& enemy_config) :
       registry(),
-      menu_games_monitor(catalog, registry, config),
+      menu_games_monitor(catalog, registry, config, enemy_config),
       acceptor(std::move(skt), menu_games_monitor, registry) {}
 
 void Server::run() {

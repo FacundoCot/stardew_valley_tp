@@ -8,8 +8,10 @@
 #include <ctime>
 #include <stdexcept>
 #include <sstream>
+#include <random>
 
 #include "common_src/village_zone.h"
+#include "vampire.h"
 
 namespace {
     const float PLAYER_STEP = 5.1f;
@@ -37,11 +39,16 @@ uint32_t Game::get_initial_coins() const {
 }
 
 Game::Game(std::shared_ptr<const World> world_param,
-           const GameConfig& config_param):
+           const GameConfig& config_param,
+           const EnemyConfig& enemy_config_param):
         world(std::move(world_param)),
         config(config_param),
+        enemy_config(enemy_config_param),
         item_catalog(config),
-        clock(1, config.day_duration_seconds) {
+        clock(1, config.day_duration_seconds),
+        rng(std::random_device{}()),
+        drop_table(enemy_config),
+        spawner(rng, enemy_config) {
     if (world == nullptr) {
         throw std::invalid_argument("el mundo no puede ser nulo");
     }
@@ -138,7 +145,7 @@ bool Game::enable_multiplayer() {
 }
 
 Game::MovementResult Game::move_player_unlocked(
-        Player& player, float new_x, float new_y) {
+        const std::string& name, Player& player, float new_x, float new_y) {
     const float dx = new_x - player.x;
     const float dy = new_y - player.y;
     const float distance = std::max(std::fabs(dx), std::fabs(dy));
@@ -153,9 +160,44 @@ Game::MovementResult Game::move_player_unlocked(
         }
         const auto portal = world->portal_at(player.zone, step_x, step_y);
         if (portal.has_value()) {
+            const ZoneId old_zone = player.zone;
+            if (old_zone.kind == ZoneId::Kind::CAVE_LEVEL) {
+                fight_sets.on_player_left_room(name);
+            }
             player.zone = portal->destination;
             player.x = portal->arrival.first;
             player.y = portal->arrival.second;
+            if (portal->destination.kind == ZoneId::Kind::CAVE_LEVEL) {
+                const ZoneId room = portal->destination;
+                const bool occupied = std::any_of(players.begin(), players.end(),
+                    [&](const auto& entry) {
+                        return entry.first != name && entry.second.zone == room;
+                    });
+                if (!occupied) {
+                    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                        [&](const std::unique_ptr<Enemy>& enemy) {
+                            return enemy->get_zone() == room;
+                        }), enemies.end());
+                    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+                        [&](const std::unique_ptr<Projectile>& projectile) {
+                            return projectile->get_spec().zone == room;
+                        }), projectiles.end());
+                    auto cave = std::dynamic_pointer_cast<const CaveLevel>(
+                        world->zone(room));
+                    if (cave) {
+                        auto spawned = spawner.populate(room, *cave, *world);
+                        for (auto& enemy : spawned) {
+                            enemies.push_back(std::move(enemy));
+                        }
+                    }
+                }
+                const bool has_skull = std::any_of(enemies.begin(), enemies.end(),
+                    [&](const std::unique_ptr<Enemy>& enemy) {
+                        return enemy->get_zone() == room &&
+                               enemy->kind() == EnemyKind::SKULL;
+                    });
+                fight_sets.on_player_entered_room(name, room, has_skull);
+            }
             return MovementResult::TRANSPORTED;
         }
     }
@@ -202,7 +244,8 @@ bool Game::move_player(int client_id, Direction direction) {
 
     player.facing = direction;
 
-    if (move_player_unlocked(player, new_x, new_y) == MovementResult::BLOCKED) {
+    if (move_player_unlocked(client_iterator->second, player, new_x, new_y) ==
+        MovementResult::BLOCKED) {
         return false;
     }
 
@@ -223,6 +266,7 @@ bool Game::remove_player(int client_id) {
     // elimino su active_merchant
     auto client_it = connected_clients.find(client_id);
     if (client_it != connected_clients.end()) {
+        fight_sets.on_player_left_room(client_it->second);
         auto player_it = players.find(client_it->second);
 
         if (player_it != players.end()) {
@@ -315,20 +359,21 @@ bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (it == players.end() || it->second.unconscious) {
         return false;
     }
-    const bool changed = apply_health(it->second, it->second.health - amount, config.initial_health);
-
+    const bool changed = apply_health(it->second, it->second.health - amount,
+                                      config.initial_health);
+    if (changed) fight_sets.on_player_hurt_by_enemy(player_name);
     check_day_end_unlocked();
 
     return changed;
 }
 
-bool Game::nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const {
+bool Game::nearest_player_unlocked(ZoneId zone, float x, float y, EnemyWorld::Target& target) const {
     bool found = false;
     float best_distance = 0.0f;
 
     for (const auto& [client_id, name] : connected_clients) {
         const Player& player = players.at(name);
-        if (player.unconscious) {
+        if (player.unconscious || player.zone != zone) {
             continue;
         }
         // Distancia de Chebyshev: la misma que usa el esqueleto para atacar
@@ -355,19 +400,22 @@ bool Game::remove_dead_enemies_unlocked() {
 
 class Game::EnemyView : public EnemyWorld {
 public:
-    explicit EnemyView(Game& g) : game(g) {}
+    explicit EnemyView(Game& g): game(g) {}
 
-    bool can_walk(float x, float y) override {
-        // provisional: los enemigos tendrán zona propia
-        return game.world->is_walkable(ZoneId::FARM_ZONE, x, y);
+    bool can_walk(ZoneId requested_zone, float x, float y) override {
+        return game.world->is_walkable(requested_zone, x, y);
     }
 
-    bool nearest_player(float x, float y, Target& target) override {
-        return game.nearest_player_unlocked(x, y, target);
+    bool nearest_player(ZoneId requested_zone, float x, float y, Target& target) override {
+        return game.nearest_player_unlocked(requested_zone, x, y, target);
     }
 
     bool damage_player(const std::string& player_name, int damage) override {
         return game.damage_player_unlocked(player_name, damage);
+    }
+
+    void spawn_projectile(const ProjectileSpec& projectile) override {
+        game.projectiles.push_back(std::make_unique<Projectile>(projectile));
     }
 
 private:
@@ -394,6 +442,7 @@ bool Game::update(float dt) {
     }
 
     clock.update(dt);
+    check_day_end_unlocked();
 
     //para que si el dia termino se se actualicen los enemigos
     if (clock.is_finished()) {
@@ -404,19 +453,38 @@ bool Game::update(float dt) {
         entry.second.attack_cooldown_left =
             std::max(0.0f, entry.second.attack_cooldown_left - dt);
     }
-    /*
-    EnemyView view(*this);
     bool changed = false;
     for (auto& enemy : enemies) {
+        EnemyView view(*this);
         if (enemy->act(view, dt)) {
             changed = true;
         }
     }
 
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+        [&](const std::unique_ptr<Projectile>& projectile) {
+            changed = true;
+            if (!projectile->update(dt)) {
+                return true;
+            }
+            const auto& spec = projectile->get_spec();
+            if (!world->is_walkable(spec.zone, projectile->get_x(), projectile->get_y())) {
+                return true;
+            }
+            for (const auto& [name, player] : players) {
+                if (player.zone == spec.zone && !player.unconscious &&
+                    std::max(std::abs(player.x - projectile->get_x()),
+                             std::abs(player.y - projectile->get_y())) < 0.5f) {
+                    damage_player_unlocked(name, spec.damage);
+                    return true;
+                }
+            }
+            return false;
+        }), projectiles.end());
     if (remove_dead_enemies_unlocked()) {
         changed = true;
-    }*/
-    return true;
+    }
+    return changed;
 }
 
 bool Game::attack(int client_id) {
@@ -459,13 +527,17 @@ bool Game::attack(int client_id) {
     const int target_cell_y = static_cast<int>(std::floor(target_y));
 
     for (auto& enemy : enemies) {
-        if (!enemy->is_visible()) {
+        if (!enemy->is_visible() || enemy->get_zone() != player.zone) {
             continue;
         }
         const int enemy_cell_x = static_cast<int>(std::floor(enemy->get_x()));
         const int enemy_cell_y = static_cast<int>(std::floor(enemy->get_y()));
         if (enemy_cell_x == target_cell_x && enemy_cell_y == target_cell_y) {
+            const bool was_alive = !enemy->is_dead();
             enemy->take_damage(damage);
+            if (was_alive && enemy->is_dead()) {
+                handle_enemy_killed_unlocked(*enemy, client_it->second);
+            }
             break;
         }
     }
@@ -488,13 +560,54 @@ void Game::add_enemy(std::unique_ptr<Enemy> enemy) {
     enemies.push_back(std::move(enemy));
 }
 
-std::vector<EnemyState> Game::enemy_snapshot() const {
+void Game::handle_enemy_killed_unlocked(Enemy& enemy, const std::string& killer) {
+    auto player = players.find(killer);
+    if (player != players.end()) {
+        for (const auto& [item, quantity] : drop_table.roll(enemy, rng)) {
+            player->second.inventory.add_item(item, quantity);
+        }
+    }
+    const int level = enemy.get_zone().kind == ZoneId::Kind::CAVE_LEVEL ?
+                      enemy.get_zone().level : 0;
+    fight_sets.on_enemy_killed(enemy, level);
+    if (enemy.kind() != EnemyKind::VAMPIRE) return;
+    for (auto& other : enemies) {
+        if (other.get() != &enemy && other->kind() == EnemyKind::VAMPIRE &&
+            other->get_group_id() == enemy.get_group_id()) {
+            other->on_partner_died();
+        }
+    }
+    if (player_incident_near_unlocked(enemy.get_zone(), enemy.get_x(), enemy.get_y(),
+                                      enemy_config.blood_incident_radius)) {
+        enemy.start_revive(enemy_config.blood_revive_seconds);
+    }
+}
+
+bool Game::player_incident_near_unlocked(ZoneId zone, float x, float y,
+                                          float radius) const {
+    for (const auto& [name, player] : players) {
+        if (player.zone == zone &&
+            std::max(std::abs(player.x - x), std::abs(player.y - y)) <= radius &&
+            (player.unconscious || is_weakened(player.health, config.initial_health))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<EnemyState> Game::enemy_snapshot(ZoneId zone) const {
 
     std::vector<EnemyState> state;
     state.reserve(enemies.size());
     for (const auto& enemy : enemies) {
-        if (!enemy->is_visible()) {
+        if (enemy->get_zone() != zone || !enemy->is_visible()) {
             continue;
+        }
+        EnemyVariant variant = EnemyVariant::NONE;
+        if (enemy->kind() == EnemyKind::VAMPIRE) {
+            const auto* vampire = dynamic_cast<const Vampire*>(enemy.get());
+            variant = vampire->is_female() ? EnemyVariant::FEMALE_VAMPIRE :
+                                             EnemyVariant::MALE_VAMPIRE;
         }
         state.push_back(EnemyState{
             enemy->kind(),
@@ -502,7 +615,23 @@ std::vector<EnemyState> Game::enemy_snapshot() const {
             enemy->get_y(),
             enemy->get_health(),
             enemy->get_max_health(),
+            variant,
+            dynamic_cast<const Vampire*>(enemy.get()) != nullptr &&
+                dynamic_cast<const Vampire*>(enemy.get())->has_frenzy()
         });
+    }
+    return state;
+}
+
+std::vector<ProjectileState> Game::projectile_snapshot(ZoneId zone) const {
+    std::vector<ProjectileState> state;
+    for (const auto& projectile : projectiles) {
+        const auto& spec = projectile->get_spec();
+        if (spec.zone == zone) {
+            state.push_back({spec.green ? EnemyVariant::GREEN_FLAME :
+                                         EnemyVariant::BLUE_FLAME,
+                             projectile->get_x(), projectile->get_y()});
+        }
     }
     return state;
 }
@@ -572,7 +701,8 @@ ServerMessage Game::game_state(int client_id) const {
     msg.players = snapshot(me.zone, name);
     msg.map_players = map_snapshot();
     
-    msg.enemies = enemy_snapshot();
+    msg.enemies = enemy_snapshot(me.zone);
+    msg.projectiles = projectile_snapshot(me.zone);
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();
 
@@ -806,7 +936,12 @@ int Game::get_selected_slot(int client_id) const {
 }
 
 void Game::check_day_end_unlocked() {
-    if (clock.is_finished() || connected_clients.empty()) {
+    if (clock.is_finished()) {
+        enemies.clear();
+        projectiles.clear();
+        return;
+    }
+    if (connected_clients.empty()) {
         return;
     }
 
@@ -819,6 +954,11 @@ void Game::check_day_end_unlocked() {
     }
 
     clock.finish_day();
+    for (const auto& entry : players) {
+        fight_sets.on_player_left_room(entry.first);
+    }
+    enemies.clear();
+    projectiles.clear();
 }
 
 bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player) const {

@@ -39,6 +39,14 @@ enum class EnemyKind : uint8_t {
   SKULL = 4
 };
 
+enum class EnemyVariant : uint8_t {
+  NONE,
+  FEMALE_VAMPIRE,
+  MALE_VAMPIRE,
+  BLUE_FLAME,
+  GREEN_FLAME
+};
+
 enum class ClientState : uint8_t {
   PLAYING,
   DAY_ENDED,
@@ -51,6 +59,14 @@ struct EnemyState {
   float y;
   int health;
   int max_health;
+  EnemyVariant variant;
+  bool frenzy;
+};
+
+struct ProjectileState {
+  EnemyVariant variant;
+  float x;
+  float y;
 };
 
 enum class Direction : uint8_t {
@@ -160,6 +176,7 @@ struct ServerMessage {
   std::vector<PlayerState> players;
   std::vector<MapPlayerState> map_players;
   std::vector<EnemyState> enemies;
+  std::vector<ProjectileState> projectiles;
   uint8_t return_code = 0;
   InventoryState inventory;
   TimeState time;

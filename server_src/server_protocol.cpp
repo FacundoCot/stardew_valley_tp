@@ -134,6 +134,12 @@ static uint32_t coordinate_to_network(float value) {
     return htonl(static_cast<uint32_t>(coordinate));
 }
 
+static void validate_variant(EnemyVariant variant) {
+    if (static_cast<uint8_t>(variant) > static_cast<uint8_t>(EnemyVariant::GREEN_FLAME)) {
+        throw std::runtime_error("invalid enemy variant");
+    }
+}
+
 static void validate_enemies(const std::vector<EnemyState>& enemies) {
     for (const EnemyState& enemy : enemies) {
         if (enemy.health < 0 ||
@@ -144,6 +150,7 @@ static void validate_enemies(const std::vector<EnemyState>& enemies) {
             enemy.max_health > std::numeric_limits<uint16_t>::max()) {
             throw std::runtime_error("invalid enemy max_health value");
         }
+        validate_variant(enemy.variant);
     }
 }
 
@@ -303,6 +310,9 @@ void ServerProtocol::send_message(const ServerMessage& message) {
              *   int32 y (valor * 100, htonl)
              *   u16 vida (htons)
              *   u16 vida maxima (htons)
+             *   u8 variante, u8 frenesí
+             * u16 cantidad de proyectiles (htons)
+             * por cada proyectil: u8 variante, int32 x, int32 y
              *   u8  inconsciente (0 o 1)
              * u16 cantidad de enemigos (htons)
              * por cada enemigo:
@@ -366,6 +376,27 @@ void ServerProtocol::send_message(const ServerMessage& message) {
                     htons(static_cast<uint16_t>(enemy.max_health));
                 send_or_throw(&health, sizeof(health));
                 send_or_throw(&max_health, sizeof(max_health));
+                validate_variant(enemy.variant);
+                const uint8_t variant = static_cast<uint8_t>(enemy.variant);
+                const uint8_t frenzy = enemy.frenzy ? 1 : 0;
+                send_or_throw(&variant, sizeof(variant));
+                send_or_throw(&frenzy, sizeof(frenzy));
+            }
+
+            if (message.projectiles.size() > 512) {
+                throw std::runtime_error("too many projectiles");
+            }
+            const uint16_t projectile_count =
+                htons(static_cast<uint16_t>(message.projectiles.size()));
+            send_or_throw(&projectile_count, sizeof(projectile_count));
+            for (const ProjectileState& projectile : message.projectiles) {
+                validate_variant(projectile.variant);
+                const uint8_t variant = static_cast<uint8_t>(projectile.variant);
+                send_or_throw(&variant, sizeof(variant));
+                const uint32_t x = coordinate_to_network(projectile.x);
+                const uint32_t y = coordinate_to_network(projectile.y);
+                send_or_throw(&x, sizeof(x));
+                send_or_throw(&y, sizeof(y));
             }
 
           send_inventory_state(message.inventory);

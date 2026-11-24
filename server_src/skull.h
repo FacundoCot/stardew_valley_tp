@@ -2,14 +2,16 @@
 #define SKULL_H
 
 #include "enemy.h"
+#include "enemy_config.h"
 
 class Skull : public Enemy {
 private:
-    EnemyStats stats;
+    bool green;
+    SkullConfig config;
     float shot_cooldown;
 
 public:
-    Skull(float x, float y, const EnemyStats& enemy_stats);
+    Skull(ZoneId zone, float x, float y, bool green, const SkullConfig& config);
 
     bool act(EnemyWorld& world, float dt) override;
     EnemyKind kind() const override;
