@@ -25,6 +25,9 @@ private:
   CharacterAppearance rcv_appearance();
   PlayerState rcv_player_state();
   ZoneId rcv_zone_id();
+  void rcv_projectiles(ServerMessage &msg);
+  void rcv_plot(ServerMessage &msg);
+
 public:
   explicit ClientProtocol(Socket &&skt_rcv);
 

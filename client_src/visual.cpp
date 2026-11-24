@@ -10,8 +10,13 @@ using SDL2pp::Window;
 Visual::Visual(const std::string &tittle, const int &width, const int &height)
     : sdl(SDL_INIT_VIDEO),
       window(tittle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
-             height, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE),
-      renderer(window, -1, SDL_RENDERER_ACCELERATED), ttf(), font("client_src/data/fonts/dayfont.ttf", 18), is_fulscreen(true) {}
+             height, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_RESIZABLE),
+      renderer(window, -1, SDL_RENDERER_ACCELERATED), ttf(), font("client_src/data/fonts/dayfont.ttf", 18), is_fulscreen(true) {
+
+       SDL_ShowCursor(SDL_ENABLE);
+       SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+       SDL_SetCursor(cursor);      
+      }
 
 Renderer &Visual::get_renderer() { return renderer; }
 
@@ -64,34 +69,6 @@ void Visual::draw_text(const std::string& text, int& x, int& y, uint8_t& r, uint
        SDL2pp::Texture text_texture(renderer, surface);
 
        SDL2pp::Rect dest(x, y, surface.GetWidth(), surface.GetHeight());
-
-       renderer.Copy(text_texture, SDL2pp::NullOpt, dest);
-}
-
-void Visual::draw_button(const SDL2pp::Rect &rect, const std::string& text, bool is_hovered) {
-       renderer.SetDrawBlendMode(SDL_BLENDMODE_NONE);
-       if (is_hovered) {
-           renderer.SetDrawColor(110, 110, 110, 255);
-       } else {
-           renderer.SetDrawColor(70, 70, 70, 255);
-       }
-       
-       renderer.FillRect(rect);
-
-       renderer.SetDrawColor(255, 255, 255, 255);
-       renderer.DrawRect(rect);
-
-       if (text.empty()) {return;}
-
-       SDL_Color color = {255, 255, 255, 255};
-       SDL2pp::Surface text_surface = font.RenderText_Solid(text, color);
-
-       SDL2pp::Texture text_texture(renderer, text_surface);
-       
-       int center_x = rect.x + (rect.w - text_surface.GetWidth()) / 2;
-       int center_y = rect.y + (rect.h - text_surface.GetHeight()) / 2;
-
-       SDL2pp::Rect dest(center_x, center_y, text_surface.GetWidth(), text_surface.GetHeight());
 
        renderer.Copy(text_texture, SDL2pp::NullOpt, dest);
 }

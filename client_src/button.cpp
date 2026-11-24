@@ -3,21 +3,29 @@
 
 #include <SDL2pp/Rect.hh>
 
-Button::Button(const std::string& text, Visual& visual, int w, int h) : button(visual.get_window().GetWidth() / 2 - (w/2), 
-                                                                                visual.get_window().GetHeight() / 2 - (h/2), w, h),
-                text(text) {}
+Button::Button(SDL2pp::Texture& texture,int x, int y, int w, int h) :  texture(texture), 
+                                                                    button(x, y, w, h) {}
 
 
 void Button::draw(Visual& visual) const {
-    int mouse_x, mouse_y;
-    SDL_GetMouseState(&mouse_x, &mouse_y);
+    if (is_hovered) {
+        texture.SetColorMod(210, 210, 210);
+    } else {
+        texture.SetColorMod(255,255,255);
+    }
 
-    bool is_hovered = button.Contains(mouse_x, mouse_y);
-
-    visual.draw_button(button, text, is_hovered);
+    visual.get_renderer().Copy(texture, SDL2pp::NullOpt, button);
 
 }
 
 bool Button::is_clicked(int& mouse_x, int& mouse_y) const {
     return button.Contains(mouse_x, mouse_y);
+}
+
+void Button::update_is_hovered(int mouse_x, int mouse_y) {
+    is_hovered = button.Contains(mouse_x, mouse_y);
+}
+
+void Button::set_rect(int x, int y, int w, int h) {
+    button = SDL2pp::Rect(x, y, w, h);
 }

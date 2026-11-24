@@ -9,6 +9,7 @@
 #include "appearance_translator.h"
 #include "characterpreview.h"
 
+#include "map_constants.h"
 
 using SDL2pp::Renderer;
 
@@ -21,8 +22,8 @@ void PlayerVisual::draw( const PlayerState &state,
 
   const SDL2pp::Rect &r = camera.get_rect();
 
-  int x_screen = static_cast<int>(std::round(state.x)) - r.x;
-  int y_screen = static_cast<int>(std::round(state.y)) - r.y;
+  float x_screen = state.x*TILE_SIZE - r.x;
+  float y_screen = state.y*TILE_SIZE - r.y;
   
   CharacterAppearance ap = state.appearance;
   AppearanceTranslator translator(ap);
@@ -33,6 +34,7 @@ void PlayerVisual::draw( const PlayerState &state,
       state.y,
       -100
     });
+
 
   PlayerAnim &anim = it_map->second;
 
@@ -53,38 +55,44 @@ void PlayerVisual::draw( const PlayerState &state,
   int step_dx = 0;
   int pos_animation = 0;
   if (is_moving) {
-    int pos_animation = (it/8) % COUNT_ANIMATIONS;
+    pos_animation = (it/8) % COUNT_ANIMATIONS;
     step_dx = STEPS[pos_animation];
   }
 
-  Rect body = translator.body_rect();
-  body.x += step_dx;
+  Translator::Rect body = translator.body_rect();
+  body.x += body.width*step_dx;
 
   int player_dy =  (is_moving ? PLAYER_DY[pos_animation]*scale : 0);
   
-  SDL2pp::Rect dest(x_screen, y_screen + player_dy, body.width*2, body.height*2);
+  SDL2pp::Rect dest(x_screen, y_screen, body.width*2, body.height*2);
 
   SDL2pp::Rect src = to_SDLRect(body);
 
   renderer.Copy(player, src, dest);
 
-  if (ap.hair != 0) {
-    draw_hair(translator, dest, ap);
-  }
-  draw_shirt(translator, dest, ap);
   draw_pants(translator, dest, ap, step_dx);
-  draw_hat(translator, dest, ap);
+
+  if (ap.hair != 0) {
+    draw_hair(translator, dest, ap, player_dy);
+  }
+  draw_shirt(translator, dest, ap, player_dy);
+  draw_hat(translator, dest, ap, player_dy);
   
 }
 
-void PlayerVisual::draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap) {
+void PlayerVisual::draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& body,
+                              CharacterAppearance& ap, int& player_dy) {
+
   SDL2pp::Texture& hair = loader.get_texture("hair");
 
-  Rect hair_dimensions = translator.hair_rect();
+  Translator::Rect hair_dimensions = translator.hair_rect();
 
   int dy = HAIR_DY + (ap.body == 1 ? FEMALE_DY : 0);
 
-  SDL2pp::Rect dest(body.x, body.y + dy*scale, hair_dimensions.width*scale, hair_dimensions.height*scale);
+  SDL2pp::Rect dest(body.x, 
+                    body.y + dy*scale + player_dy, 
+                    hair_dimensions.width*scale, 
+                    hair_dimensions.height*scale);
 
   SDL2pp::Rect src = to_SDLRect(hair_dimensions);
 
@@ -98,8 +106,8 @@ void PlayerVisual::draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& bod
 void PlayerVisual::draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& step_dx) {
     SDL2pp::Texture& pants = loader.get_texture("pants");
 
-  Rect pants_dimensions = translator.pants_rect();
-  pants_dimensions.x += step_dx;
+  Translator::Rect pants_dimensions = translator.pants_rect();
+  pants_dimensions.x += step_dx * pants_dimensions.width;
 
   int dy = PANTS_DY + (ap.body == 1 ? FEMALE_DY : 0);
 
@@ -113,41 +121,48 @@ void PlayerVisual::draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& bo
   renderer.Copy(pants, src, dest);
 }
 
-void PlayerVisual::draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap) {
+void PlayerVisual::draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& body,
+                               CharacterAppearance& ap, int& player_dy) {
   SDL2pp::Texture& shirt = loader.get_texture("shirts");
 
-  Rect shirt_dimension = translator.shirt_rect();
+  Translator::Rect shirt_dimension = translator.shirt_rect();
 
   int dy = SHIRT_DY + (ap.body == 1 ? FEMALE_DY : 0);
   
-  SDL2pp::Rect dest(body.x + SHIRT_DX*scale, body.y + dy*scale, 
-                    shirt_dimension.width*scale, shirt_dimension.height*scale);
+  SDL2pp::Rect dest(body.x + SHIRT_DX*scale, 
+                    body.y + dy*scale + player_dy, 
+                    shirt_dimension.width*scale, 
+                    shirt_dimension.height*scale);
 
   SDL2pp::Rect src = to_SDLRect(shirt_dimension);
 
   renderer.Copy(shirt, src, dest);
 }
 
-void PlayerVisual::draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap) {
+void PlayerVisual::draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body, 
+                            CharacterAppearance& ap, int& player_dy) {
+
   if (ap.hat == 0) {
     return;
   }
 
   SDL2pp::Texture& hat = loader.get_texture("hats");
 
-  Rect hat_dimension = translator.hat_rect();
+  Translator::Rect hat_dimension = translator.hat_rect();
 
   int dy = HAT_DY + (ap.body == 1 ? FEMALE_DY : 0);
   
-  SDL2pp::Rect dest(body.x + HAT_DX*scale, body.y + dy*scale, 
-                    hat_dimension.width*scale, hat_dimension.height*scale);
+  SDL2pp::Rect dest(body.x + HAT_DX*scale,
+                    body.y + dy*scale + player_dy, 
+                    hat_dimension.width*scale, 
+                    hat_dimension.height*scale);
 
   SDL2pp::Rect src = to_SDLRect(hat_dimension);
 
   renderer.Copy(hat, src, dest);
 }
 
-SDL2pp::Rect PlayerVisual::to_SDLRect(Rect& rect) {
+SDL2pp::Rect PlayerVisual::to_SDLRect(Translator::Rect& rect) {
   return SDL2pp::Rect(rect.x, rect.y, rect.width, rect.height);
 }
 

@@ -8,17 +8,16 @@
 
 class Menu {
     public:
-        explicit Menu(ClientProtocol& protocol);
+        explicit Menu(ClientProtocol& protocol, Queue<ServerMessage>& responses);
 
         bool run(int argc, char* argv[]);
         
         ~Menu();
     private:
-        Queue<ServerMessage> responses;
-        Queue<ClientMessage> commands;
 
         ClientProtocol& protocol;
-        Receiver receiver;
+        Queue<ServerMessage>& responses;
+        Queue<ClientMessage> commands;
         Sender sender;
 
         bool main_menu(int argc, char *argv[]);

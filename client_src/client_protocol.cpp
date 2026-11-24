@@ -195,7 +195,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
       player.y = ntohl(coordinate) / 100.0f;
 
       player.zone = rcv_zone_id();
-
+      response.map_players.push_back(player);
     }
 
     uint16_t enemy_count;
@@ -224,10 +224,25 @@ ServerMessage ClientProtocol::rcv_from_server() {
       skt.recvall(&max_health, sizeof(uint16_t));
       enemy.max_health = ntohs(max_health);
 
+      uint8_t variant, frenzy;
+
+      skt.recvall(&variant, sizeof(uint8_t));
+      skt.recvall(&frenzy, sizeof(uint8_t));
+
+      enemy.variant = static_cast<EnemyVariant>(variant);
+      enemy.frenzy = frenzy != 0;
+
       response.enemies.push_back(enemy);
     }
+    rcv_projectiles(response);
     rcv_inventory(response);
     rcv_time_state(response);
+    rcv_plot(response);
+
+    uint8_t multiplayer_enabled;
+    skt.recvall(&multiplayer_enabled, sizeof(uint8_t));
+    response.multiplayer_enabled = multiplayer_enabled != 0;
+
     break;
   }
   case MessageType::GAMES_LIST: {
@@ -396,6 +411,74 @@ PlayerState ClientProtocol::rcv_player_state() {
 
     player.appearance = rcv_appearance();
 
+    uint8_t facing;
+    skt.recvall(&facing, sizeof(uint8_t));
+    player.facing = static_cast<Direction>(facing);
+
     return player;
   
+}
+
+void ClientProtocol::rcv_projectiles(ServerMessage &response) {
+    uint16_t count_net;
+    skt.recvall(&count_net, sizeof(uint16_t));
+
+    uint16_t count = ntohs(count_net);
+
+    for (uint16_t i = 0; i < count; i++) {
+      ProjectileState projectil;
+
+      uint8_t variant; 
+      skt.recvall(&variant, sizeof(uint8_t));
+      projectil.variant = static_cast<EnemyVariant>(variant);
+
+      uint32_t coordinate;
+
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      projectil.x = ntohl(coordinate);
+
+      skt.recvall(&coordinate, sizeof(uint32_t));
+      projectil.y = coordinate;
+
+      response.projectiles.push_back(projectil);
+
+    }
+
+}
+
+void ClientProtocol::rcv_plot(ServerMessage& reponse) {
+  uint16_t plot_count_net;
+
+  skt.recvall(&plot_count_net, sizeof(uint16_t));
+
+  uint16_t plot_count = ntohs(plot_count_net);
+
+  for (uint16_t i = 0; i < plot_count; i++) {
+    FarmPlotState plot;
+
+    uint16_t x, y, grown, required;
+    uint8_t has_crop, crop_type, needs_water, ready;
+
+    skt.recvall(&x, sizeof(uint16_t));
+    skt.recvall(&y, sizeof(uint16_t));
+    skt.recvall(&grown, sizeof(uint16_t));
+    skt.recvall(&required, sizeof(uint16_t));
+
+    skt.recvall(&has_crop, sizeof(uint8_t));
+    skt.recvall(&crop_type, sizeof(uint8_t));
+    skt.recvall(&needs_water, sizeof(uint8_t));
+    skt.recvall(&ready, sizeof(uint8_t));
+
+    plot.cell_x = ntohs(x);
+    plot.cell_y = ntohs(y);
+    plot.days_grown = htons(grown);
+    plot.growth_days = htons(required);
+
+    plot.has_crop = has_crop;
+    plot.crop_type = static_cast<ItemType>(crop_type);
+    plot.needs_water = needs_water != 0;
+    plot.ready_to_harvest = ready != 0;
+
+    reponse.farm_plots.push_back(plot);
+  }
 }

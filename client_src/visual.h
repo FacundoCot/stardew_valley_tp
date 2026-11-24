@@ -29,7 +29,6 @@ public:
     double angle, int& pivot_x, int& pivot_y);
   
   void draw_text(const std::string& text, int& x, int& y, uint8_t& r, uint8_t& g, uint8_t& b);
-  void draw_button(const SDL2pp::Rect& rect, const std::string& text, bool is_hovered= false);
   void draw_black_overlay();
   void draw_text_centered(const std::string& text, uint8_t& r, uint8_t& g, uint8_t& b);
 

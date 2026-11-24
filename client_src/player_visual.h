@@ -25,18 +25,18 @@ Loader& loader;
 
 std::unordered_map<std::string, PlayerAnim> last_pos;
 
-SDL2pp::Rect to_SDLRect(Rect& rect);
-void draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap);
-void draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap);
+SDL2pp::Rect to_SDLRect(Translator::Rect& rect);
+void draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& player_dy );
+void draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& player_dy);
 void draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& step_dx);
-void draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap);
+void draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& player_dy);
 
 const int COUNT_ANIMATIONS = 4;
 const int STEPS[4] = {
     1,
+    0,
     2,
-    1,
-    3
+    0
 };
 const int PLAYER_DY[4] = {
     1,
