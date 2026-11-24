@@ -29,7 +29,11 @@ enum class ActionType : uint8_t {
   SELECT_SLOT = 9,
   ENABLE_MULTIPLAYER = 10,
   USERNAME = 11,
-  INTERACT_MERCHANT = 12
+  INTERACT_MERCHANT = 12,
+  TILL_SOIL = 13,
+  PLANT_SEED = 14,
+  WATER_CROP = 15,
+  HARVEST_CROP = 16
 };
 
 enum class EnemyKind : uint8_t {
@@ -123,6 +127,20 @@ struct InventoryState {
     std::vector<InventorySlotState> slot_vector;
 };
 
+struct FarmPlotState {
+    uint16_t cell_x = 0;
+    uint16_t cell_y = 0;
+
+    bool has_crop = false;
+    ItemType crop_type = ItemType::STRAWBERRY;
+
+    uint16_t days_grown = 0;
+    uint16_t growth_days = 0;
+
+    bool needs_water = false;
+    bool ready_to_harvest = false;
+};
+
 struct TimeState {
     uint16_t day;
     uint8_t hour;
@@ -166,6 +184,7 @@ struct ServerMessage {
   ChatState chat;
   std::vector<GameInfoForMenu> games;
   std::vector<uint8_t> world_info;
+  std::vector<FarmPlotState> farm_plots;
 };
 
 struct MenuRequest {
@@ -188,6 +207,8 @@ struct ClientMessage {
   std::string chat_text;
   std::string game_code; // momentáneo del join
   uint8_t slot_index = 0;
+  uint16_t target_cell_x = 0; //posiciones en las que el jugador
+  uint16_t target_cell_y = 0; //quiere realizar la accion
 };
 
 #endif

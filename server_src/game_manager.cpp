@@ -313,3 +313,27 @@ void GameManager::interact_merchant(int client_id, MerchantType merchant) {
 
     registry.send(client_id, message);
 }
+
+void GameManager::till_soil(int client_id, int x, int y) {
+    if (game->till_soil(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::plant_seed(int client_id, int x, int y) {
+    if (game->plant_seed(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::water_crop(int client_id, int x, int y) {
+    if (game->water_crop(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::harvest_crop(int client_id, int x, int y) {
+    if (game->harvest_crop(client_id, x, y)) {
+        send_state();
+    }
+}

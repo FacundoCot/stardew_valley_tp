@@ -34,6 +34,14 @@ class GameActionHandler {
 
         virtual void interact_merchant(int client_id, MerchantType merchant) = 0;
 
+        virtual void till_soil(int client_id, int x, int y) = 0;
+
+        virtual void plant_seed(int client_id, int x, int y) = 0;
+
+        virtual void water_crop(int client_id, int x, int y) = 0;
+        
+        virtual void harvest_crop(int client_id, int x, int y) = 0;
+
         // Destructor virtual: asegura que al destruir un objeto mediante un puntero
         // a la clase padre, se ejecuten también los destructores de las clases hijas
         virtual ~GameActionHandler() = default;

@@ -62,6 +62,14 @@ public:
     void enable_multiplayer(int client_id) override;
 
     void interact_merchant(int client_id, MerchantType merchant) override;
+
+    void till_soil(int client_id, int x, int y) override;
+
+    void plant_seed(int client_id, int x, int y) override;
+
+    void water_crop(int client_id, int x, int y) override;
+    
+    void harvest_crop(int client_id, int x, int y) override;
 };
 
 #endif

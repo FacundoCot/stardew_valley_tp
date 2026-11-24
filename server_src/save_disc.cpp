@@ -13,7 +13,24 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ZoneId, kind, level)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CharacterAppearance, body, hair, shirt, pants, hat, hair_color, pants_color)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ItemSaveData, type, quality, quantity, index)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerSaveData, name, appearance, x, y, health, energy, coins, zone, bed_index, selected_slot, inventory)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, world_name, multiplayer, day, players)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+    CropSaveData,
+    type,
+    required_waterings,
+    growth_days,
+    regrowth_days,
+    tolerated_missed_waterings,
+    days_grown,
+    waterings_today,
+    last_watering_window,
+    missed_waterings,
+    watering_delay_minutes,
+    ready_days,
+    ready_to_harvest
+)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FarmPlotSaveData, x, y, has_crop, crop)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, world_name, multiplayer, day, players, farm_plots)
+
 
 SaveDisc::SaveDisc(const std::filesystem::path& saves_directory):
         saves_directory(saves_directory) {

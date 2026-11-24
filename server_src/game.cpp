@@ -8,6 +8,7 @@
 #include <ctime>
 #include <stdexcept>
 #include <sstream>
+#include <random>
 
 #include "common_src/village_zone.h"
 
@@ -575,6 +576,7 @@ ServerMessage Game::game_state(int client_id) const {
     msg.enemies = enemy_snapshot();
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();
+    msg.farm_plots = farm_plots_state();
 
     return msg;
 }
@@ -635,6 +637,10 @@ bool Game::start_next_day_game() {
         player.attack_cooldown_left = 0.0f;
 
         player.active_merchant.reset();
+    }
+
+    for (auto& entry : farm_plots) {
+        entry.second.advance_day();
     }
 
     clock.start_next_day();
@@ -726,6 +732,22 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         data.players.push_back(player_data);
     }
 
+    for (const auto& [pos, plot] : farm_plots) {
+        FarmPlotSaveData plot_data{};
+
+        plot_data.x = pos.x;
+        plot_data.y = pos.y;
+
+        const Crop* crop = plot.get_crop();
+
+        if (crop) {
+            plot_data.has_crop = true;
+            plot_data.crop = crop->get_save_data();
+        }
+
+        data.farm_plots.push_back(plot_data);
+    }
+
     return data;
 }
 
@@ -737,6 +759,7 @@ void Game::restore_save_data(const GameSaveData& data) {
     connected_clients.clear();
     ready_clients.clear();
     bed_by_player.clear();
+    farm_plots.clear();
 
     clock = GameClock(data.day, config.day_duration_seconds);
     multiplayer_enabled = data.multiplayer;
@@ -767,6 +790,16 @@ void Game::restore_save_data(const GameSaveData& data) {
 
 
         players.emplace(saved_player.name, std::move(player));
+    }
+
+    for (const FarmPlotSaveData& saved_plot : data.farm_plots) {
+        FarmPlot plot;
+
+        if (saved_plot.has_crop) {
+            plot.restore_crop(saved_plot.crop);
+        }
+
+        farm_plots.emplace(CellPos{saved_plot.x, saved_plot.y}, plot);
     }
 }
 
@@ -1129,4 +1162,381 @@ std::optional<std::string> Game::get_merchant_catalog(int client_id) const {
     }
 
     return catalog.str();
+}
+
+
+bool Game::till_soil(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE 
+        || player.unconscious 
+        || player.energy < config.till_energy_cost) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+    const auto& selected = slots[player.selected_slot];
+    //chequeo que tenga seleccionada la pala
+    if (!selected || selected->get_item().get_type() != ItemType::SHOVEL) {
+        return false;
+    }
+
+
+    if (x < 0 || y < 0 || x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(std::floor(player.x));
+    const int player_y = static_cast<int>(std::floor(player.y));
+
+    if (std::abs(player_x - x) > 1 || std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    const size_t index = static_cast<size_t>(y) * farm->width() + x;
+    //verificamos que el terreno sea grass y que no este ni dentro de la cabaña
+    //ni dentro de un portal
+    if (farm->grid()[index] != Tile::GRASS 
+        || farm->cabin().contains_cell(x, y) 
+        || farm->portal_at(x + 0.5f, y + 0.5f).has_value()) {
+        return false;
+    }
+
+    CellPos pos{x, y};
+
+    bool inserted = farm_plots.emplace(pos, FarmPlot{}).second;
+
+    if (!inserted) {
+        return false;
+    }
+
+    player.energy = std::max(0, player.energy - config.till_energy_cost);
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+std::optional<ItemType> Game::crop_type_for_seed(ItemType seed_type) {
+    if (seed_type == ItemType::STRAWBERRY_SEED) {
+        return ItemType::STRAWBERRY;
+    }
+
+    if (seed_type == ItemType::ONION_SEED) {
+        return ItemType::ONION;
+    }
+
+    if (seed_type == ItemType::POTATO_SEED) {
+        return ItemType::POTATO;
+    }
+
+    if (seed_type == ItemType::PUMPKIN_SEED) {
+        return ItemType::PUMPKIN;
+    }
+
+    return std::nullopt;
+}
+
+Quality Game::quality_from_score(int score, const GameConfig& config) {
+    if (score >= config.quality_perfect_threshold) {
+        return Quality::PERFECT;
+    }
+    if (score >= config.quality_incredible_threshold) {
+        return Quality::INCREDIBLE;
+    }
+    if (score >= config.quality_excellent_threshold) {
+        return Quality::EXCELLENT;
+    }
+    if (score >= config.quality_good_threshold) {
+        return Quality::GOOD;
+    }
+    return Quality::BASE;
+}
+
+int Game::generate_luck(int minimum, int maximum) {
+    static thread_local std::mt19937 generator(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(minimum, maximum);
+    return distribution(generator);
+}
+
+bool Game::plant_seed(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.plant_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 || x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+    if (plot_it == farm_plots.end() ||
+        plot_it->second.has_crop()) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+    const auto& selected = slots[player.selected_slot];
+    if (!selected) {
+        return false;
+    }
+
+    const auto crop_type = crop_type_for_seed(selected->get_item().get_type());
+    if (!crop_type) {
+        return false;
+    }
+
+    const int waterings = config.crop_waterings.at(*crop_type);
+    const int growth_days = config.crop_growth_days.at(*crop_type);
+    const int regrowth_days = config.crop_regrowth_days.at(*crop_type);
+    const int tolerated_missed = config.crop_missed_water_tolerance.at(*crop_type);
+    const auto removed = player.inventory.remove_item(player.selected_slot, RemoveMode::ONE);
+
+    if (!removed) {
+        return false;
+    }
+
+    if (!plot_it->second.plant(*crop_type, waterings,
+            growth_days, regrowth_days, tolerated_missed)) {
+        player.inventory.add_item(removed->get_item(), removed->get_quantity());
+        return false;
+    }
+
+    player.energy -= config.plant_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+bool Game::water_crop(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.water_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 ||
+        x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+
+    if (player.selected_slot < 0 ||
+        static_cast<size_t>(player.selected_slot) >= slots.size()) {
+        return false;
+    }
+
+    const auto& selected =
+        slots[static_cast<size_t>(player.selected_slot)];
+
+    if (!selected ||
+        selected->get_item().get_type() != ItemType::WATERING_CAN) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+
+    if (plot_it == farm_plots.end()) {
+        return false;
+    }
+
+    if (!plot_it->second.water(clock.elapsed_game_minutes())) {
+        return false;
+    }
+
+    player.energy -= config.water_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+
+
+bool Game::harvest_crop(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.harvest_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 ||
+        x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+
+    if (plot_it == farm_plots.end()) {
+        return false;
+    }
+
+    const Crop* crop = plot_it->second.get_crop();
+
+    if (!crop || !crop->is_ready_to_harvest()) {
+        return false;
+    }
+
+    const int luck_percent = generate_luck(
+        config.quality_luck_min_pct,
+        config.quality_luck_max_pct
+    );
+
+    const int score = crop->quality_score(
+        clock.elapsed_game_minutes(),
+        luck_percent,
+        config.quality_watering_minutes_per_point,
+        config.quality_missed_watering_penalty,
+        config.quality_harvest_minutes_per_point
+    );
+
+    const Quality quality = quality_from_score(score, config);
+
+    const Item item(crop->get_type(), quality);
+
+    if (!player.inventory.can_add_item(item, 1)) {
+        return false;
+    }
+
+    if (!plot_it->second.harvest()) {
+        return false;
+    }
+
+    if (player.inventory.add_item(item, 1) != 0) {
+        throw std::logic_error(
+            "No se pudo almacenar la cosecha");
+    }
+
+    player.energy -= config.harvest_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+std::vector<FarmPlotState> Game::farm_plots_state() const {
+    std::vector<FarmPlotState> states;
+
+    for (const auto& [pos, plot] : farm_plots) {
+        FarmPlotState state{};
+
+        state.cell_x = static_cast<uint16_t>(pos.x);
+        state.cell_y = static_cast<uint16_t>(pos.y);
+
+        const Crop* crop = plot.get_crop();
+
+        if (crop) {
+            state.has_crop = true;
+            state.crop_type = crop->get_type();
+
+            state.days_grown =
+                static_cast<uint16_t>(crop->get_days_grown());
+
+            state.growth_days =
+                static_cast<uint16_t>(crop->get_growth_days());
+
+            state.needs_water =
+                crop->needs_water(clock.elapsed_game_minutes());
+
+            state.ready_to_harvest =
+                crop->is_ready_to_harvest();
+        }
+
+        states.push_back(state);
+    }
+
+    return states;
 }
