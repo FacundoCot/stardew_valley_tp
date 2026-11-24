@@ -108,6 +108,15 @@ endif()
 if(GAME_CLIENT OR GAME_SERVER OR MAP_EDITOR)
     find_package(SDL2 REQUIRED)
     target_link_libraries(game_common PUBLIC SDL2::SDL2)
+
+    include(FetchContent)
+    FetchContent_Declare(
+        tomlplusplus
+        GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+        GIT_TAG v3.5.1
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_MakeAvailable(tomlplusplus)
 endif()
 
 # Program section
@@ -161,6 +170,7 @@ endif()
 if(MAP_EDITOR)
     find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+    find_package(tomlplusplus CONFIG REQUIRED)
 
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
@@ -182,7 +192,7 @@ if(MAP_EDITOR)
     target_include_directories(map_editor PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/editor) 
 
     # Link the game_common lib target
-    target_link_libraries(map_editor game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
+    target_link_libraries(map_editor game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets tomlplusplus::tomlplusplus)
 endif()
 
 

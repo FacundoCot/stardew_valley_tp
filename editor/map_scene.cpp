@@ -39,7 +39,7 @@ void MapScene::set_tile(const QPixmap& new_tile, std::string sheet_name, int row
     tile_sheet = sheet_name;
     tile_column = column;
     tile_row = row;
-    selection_size = std::max(1, new_tile.width() / TILE_SIZE);  // ajusto segun el valor de sheet scene
+    selection_size = std::max(1, new_tile.width() / TILE_SIZE);
 }
 
 QStringList MapScene::layer_names() const {
@@ -119,7 +119,7 @@ void MapScene::paint_selection(int column, int row) {
             }
 
             const QPixmap piece = tile.copy(dx * TILE_SIZE, dy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            paint_cell(cell_column, cell_row, piece, tile_column + dx, tile_row + dy);
+            paint_cell(layer, cell_column, cell_row, piece, tile_sheet, tile_column + dx, tile_row + dy);
         }
     }
 }
@@ -130,40 +130,48 @@ void MapScene::erase_selection(int column, int row) {
             const int cell_column = column + dx;
             const int cell_row = row + dy;
             if (cell_column < columns && cell_row < rows) {
-                erase_cell(cell_column, cell_row);
+                erase_cell(layer, cell_column, cell_row);
             }
         }
     }
 }
 
-void MapScene::paint_cell(int column, int row, const QPixmap& piece,
-                          int piece_column, int piece_row) {
-    erase_cell(column, row);  // reemplazo si ya había algo en la capa
+void MapScene::paint_cell(int layer_index, int column, int row, const QPixmap& piece,
+                          const std::string& sheet_name, int piece_column, int piece_row) {
+    erase_cell(layer_index, column, row);  // reemplazo si ya había algo en la capa
 
     const int index = row * columns + column;
     QGraphicsPixmapItem* item = addPixmap(piece);
 
     // datos en relación al mapa
     item->setPos(column * TILE_SIZE, row * TILE_SIZE);
-    item->setZValue(layer);
+    item->setZValue(layer_index);
 
     // los datos del sprite en relación a su sheet
-    item->setData(TILE_DATA_SHEET, QString::fromStdString(tile_sheet));
+    item->setData(TILE_DATA_SHEET, QString::fromStdString(sheet_name));
     item->setData(TILE_DATA_COLUMN, piece_column);
     item->setData(TILE_DATA_ROW, piece_row);
 
-    layer_cells[layer][index] = item;
+    layer_cells[layer_index][index] = item;
 }
 
-void MapScene::erase_cell(int column, int row) {
+void MapScene::erase_cell(int layer_index, int column, int row) {
     const int index = row * columns + column;
 
-    QGraphicsItem* item = layer_cells[layer][index];
+    QGraphicsItem* item = layer_cells[layer_index][index];
     if (item == nullptr) {
         return;
     }
 
     removeItem(item);
     delete item;
-    layer_cells[layer][index] = nullptr;
+    layer_cells[layer_index][index] = nullptr;
+}
+
+void MapScene::clear_tiles() {
+    clear(); // saca y destruye todos los items
+
+    for (std::vector<QGraphicsItem*>& cells: layer_cells) {
+        std::fill(cells.begin(), cells.end(), nullptr);
+    }
 }

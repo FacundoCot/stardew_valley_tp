@@ -48,8 +48,7 @@ private:
     int to_cell(qreal coordinate) const;
     void apply_at(const QPointF& position);
 
-    void paint_cell(int column, int row, const QPixmap& piece, int piece_column, int piece_row);
-    void erase_cell(int column, int row); // individuales 
+    void erase_cell(int layer_index, int column, int row); // individuales 
 
     void paint_selection(int column, int row); // seleccion completa
     void erase_selection(int column, int row);
@@ -68,6 +67,11 @@ public:
     QStringList layer_names() const;
 
     QGraphicsItem* tile_item(int layer_index, int column, int row) const;
+
+    void paint_cell(int layer_index, int column, int row, const QPixmap& piece, const std::string& sheet_name, 
+                int piece_column, int piece_row);
+
+    void clear_tiles();
 };
 
 #endif

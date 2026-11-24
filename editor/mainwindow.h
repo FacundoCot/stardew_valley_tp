@@ -41,6 +41,7 @@ private slots:
     void change_tile(const QPixmap& tile, int row, int column);
     void change_selection_size(int index);
 
+    void open_map();
     void save_map();
 
 public:

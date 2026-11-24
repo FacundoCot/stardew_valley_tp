@@ -55,6 +55,7 @@ MainWindow::MainWindow(QWidget* parent):
             &MainWindow::change_sheet);
     connect(ui->selectionSizeComboBox, &QComboBox::currentIndexChanged, this,
             &MainWindow::change_selection_size);
+    connect(ui->openAction, &QAction::triggered, this, &MainWindow::open_map);
     connect(ui->saveAction, &QAction::triggered, this, &MainWindow::save_map);
 }
 
@@ -141,10 +142,27 @@ void MainWindow::change_selection_size(int index) {
     sheet_scene->set_selection_size(index + 1);
 }
 
+void MainWindow::open_map() {
+    const QString chosen = QFileDialog::getOpenFileName(this, "Abrir mapa", "", "Mapas (*.toml)");
+    if (chosen.isEmpty()) {
+        return; // el usuario cancela
+    }
+
+    std::string file_path = chosen.toStdString();
+    
+    MapFile map_file;
+    std::string error;
+    if (map_file.load(file_path, ASSETS_PATH, MAP_COLUMNS, MAP_ROWS, scenes, error)) {
+        ui->statusbar->showMessage(QString::fromStdString("Mapa abierto: " + file_path));
+    } else {
+        ui->statusbar->showMessage(QString::fromStdString("No se pudo abrir " + file_path + ": " + error));
+    }
+}
+
 void MainWindow::save_map() {
     QString chosen = QFileDialog::getSaveFileName(this, "Guardar mapa", "", "Mapas (*.toml)");
     if (chosen.isEmpty()) {
-        return;  // el usuario cancelo
+        return; // el usuario cancelo
     }
     if (!chosen.endsWith(".toml")) {
         chosen += ".toml";

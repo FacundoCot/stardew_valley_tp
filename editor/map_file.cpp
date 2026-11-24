@@ -78,3 +78,172 @@ bool MapFile::save(const std::string& path, const std::string& map_name,
 
     return writer.good();
 }
+
+int MapFile::zone_index(const std::string& kind, int level, int zone_count) const {
+    int index = -1;
+
+    if (kind == "farm") {
+        index = 0;
+    } else if (kind == "village") {
+        index = 1;
+    } else if (kind == "cave") {
+        int new_index = level + 1;
+        if (level >= 1 && new_index < zone_count) {
+            index = new_index;
+        }
+    }
+
+    return index;
+}
+
+int MapFile::layer_index(const std::string& id) const {
+    for (int layer = 0; layer < LAYER_COUNT; ++layer) {
+        if (LAYER_IDS[layer] == id) {
+            return layer;
+        }
+    }
+    return -1;
+}
+
+bool MapFile::load_sheets(const toml::table& root, const std::string& assets_path,
+                          std::map<std::string, QPixmap>& sheets,
+                          std::string& error) const {
+    const toml::array* list = root["sheet"].as_array();
+    if (list == nullptr) {
+        return true;
+    }
+    for (const toml::node& node : *list) {
+        const toml::table* sheet = node.as_table();
+        if (sheet == nullptr) {
+            error = "Error: [[sheet]] mal formado";
+            return false;
+        }
+
+        const std::string name = (*sheet)["path"].value_or(std::string());
+        if ((*sheet)["tile_w"].value_or(0) != TILE_SIZE || (*sheet)["tile_h"].value_or(0) != TILE_SIZE) {
+            error = "Error: tamaño erroneo de sheet";
+            return false;
+        }
+
+        const std::string path = assets_path + "/" + name;
+        const QPixmap pixmap(QString::fromStdString(path));
+        if (pixmap.isNull()) {
+            error = "Error: fallo al cargar sheet " + path;
+            return false;
+        }
+        sheets[name] = pixmap;
+    }
+    return true;
+}
+
+bool MapFile::load_tile(const toml::table& tile, const std::map<std::string, QPixmap>& sheets,
+                        int map_columns, int map_rows, MapScene* scene,
+                        std::string& error) const {
+    const int x = tile["x"].value_or(-1);
+    const int y = tile["y"].value_or(-1);
+    const int col = tile["col"].value_or(-1);
+    const int row = tile["row"].value_or(-1);
+    const std::string sheet_name = tile["sheet"].value_or(std::string());
+    const std::string layer_id = tile["layer"].value_or(std::string());
+
+    const int layer = layer_index(layer_id);
+    if (layer < 0) {
+        error = "Error: capa desconocida";
+        return false;
+    }
+    if (x < 0 || y < 0 || x >= map_columns || y >= map_rows) {
+        error = "Error: tile fuera del mapa";
+        return false;
+    }
+
+    const auto found = sheets.find(sheet_name); // iterador
+    if (found == sheets.end()) {
+        error = "Error: sheet desconocida para tile";
+        return false;
+    }
+    
+    const QPixmap& sheet = found->second;
+    if (col < 0 || row < 0 || (col + 1) * TILE_SIZE > sheet.width() 
+        || (row + 1) * TILE_SIZE > sheet.height()) {
+        error = "Error: tile fuera de hoja";
+        return false;
+    }
+
+    // hago mismo corte como el de sheet scene
+    const QPixmap piece = sheet.copy(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    scene->paint_cell(layer, x, y, piece, sheet_name, col, row);
+    return true;
+}
+
+bool MapFile::load_zone(const toml::table& zone, const std::map<std::string, QPixmap>& sheets,
+                        int map_columns, int map_rows, const std::vector<MapScene*>& scenes,
+                        std::string& error) const {
+    const std::string kind = zone["kind"].value_or(std::string());
+    const int level = zone["level"].value_or(0);
+    const int index = zone_index(kind, level, static_cast<int>(scenes.size()));
+    if (index < 0) {
+        error = "Error: zona desconocida";
+        return false;
+    }
+
+    const toml::array* tiles = zone["tile"].as_array();
+    if (tiles == nullptr) {
+        return true;  // zona sin tiles
+    }
+    for (const toml::node& node : *tiles) {
+        const toml::table* tile = node.as_table();
+        if (tile == nullptr) {
+            error = "Error: [[zone.tile]] mal formado";
+            return false;
+        }
+        if (!load_tile(*tile, sheets, map_columns, map_rows, scenes[static_cast<size_t>(index)], error)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MapFile::load(const std::string& path, const std::string& assets_path,
+                   int map_columns, int map_rows,
+                   const std::vector<MapScene*>& scenes, std::string& error) const {
+
+    toml::table root;
+    try {
+        root = toml::parse_file(path); // carga todo en memoria
+    } catch (const toml::parse_error& parse_error) {
+        error = std::string(parse_error.description()) + " (linea " +
+                std::to_string(parse_error.source().begin.line) + ")";
+        return false;
+    }
+
+    if (root["tile_size"].value_or(0) != TILE_SIZE ||
+        root["width"].value_or(0) != map_columns || root["height"].value_or(0) != map_rows) {
+        error = "Error: valores del mapa no coinciden";
+        return false;
+    }
+
+    std::map<std::string, QPixmap> sheets;
+    if (!load_sheets(root, assets_path, sheets, error)) {
+        return false;
+    }
+
+    for (MapScene* scene: scenes) {
+        scene->clear_tiles();
+    }
+
+    const toml::array* zones = root["zone"].as_array();
+    if (zones == nullptr) {
+        return true;  // mapa sin zonas pintadas
+    }
+    for (const toml::node& node : *zones) {
+        const toml::table* zone = node.as_table();
+        if (zone == nullptr) {
+            error = "Error: [[zone]] mal formado";
+            return false;
+        }
+        if (!load_zone(*zone, sheets, map_columns, map_rows, scenes, error)) {
+            return false;
+        }
+    }
+    return true;
+}
