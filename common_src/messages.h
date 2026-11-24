@@ -28,7 +28,12 @@ enum class ActionType : uint8_t {
   CONFIRM_NEXT_DAY = 8,
   SELECT_SLOT = 9,
   ENABLE_MULTIPLAYER = 10,
-  USERNAME = 11
+  USERNAME = 11,
+  INTERACT_MERCHANT = 12,
+  TILL_SOIL = 13,
+  PLANT_SEED = 14,
+  WATER_CROP = 15,
+  HARVEST_CROP = 16
 };
 
 enum class EnemyKind : uint8_t {
@@ -36,6 +41,14 @@ enum class EnemyKind : uint8_t {
   ORC = 2,
   VAMPIRE = 3,
   SKULL = 4
+};
+
+enum class EnemyVariant : uint8_t {
+  NONE,
+  FEMALE_VAMPIRE,
+  MALE_VAMPIRE,
+  BLUE_FLAME,
+  GREEN_FLAME
 };
 
 enum class ClientState : uint8_t {
@@ -50,6 +63,14 @@ struct EnemyState {
   float y;
   int health;
   int max_health;
+  EnemyVariant variant;
+  bool frenzy;
+};
+
+struct ProjectileState {
+  EnemyVariant variant;
+  float x;
+  float y;
 };
 
 enum class Direction : uint8_t {
@@ -89,13 +110,14 @@ struct PlayerState {
     int max_energy;
     bool unconscious;
     CharacterAppearance appearance;
+    Direction facing = Direction::DOWN;
 
 
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, int energy, int max_energy, bool unconscious,
-              CharacterAppearance appearance):
+              CharacterAppearance appearance, Direction facing):
         player_name(std::move(name)), x(x), y(y), health(health), max_health(max_health), 
-        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance) {}
+        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance), facing(facing) {}
 
     /*
     // -- TEMPORAL, solo para que compile hasta que el server guarde el estado del CharacterAppearance en game.h
@@ -120,6 +142,20 @@ struct InventoryState {
     uint32_t coins = 0;
     uint8_t selected_slot = 0;
     std::vector<InventorySlotState> slot_vector;
+};
+
+struct FarmPlotState {
+    uint16_t cell_x = 0;
+    uint16_t cell_y = 0;
+
+    bool has_crop = false;
+    ItemType crop_type = ItemType::STRAWBERRY;
+
+    uint16_t days_grown = 0;
+    uint16_t growth_days = 0;
+
+    bool needs_water = false;
+    bool ready_to_harvest = false;
 };
 
 struct TimeState {
@@ -147,6 +183,8 @@ struct GameInfoForMenu {
     std::string game_name;
     std::string owner_name;
     bool multiplayer;
+    std::string player_name;
+    CharacterAppearance appearance;
 };
 
 struct ServerMessage {
@@ -157,12 +195,15 @@ struct ServerMessage {
   std::vector<PlayerState> players;
   std::vector<MapPlayerState> map_players;
   std::vector<EnemyState> enemies;
+  std::vector<ProjectileState> projectiles;
   uint8_t return_code = 0;
   InventoryState inventory;
   TimeState time;
   ChatState chat;
   std::vector<GameInfoForMenu> games;
   std::vector<uint8_t> world_info;
+  std::vector<FarmPlotState> farm_plots;
+  bool multiplayer_enabled = false;
 };
 
 struct MenuRequest {
@@ -185,6 +226,8 @@ struct ClientMessage {
   std::string chat_text;
   std::string game_code; // momentáneo del join
   uint8_t slot_index = 0;
+  uint16_t target_cell_x = 0; //posiciones en las que el jugador
+  uint16_t target_cell_y = 0; //quiere realizar la accion
 };
 
 #endif

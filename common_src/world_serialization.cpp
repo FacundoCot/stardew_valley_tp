@@ -134,7 +134,7 @@ PortalType decode_portal_type(uint8_t value) {
 std::vector<uint8_t> encode_world(const World& world) {
     const auto& zones = world.zones_data();
     std::vector<uint8_t> data;
-    append_u8(data, 8);
+    append_u8(data, 9);
     append_u8(data, checked_count(zones.size(), "cantidad de zonas"));
 
     for (const auto& [id, zone] : zones) {
@@ -181,6 +181,13 @@ std::vector<uint8_t> encode_world(const World& world) {
                 append_i32(data, area.width);
                 append_i32(data, area.height);
             }
+            append_u8(data, checked_count(village->merchants().size(), "cantidad de comerciantes"));
+
+            for (const MerchantPosition& merchant : village->merchants()) {
+                append_u8(data, static_cast<uint8_t>(merchant.type));
+                append_i32(data, coordinate_to_i32(merchant.x));
+                append_i32(data, coordinate_to_i32(merchant.y));
+            }
         }
     }
     return data;
@@ -188,7 +195,7 @@ std::vector<uint8_t> encode_world(const World& world) {
 
 SerializedWorld decode_world(const std::vector<uint8_t>& data) {
     Reader reader(data);
-    if (reader.u8() != 8) {
+    if (reader.u8() != 9) {
         throw std::runtime_error("version de WORLD_INFO invalida");
     }
 
@@ -249,6 +256,26 @@ SerializedWorld decode_world(const std::vector<uint8_t>& data) {
                 value.width = reader.i32();
                 value.height = reader.i32();
                 zone.areas.push_back(value);
+            }
+            // Comerciantes
+            const uint8_t merchant_count = reader.u8();
+            zone.merchants.reserve(merchant_count);
+
+            for (uint8_t i = 0; i < merchant_count; ++i) {
+                const uint8_t type = reader.u8();
+
+                if (type > static_cast<uint8_t>(MerchantType::CLINT)) {
+                    throw std::runtime_error("Comerciante invalido");
+                }
+
+                const int32_t x = reader.i32();
+                const int32_t y = reader.i32();
+
+                zone.merchants.push_back(MerchantPosition{
+                    static_cast<MerchantType>(type),
+                    x / 100.0f,
+                    y / 100.0f
+                });
             }
         }
         world.zones.push_back(std::move(zone));

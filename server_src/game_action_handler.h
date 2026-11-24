@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../common_src/messages.h"
+#include "../common_src/merchant_pos.h"
 
 class GameActionHandler {
     public:
@@ -30,6 +31,16 @@ class GameActionHandler {
         virtual void select_slot(int client_id, int slot_index) = 0;
 
         virtual void enable_multiplayer(int client_id) = 0;
+
+        virtual void interact_merchant(int client_id, MerchantType merchant) = 0;
+
+        virtual void till_soil(int client_id, int x, int y) = 0;
+
+        virtual void plant_seed(int client_id, int x, int y) = 0;
+
+        virtual void water_crop(int client_id, int x, int y) = 0;
+        
+        virtual void harvest_crop(int client_id, int x, int y) = 0;
 
         // Destructor virtual: asegura que al destruir un objeto mediante un puntero
         // a la clase padre, se ejecuten también los destructores de las clases hijas

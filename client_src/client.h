@@ -45,7 +45,7 @@ private:
   MenuInGame menu_game;
   EventHandler e_handler;
 
-  ZoneId zone_player;
+  ZoneId zone_player = ZoneId::FARM_ZONE;
 
   ClientState current_state = ClientState::PLAYING;
 

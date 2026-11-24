@@ -7,15 +7,20 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdexcept>
+#include <sstream>
+#include <random>
+
+#include "common_src/village_zone.h"
+#include "vampire.h"
 #include <iostream>
 
 namespace {
     const float PLAYER_STEP = 1.0f;
 
-    bool apply_health(Player& player, int health) {
+    bool apply_health(Player& player, int health, int max_health) {
         int new_life = health;
         if (new_life < 0) new_life = 0;
-        if (new_life > MAX_HEALTH) new_life = MAX_HEALTH;
+        if (new_life > max_health) new_life = max_health;
 
         if (new_life == player.health) {
             return false;
@@ -34,8 +39,17 @@ uint32_t Game::get_initial_coins() const {
     return static_cast<uint32_t>(rand() % 101);
 }
 
-Game::Game(std::shared_ptr<const World> world_param):
-        world(std::move(world_param)), clock(1, 840) {
+Game::Game(std::shared_ptr<const World> world_param,
+           const GameConfig& config_param,
+           const EnemyConfig& enemy_config_param):
+        world(std::move(world_param)),
+        config(config_param),
+        enemy_config(enemy_config_param),
+        item_catalog(config),
+        clock(1, config.day_duration_seconds),
+        rng(std::random_device{}()),
+        drop_table(enemy_config),
+        spawner(rng, enemy_config) {
     if (world == nullptr) {
         throw std::invalid_argument("el mundo no puede ser nulo");
     }
@@ -44,6 +58,12 @@ Game::Game(std::shared_ptr<const World> world_param):
     if (farm == nullptr) {
         throw std::invalid_argument("el mundo tiene que tener granja");
     }
+
+    //inicializo los comerciantes
+    merchants.emplace(MerchantType::PIERRE, std::make_unique<Pierre>(item_catalog));
+    merchants.emplace(MerchantType::CLINT, std::make_unique<Clint>(item_catalog));
+    merchants.emplace(MerchantType::ROBIN, std::make_unique<Robin>(item_catalog));
+    merchants.emplace(MerchantType::MARNIE, std::make_unique<Marnie>(item_catalog));
 }
 
 bool Game::add_player_unlocked(int client_id, const std::string &player_name,
@@ -63,7 +83,7 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
             return false;
         }
         
-        Player player(x, y, MAX_HEALTH, get_initial_coins(), zone, appearance);
+        Player player(x, y, config.initial_health, config.initial_energy, get_initial_coins(), zone, appearance);
 
         player.inventory.add_item(Item(ItemType::SWORD, Quality::BASE), 1);
         player.inventory.add_item(Item(ItemType::PICKAXE, Quality::BASE), 1);
@@ -126,7 +146,7 @@ bool Game::enable_multiplayer() {
 }
 
 Game::MovementResult Game::move_player_unlocked(
-        Player& player, float new_x, float new_y) {
+        const std::string& name, Player& player, float new_x, float new_y) {
     const float dx = new_x - player.x;
     const float dy = new_y - player.y;
     const float distance = std::max(std::fabs(dx), std::fabs(dy));
@@ -139,9 +159,44 @@ Game::MovementResult Game::move_player_unlocked(
 
         const auto portal = world->portal_at(player.zone, step_x, step_y);
         if (portal.has_value()) {
+            const ZoneId old_zone = player.zone;
+            if (old_zone.kind == ZoneId::Kind::CAVE_LEVEL) {
+                fight_sets.on_player_left_room(name);
+            }
             player.zone = portal->destination;
             player.x = portal->arrival.first;
             player.y = portal->arrival.second;
+            if (portal->destination.kind == ZoneId::Kind::CAVE_LEVEL) {
+                const ZoneId room = portal->destination;
+                const bool occupied = std::any_of(players.begin(), players.end(),
+                    [&](const auto& entry) {
+                        return entry.first != name && entry.second.zone == room;
+                    });
+                if (!occupied) {
+                    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                        [&](const std::unique_ptr<Enemy>& enemy) {
+                            return enemy->get_zone() == room;
+                        }), enemies.end());
+                    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+                        [&](const std::unique_ptr<Projectile>& projectile) {
+                            return projectile->get_spec().zone == room;
+                        }), projectiles.end());
+                    auto cave = std::dynamic_pointer_cast<const CaveLevel>(
+                        world->zone(room));
+                    if (cave) {
+                        auto spawned = spawner.populate(room, *cave, *world);
+                        for (auto& enemy : spawned) {
+                            enemies.push_back(std::move(enemy));
+                        }
+                    }
+                }
+                const bool has_skull = std::any_of(enemies.begin(), enemies.end(),
+                    [&](const std::unique_ptr<Enemy>& enemy) {
+                        return enemy->get_zone() == room &&
+                               enemy->kind() == EnemyKind::SKULL;
+                    });
+                fight_sets.on_player_entered_room(name, room, has_skull);
+            }
             return MovementResult::TRANSPORTED;
         }
 
@@ -177,7 +232,7 @@ bool Game::move_player(int client_id, Direction direction) {
     }
 
     float step = PLAYER_STEP;
-    if (player.energy * 10 <= MAX_ENERGY) {
+    if (player.energy * 10 <= config.initial_energy) {
         step = PLAYER_STEP/ 2.0f;
     }
 
@@ -193,14 +248,13 @@ bool Game::move_player(int client_id, Direction direction) {
 
     player.facing = direction;
 
-    if (move_player_unlocked(player, new_x, new_y) == MovementResult::BLOCKED) {
+    if (move_player_unlocked(client_iterator->second, player, new_x, new_y) ==
+        MovementResult::BLOCKED) {
         return false;
     }
 
-    player.energy = std::max(0, player.energy - MOVE_ENERGY_COST);
-
-    if (player.energy == 0) {
-        player.unconscious = true;
+    if (player.active_merchant && !near_merchant_unlocked(player, *player.active_merchant)) {
+        player.active_merchant.reset();
     }
 
     check_day_end_unlocked();
@@ -210,7 +264,20 @@ bool Game::move_player(int client_id, Direction direction) {
 
 bool Game::remove_player(int client_id) {
     std::lock_guard<std::mutex> lock(mtx);
+    //elimino de ready para el dia sig
     ready_clients.erase(client_id);
+
+    // elimino su active_merchant
+    auto client_it = connected_clients.find(client_id);
+    if (client_it != connected_clients.end()) {
+        fight_sets.on_player_left_room(client_it->second);
+        auto player_it = players.find(client_it->second);
+
+        if (player_it != players.end()) {
+            player_it->second.active_merchant.reset();
+        }
+    }   
+
     const bool removed = connected_clients.erase(client_id) > 0;
 
     if (removed) {
@@ -249,11 +316,12 @@ std::vector<PlayerState> Game::snapshot(ZoneId zone, const std::string& self_nam
                     player.x,
                     player.y,
                     player.health,
-                    MAX_HEALTH,
+                    config.initial_health,
                     player.energy,
-                    MAX_ENERGY,
+                    config.initial_energy,
                     player.unconscious, 
-                    player.appearance
+                    player.appearance,
+                    player.facing
             });
         }
     }
@@ -296,20 +364,21 @@ bool Game::damage_player_unlocked(const std::string& player_name, int amount) {
     if (it == players.end() || it->second.unconscious) {
         return false;
     }
-    const bool changed = apply_health(it->second, it->second.health - amount);
-
+    const bool changed = apply_health(it->second, it->second.health - amount,
+                                      config.initial_health);
+    if (changed) fight_sets.on_player_hurt_by_enemy(player_name);
     check_day_end_unlocked();
 
     return changed;
 }
 
-bool Game::nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const {
+bool Game::nearest_player_unlocked(ZoneId zone, float x, float y, EnemyWorld::Target& target) const {
     bool found = false;
     float best_distance = 0.0f;
 
     for (const auto& [client_id, name] : connected_clients) {
         const Player& player = players.at(name);
-        if (player.unconscious) {
+        if (player.unconscious || player.zone != zone) {
             continue;
         }
         // Distancia de Chebyshev: la misma que usa el esqueleto para atacar
@@ -336,19 +405,22 @@ bool Game::remove_dead_enemies_unlocked() {
 
 class Game::EnemyView : public EnemyWorld {
 public:
-    explicit EnemyView(Game& g) : game(g) {}
+    explicit EnemyView(Game& g): game(g) {}
 
-    bool can_walk(float x, float y) override {
-        // provisional: los enemigos tendrán zona propia
-        return game.world->is_walkable(ZoneId::FARM_ZONE, x, y);
+    bool can_walk(ZoneId requested_zone, float x, float y) override {
+        return game.world->is_walkable(requested_zone, x, y);
     }
 
-    bool nearest_player(float x, float y, Target& target) override {
-        return game.nearest_player_unlocked(x, y, target);
+    bool nearest_player(ZoneId requested_zone, float x, float y, Target& target) override {
+        return game.nearest_player_unlocked(requested_zone, x, y, target);
     }
 
     bool damage_player(const std::string& player_name, int damage) override {
         return game.damage_player_unlocked(player_name, damage);
+    }
+
+    void spawn_projectile(const ProjectileSpec& projectile) override {
+        game.projectiles.push_back(std::make_unique<Projectile>(projectile));
     }
 
 private:
@@ -375,6 +447,7 @@ bool Game::update(float dt) {
     }
 
     clock.update(dt);
+    check_day_end_unlocked();
 
     //para que si el dia termino se se actualicen los enemigos
     if (clock.is_finished()) {
@@ -385,19 +458,38 @@ bool Game::update(float dt) {
         entry.second.attack_cooldown_left =
             std::max(0.0f, entry.second.attack_cooldown_left - dt);
     }
-    /*
-    EnemyView view(*this);
     bool changed = false;
     for (auto& enemy : enemies) {
+        EnemyView view(*this);
         if (enemy->act(view, dt)) {
             changed = true;
         }
     }
 
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+        [&](const std::unique_ptr<Projectile>& projectile) {
+            changed = true;
+            if (!projectile->update(dt)) {
+                return true;
+            }
+            const auto& spec = projectile->get_spec();
+            if (!world->is_walkable(spec.zone, projectile->get_x(), projectile->get_y())) {
+                return true;
+            }
+            for (const auto& [name, player] : players) {
+                if (player.zone == spec.zone && !player.unconscious &&
+                    std::max(std::abs(player.x - projectile->get_x()),
+                             std::abs(player.y - projectile->get_y())) < 0.5f) {
+                    damage_player_unlocked(name, spec.damage);
+                    return true;
+                }
+            }
+            return false;
+        }), projectiles.end());
     if (remove_dead_enemies_unlocked()) {
         changed = true;
-    }*/
-    return true;
+    }
+    return changed;
 }
 
 bool Game::attack(int client_id) {
@@ -434,18 +526,23 @@ bool Game::attack(int client_id) {
 
     player.attack_cooldown_left = PLAYER_ATTACK_COOLDOWN;
 
-    const int damage = is_weakened(player.health) ? SWORD_DAMAGE / 2 : SWORD_DAMAGE;
+    const int damage = is_weakened(player.health, config.initial_health) ? 
+                            config.sword_damage / 2 : config.sword_damage;
     const int target_cell_x = static_cast<int>(std::floor(target_x));
     const int target_cell_y = static_cast<int>(std::floor(target_y));
 
     for (auto& enemy : enemies) {
-        if (!enemy->is_visible()) {
+        if (!enemy->is_visible() || enemy->get_zone() != player.zone) {
             continue;
         }
         const int enemy_cell_x = static_cast<int>(std::floor(enemy->get_x()));
         const int enemy_cell_y = static_cast<int>(std::floor(enemy->get_y()));
         if (enemy_cell_x == target_cell_x && enemy_cell_y == target_cell_y) {
+            const bool was_alive = !enemy->is_dead();
             enemy->take_damage(damage);
+            if (was_alive && enemy->is_dead()) {
+                handle_enemy_killed_unlocked(*enemy, client_it->second);
+            }
             break;
         }
     }
@@ -468,13 +565,54 @@ void Game::add_enemy(std::unique_ptr<Enemy> enemy) {
     enemies.push_back(std::move(enemy));
 }
 
-std::vector<EnemyState> Game::enemy_snapshot() const {
+void Game::handle_enemy_killed_unlocked(Enemy& enemy, const std::string& killer) {
+    auto player = players.find(killer);
+    if (player != players.end()) {
+        for (const auto& [item, quantity] : drop_table.roll(enemy, rng)) {
+            player->second.inventory.add_item(item, quantity);
+        }
+    }
+    const int level = enemy.get_zone().kind == ZoneId::Kind::CAVE_LEVEL ?
+                      enemy.get_zone().level : 0;
+    fight_sets.on_enemy_killed(enemy, level);
+    if (enemy.kind() != EnemyKind::VAMPIRE) return;
+    for (auto& other : enemies) {
+        if (other.get() != &enemy && other->kind() == EnemyKind::VAMPIRE &&
+            other->get_group_id() == enemy.get_group_id()) {
+            other->on_partner_died();
+        }
+    }
+    if (player_incident_near_unlocked(enemy.get_zone(), enemy.get_x(), enemy.get_y(),
+                                      enemy_config.blood_incident_radius)) {
+        enemy.start_revive(enemy_config.blood_revive_seconds);
+    }
+}
+
+bool Game::player_incident_near_unlocked(ZoneId zone, float x, float y,
+                                          float radius) const {
+    for (const auto& [name, player] : players) {
+        if (player.zone == zone &&
+            std::max(std::abs(player.x - x), std::abs(player.y - y)) <= radius &&
+            (player.unconscious || is_weakened(player.health, config.initial_health))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<EnemyState> Game::enemy_snapshot(ZoneId zone) const {
 
     std::vector<EnemyState> state;
     state.reserve(enemies.size());
     for (const auto& enemy : enemies) {
-        if (!enemy->is_visible()) {
+        if (enemy->get_zone() != zone || !enemy->is_visible()) {
             continue;
+        }
+        EnemyVariant variant = EnemyVariant::NONE;
+        if (enemy->kind() == EnemyKind::VAMPIRE) {
+            const auto* vampire = dynamic_cast<const Vampire*>(enemy.get());
+            variant = vampire->is_female() ? EnemyVariant::FEMALE_VAMPIRE :
+                                             EnemyVariant::MALE_VAMPIRE;
         }
         state.push_back(EnemyState{
             enemy->kind(),
@@ -482,7 +620,23 @@ std::vector<EnemyState> Game::enemy_snapshot() const {
             enemy->get_y(),
             enemy->get_health(),
             enemy->get_max_health(),
+            variant,
+            dynamic_cast<const Vampire*>(enemy.get()) != nullptr &&
+                dynamic_cast<const Vampire*>(enemy.get())->has_frenzy()
         });
+    }
+    return state;
+}
+
+std::vector<ProjectileState> Game::projectile_snapshot(ZoneId zone) const {
+    std::vector<ProjectileState> state;
+    for (const auto& projectile : projectiles) {
+        const auto& spec = projectile->get_spec();
+        if (spec.zone == zone) {
+            state.push_back({spec.green ? EnemyVariant::GREEN_FLAME :
+                                         EnemyVariant::BLUE_FLAME,
+                             projectile->get_x(), projectile->get_y()});
+        }
     }
     return state;
 }
@@ -542,19 +696,23 @@ ServerMessage Game::game_state(int client_id) const {
         me.x,
         me.y,
         me.health,
-        MAX_HEALTH,
+        config.initial_health,
         me.energy,
-        MAX_ENERGY,
+        config.initial_energy,
         me.unconscious,
-        me.appearance
+        me.appearance,
+        me.facing
     };
 
     msg.players = snapshot(me.zone, name);
     msg.map_players = map_snapshot();
     
-    msg.enemies = enemy_snapshot();
+    msg.enemies = enemy_snapshot(me.zone);
+    msg.projectiles = projectile_snapshot(me.zone);
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();
+    msg.farm_plots = farm_plots_state();
+    msg.multiplayer_enabled = multiplayer_enabled;
 
     return msg;
 }
@@ -606,19 +764,38 @@ bool Game::start_next_day_game() {
         player.y = bed_y;
         player.zone = ZoneId::FARM_ZONE;
 
-        player.health = slept_well ? MAX_HEALTH : MAX_HEALTH / 2;
+        player.health = slept_well ? config.initial_health : config.initial_health / 2;
 
-        player.energy = slept_well ? MAX_ENERGY : MAX_ENERGY / 2;
+        player.energy = slept_well ? config.initial_energy : config.initial_energy / 2;
 
         player.unconscious = false;
         player.facing = Direction::DOWN;
         player.attack_cooldown_left = 0.0f;
+
+        player.active_merchant.reset();
+    }
+
+    for (auto& entry : farm_plots) {
+        entry.second.advance_day();
     }
 
     clock.start_next_day();
     ready_clients.clear();
 
     return true;
+}
+
+std::optional<CharacterAppearance> Game::appearance_for(const std::string& player_name) const {
+
+    std::lock_guard<std::mutex> lock(mtx);
+
+    const auto it = players.find(player_name);
+
+    if (it == players.end()) {
+        return std::nullopt;
+    }
+
+    return it->second.appearance;
 }
 
 bool Game::player_name(int client_id, std::string& player_name) const {
@@ -691,6 +868,22 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         data.players.push_back(player_data);
     }
 
+    for (const auto& [pos, plot] : farm_plots) {
+        FarmPlotSaveData plot_data{};
+
+        plot_data.x = pos.x;
+        plot_data.y = pos.y;
+
+        const Crop* crop = plot.get_crop();
+
+        if (crop) {
+            plot_data.has_crop = true;
+            plot_data.crop = crop->get_save_data();
+        }
+
+        data.farm_plots.push_back(plot_data);
+    }
+
     return data;
 }
 
@@ -702,8 +895,9 @@ void Game::restore_save_data(const GameSaveData& data) {
     connected_clients.clear();
     ready_clients.clear();
     bed_by_player.clear();
+    farm_plots.clear();
 
-    clock = GameClock(data.day, 840);
+    clock = GameClock(data.day, config.day_duration_seconds);
     multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
@@ -711,13 +905,13 @@ void Game::restore_save_data(const GameSaveData& data) {
             saved_player.x,
             saved_player.y,
             saved_player.health,
+            saved_player.energy,
             saved_player.coins,
             saved_player.zone,
             saved_player.appearance
         );
         // se hacen aparte porque no son parte del constructor de player
         player.selected_slot = saved_player.selected_slot;
-        player.energy = saved_player.energy;
 
         for (const ItemSaveData& saved_item : saved_player.inventory) {
             Item item(saved_item.type, saved_item.quality);
@@ -732,6 +926,16 @@ void Game::restore_save_data(const GameSaveData& data) {
 
 
         players.emplace(saved_player.name, std::move(player));
+    }
+
+    for (const FarmPlotSaveData& saved_plot : data.farm_plots) {
+        FarmPlot plot;
+
+        if (saved_plot.has_crop) {
+            plot.restore_crop(saved_plot.crop);
+        }
+
+        farm_plots.emplace(CellPos{saved_plot.x, saved_plot.y}, plot);
     }
 }
 
@@ -771,7 +975,12 @@ int Game::get_selected_slot(int client_id) const {
 }
 
 void Game::check_day_end_unlocked() {
-    if (clock.is_finished() || connected_clients.empty()) {
+    if (clock.is_finished()) {
+        enemies.clear();
+        projectiles.clear();
+        return;
+    }
+    if (connected_clients.empty()) {
         return;
     }
 
@@ -784,6 +993,11 @@ void Game::check_day_end_unlocked() {
     }
 
     clock.finish_day();
+    for (const auto& entry : players) {
+        fight_sets.on_player_left_room(entry.first);
+    }
+    enemies.clear();
+    projectiles.clear();
 }
 
 bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player) const {
@@ -801,4 +1015,674 @@ bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player)
     const auto [bed_x, bed_y] = farm->bed_position(bed_searched->second);
 
     return std::floor(player.x) == std::floor(bed_x) && std::floor(player.y) == std::floor(bed_y);
+}
+
+bool Game::buy_item(int client_id, MerchantType merchant, const std::string& product, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto itemt = item_catalog.get_item_type(product);
+    if (!itemt) {
+        return false;
+    }
+    ItemType type = *itemt;
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.active_merchant != merchant || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    if (player.unconscious) {
+        return false;
+    }
+
+    auto merchant_it = merchants.find(merchant);
+
+    if (merchant_it == merchants.end()) {
+        return false;
+    }
+
+    auto price = merchant_it->second->get_buy_price(type);
+
+    if (!price) {
+        return false;
+    }
+
+    const int total = *price * quantity;
+
+    if (total > player.coins) {
+        return false;
+    }
+
+    Item item(type, Quality::BASE);
+
+    if (!player.inventory.can_add_item(item, quantity)) {
+        return false;
+    }
+
+    player.inventory.add_item(item, quantity);
+    player.coins -= total;
+
+    return true;
+}
+
+bool Game::sell_item(int client_id, MerchantType merchant, const std::string& product, int quantity) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto itemt = item_catalog.get_item_type(product);
+    if (!itemt) {
+        return false;
+    }
+    ItemType type = *itemt;
+
+    if (quantity <= 0 || clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    auto player_it = players.find(client_it->second);
+
+    Player& player = player_it->second;
+
+    if (player.active_merchant != merchant || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    auto merchant_it = merchants.find(merchant);
+
+    if (merchant_it == merchants.end()) {
+        return false;
+    }
+
+    if (player.unconscious || !merchant_it->second->buys(type)) {
+        return false;
+    }
+
+    std::map<Quality, int> quantities_to_sell;
+    int remaining = quantity;
+
+    for (const auto& slot : player.inventory.get_stacks()) {
+        if (!slot || slot->get_item().get_type() != type) {
+            continue;
+        }
+
+        int quantity_to_sell = std::min(remaining, slot->get_quantity());
+        Quality quality = slot->get_item().get_quality();
+
+        quantities_to_sell[quality] += quantity_to_sell;
+        remaining -= quantity_to_sell;
+
+        if (remaining == 0) {
+            break;
+        }
+    }
+
+    if (remaining != 0) {
+        return false;
+    }
+
+    int total = 0;
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        auto price = merchant_it->second->get_sell_price(type, quality);
+
+        if (!price) {
+            return false;
+        }
+
+        total += *price * amount;
+    }
+
+    for (const auto& [quality, amount] : quantities_to_sell) {
+        Item item(type, quality);
+
+        if (!player.inventory.remove_quantity(item, amount)) {
+            throw std::logic_error("Error al retirar los objetos vendidos");
+        }
+    }
+
+    player.coins += total;
+
+    return true;
+}
+
+bool Game::near_merchant_unlocked(const Player& player, MerchantType merchant) const {
+
+    if (player.zone != ZoneId::VILLAGE_ZONE) {
+        return false;
+    }
+
+    // tengo un puntero a zone, pero quiero uno a la clase hija village, se que existe
+    // entonces hago un cast y convertimos de tipo zone a tipo village con 
+    // static_pointer_cast
+    auto village = std::static_pointer_cast<const VillageZone>(world->zone(ZoneId::VILLAGE_ZONE));
+
+    for (const auto& position : village->merchants()) {
+        if (position.type == merchant) {
+            constexpr float MAX_DISTANCE = 6.0f;
+            // nos devuelve la distancia entre el jugador y el comerciante
+            float distance = std::hypot(player.x - position.x, 
+                                        player.y - position.y);
+
+            return distance <= MAX_DISTANCE;
+        }
+    }
+
+    return false;
+}
+
+bool Game::interact_with_merchant(int client_id, MerchantType merchant) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished() || merchants.find(merchant) == merchants.end()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return false;
+    }
+
+    Player& player = player_it->second;
+
+    if (player.unconscious || !near_merchant_unlocked(player, merchant)) {
+        return false;
+    }
+
+    player.active_merchant = merchant;
+
+    return true;
+}
+
+std::optional<MerchantType> Game::get_active_merchant(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return std::nullopt;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return std::nullopt;
+    }
+
+    auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return std::nullopt;
+    }
+
+    const Player& player = player_it->second;
+
+    if (player.unconscious || !player.active_merchant) {
+        return std::nullopt;
+    }
+
+    if (!near_merchant_unlocked(player, *player.active_merchant)) {
+        return std::nullopt;
+    }
+
+    return player.active_merchant;
+}
+
+std::optional<std::string> Game::get_merchant_catalog(int client_id) const {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return std::nullopt;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+    if (client_it == connected_clients.end()) {
+        return std::nullopt;
+    }
+
+    auto player_it = players.find(client_it->second);
+    if (player_it == players.end()) {
+        return std::nullopt;
+    }
+
+    const Player& player = player_it->second;
+
+    if (player.unconscious || !player.active_merchant ||
+        !near_merchant_unlocked(player, *player.active_merchant)) {
+        return std::nullopt;
+    }
+
+    auto merchant_it = merchants.find(*player.active_merchant);
+    if (merchant_it == merchants.end()) {
+        return std::nullopt;
+    }
+
+    const Merchant& merchant = *merchant_it->second;
+
+    std::ostringstream catalog;
+
+    catalog << "Items for sale:\n";
+
+    bool has_sales = false;
+
+    for (ItemType type : merchant.get_items_for_sale()) {
+        auto price = merchant.get_buy_price(type);
+
+        if (price) {
+            catalog << item_catalog.get_item_name(type) << ": " << *price << " coins\n";
+            has_sales = true;
+        }
+    }
+
+    if (!has_sales) {
+        catalog << "None\n";
+    }
+
+    catalog << "Items accepted for sale (base quality prices):\n";
+
+    bool has_purchases = false;
+
+    for (ItemType type : merchant.get_items_to_buy()) {
+        auto price = merchant.get_sell_price(type, Quality::BASE);
+
+        if (price) {
+            catalog << item_catalog.get_item_name(type) << ": " << *price << " coins\n";
+            has_purchases = true;
+        }
+    }
+
+    if (!has_purchases) {
+        catalog << "None\n";
+    }
+
+    return catalog.str();
+}
+
+
+bool Game::till_soil(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE 
+        || player.unconscious 
+        || player.energy < config.till_energy_cost) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+    const auto& selected = slots[player.selected_slot];
+    //chequeo que tenga seleccionada la pala
+    if (!selected || selected->get_item().get_type() != ItemType::SHOVEL) {
+        return false;
+    }
+
+
+    if (x < 0 || y < 0 || x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(std::floor(player.x));
+    const int player_y = static_cast<int>(std::floor(player.y));
+
+    if (std::abs(player_x - x) > 1 || std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    const size_t index = static_cast<size_t>(y) * farm->width() + x;
+    //verificamos que el terreno sea grass y que no este ni dentro de la cabaña
+    //ni dentro de un portal
+    if (farm->grid()[index] != Tile::GRASS 
+        || farm->cabin().contains_cell(x, y) 
+        || farm->portal_at(x + 0.5f, y + 0.5f).has_value()) {
+        return false;
+    }
+
+    CellPos pos{x, y};
+
+    bool inserted = farm_plots.emplace(pos, FarmPlot{}).second;
+
+    if (!inserted) {
+        return false;
+    }
+
+    player.energy = std::max(0, player.energy - config.till_energy_cost);
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+std::optional<ItemType> Game::crop_type_for_seed(ItemType seed_type) {
+    if (seed_type == ItemType::STRAWBERRY_SEED) {
+        return ItemType::STRAWBERRY;
+    }
+
+    if (seed_type == ItemType::ONION_SEED) {
+        return ItemType::ONION;
+    }
+
+    if (seed_type == ItemType::POTATO_SEED) {
+        return ItemType::POTATO;
+    }
+
+    if (seed_type == ItemType::PUMPKIN_SEED) {
+        return ItemType::PUMPKIN;
+    }
+
+    return std::nullopt;
+}
+
+Quality Game::quality_from_score(int score, const GameConfig& config) {
+    if (score >= config.quality_perfect_threshold) {
+        return Quality::PERFECT;
+    }
+    if (score >= config.quality_incredible_threshold) {
+        return Quality::INCREDIBLE;
+    }
+    if (score >= config.quality_excellent_threshold) {
+        return Quality::EXCELLENT;
+    }
+    if (score >= config.quality_good_threshold) {
+        return Quality::GOOD;
+    }
+    return Quality::BASE;
+}
+
+int Game::generate_luck(int minimum, int maximum) {
+    static thread_local std::mt19937 generator(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(minimum, maximum);
+    return distribution(generator);
+}
+
+bool Game::plant_seed(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.plant_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 || x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+    if (plot_it == farm_plots.end() ||
+        plot_it->second.has_crop()) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+    const auto& selected = slots[player.selected_slot];
+    if (!selected) {
+        return false;
+    }
+
+    const auto crop_type = crop_type_for_seed(selected->get_item().get_type());
+    if (!crop_type) {
+        return false;
+    }
+
+    const int waterings = config.crop_waterings.at(*crop_type);
+    const int growth_days = config.crop_growth_days.at(*crop_type);
+    const int regrowth_days = config.crop_regrowth_days.at(*crop_type);
+    const int tolerated_missed = config.crop_missed_water_tolerance.at(*crop_type);
+    const auto removed = player.inventory.remove_item(player.selected_slot, RemoveMode::ONE);
+
+    if (!removed) {
+        return false;
+    }
+
+    if (!plot_it->second.plant(*crop_type, waterings,
+            growth_days, regrowth_days, tolerated_missed)) {
+        player.inventory.add_item(removed->get_item(), removed->get_quantity());
+        return false;
+    }
+
+    player.energy -= config.plant_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+bool Game::water_crop(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.water_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 ||
+        x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+
+    if (player.selected_slot < 0 ||
+        static_cast<size_t>(player.selected_slot) >= slots.size()) {
+        return false;
+    }
+
+    const auto& selected =
+        slots[static_cast<size_t>(player.selected_slot)];
+
+    if (!selected ||
+        selected->get_item().get_type() != ItemType::WATERING_CAN) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+
+    if (plot_it == farm_plots.end()) {
+        return false;
+    }
+
+    if (!plot_it->second.water(clock.elapsed_game_minutes())) {
+        return false;
+    }
+
+    player.energy -= config.water_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+
+
+bool Game::harvest_crop(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    const auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious ||
+        player.energy < config.harvest_energy_cost) {
+        return false;
+    }
+
+    if (x < 0 || y < 0 ||
+        x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    auto plot_it = farm_plots.find(CellPos{x, y});
+
+    if (plot_it == farm_plots.end()) {
+        return false;
+    }
+
+    const Crop* crop = plot_it->second.get_crop();
+
+    if (!crop || !crop->is_ready_to_harvest()) {
+        return false;
+    }
+
+    const int luck_percent = generate_luck(
+        config.quality_luck_min_pct,
+        config.quality_luck_max_pct
+    );
+
+    const int score = crop->quality_score(
+        clock.elapsed_game_minutes(),
+        luck_percent,
+        config.quality_watering_minutes_per_point,
+        config.quality_missed_watering_penalty,
+        config.quality_harvest_minutes_per_point
+    );
+
+    const Quality quality = quality_from_score(score, config);
+
+    const Item item(crop->get_type(), quality);
+
+    if (!player.inventory.can_add_item(item, 1)) {
+        return false;
+    }
+
+    if (!plot_it->second.harvest()) {
+        return false;
+    }
+
+    if (player.inventory.add_item(item, 1) != 0) {
+        throw std::logic_error(
+            "No se pudo almacenar la cosecha");
+    }
+
+    player.energy -= config.harvest_energy_cost;
+
+    if (player.energy == 0) {
+        player.unconscious = true;
+        check_day_end_unlocked();
+    }
+
+    return true;
+}
+
+std::vector<FarmPlotState> Game::farm_plots_state() const {
+    std::vector<FarmPlotState> states;
+
+    for (const auto& [pos, plot] : farm_plots) {
+        FarmPlotState state{};
+
+        state.cell_x = static_cast<uint16_t>(pos.x);
+        state.cell_y = static_cast<uint16_t>(pos.y);
+
+        const Crop* crop = plot.get_crop();
+
+        if (crop) {
+            state.has_crop = true;
+            state.crop_type = crop->get_type();
+
+            state.days_grown =
+                static_cast<uint16_t>(crop->get_days_grown());
+
+            state.growth_days =
+                static_cast<uint16_t>(crop->get_growth_days());
+
+            state.needs_water =
+                crop->needs_water(clock.elapsed_game_minutes());
+
+            state.ready_to_harvest =
+                crop->is_ready_to_harvest();
+        }
+
+        states.push_back(state);
+    }
+
+    return states;
 }

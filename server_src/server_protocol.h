@@ -30,6 +30,7 @@ private:
   void send_games_list(const std::vector<GameInfoForMenu>& games);
   void send_zone_id(ZoneId zone);
   void send_player_state(const PlayerState& player);
+  void send_farm_plots(const std::vector<FarmPlotState>& plots);
 public:
   explicit ServerProtocol(Socket &skt);
 

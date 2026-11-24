@@ -155,7 +155,9 @@ if(GAME_SERVER)
     set_project_warnings(game_server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # Link the game_common lib target
-    target_link_libraries(game_server game_common nlohmann_json::nlohmann_json)
+    target_link_libraries(game_server game_common nlohmann_json::nlohmann_json tomlplusplus::tomlplusplus)
+
+    find_package(tomlplusplus CONFIG REQUIRED)
 endif()
 
 if(MAP_EDITOR)

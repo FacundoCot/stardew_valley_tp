@@ -4,6 +4,7 @@
 #include <string>
 
 #include "../common_src/messages.h"
+#include "../common_src/merchant_pos.h"
 
 class GameActionHandler;
 
@@ -114,6 +115,57 @@ public:
 
 class EnableMultiplayerAction : public ClientAction {
 public:
+    void execute(GameActionHandler& handler) const override;
+};
+
+class InteractMerchantAction : public ClientAction {
+private:
+    MerchantType merchant;
+
+public:
+    explicit InteractMerchantAction(MerchantType merchant);
+
+    void execute(GameActionHandler& handler) const override;
+};
+
+
+class TillSoilAction : public ClientAction {
+private:
+    int x;
+    int y;
+
+public:
+    TillSoilAction(int x, int y);
+    void execute(GameActionHandler& handler) const override;
+};
+
+class PlantSeedAction : public ClientAction {
+private:
+    int x;
+    int y;
+
+public:
+    PlantSeedAction(int x, int y);
+    void execute(GameActionHandler& handler) const override;
+};
+
+class WaterCropAction : public ClientAction {
+private:
+    int x;
+    int y;
+
+public:
+    WaterCropAction(int x, int y);
+    void execute(GameActionHandler& handler) const override;
+};
+
+class HarvestCropAction : public ClientAction {
+private:
+    int x;
+    int y;
+
+public:
+    HarvestCropAction(int x, int y);
     void execute(GameActionHandler& handler) const override;
 };
 

@@ -156,9 +156,9 @@ void Client::render(Button& btn, int& it, MapVisual& m_visual) {
 }
 
 void Client::update(ServerMessage& response) {
-  if (!response.players.empty()) {
-    players = response.players;
-  }
+
+  players = response.players;
+  
   self = response.self_player;
   camera.update_pos(self, BODY_WIDTH*2, BODY_HEIGHT*2);
   zone_player = response.zone;

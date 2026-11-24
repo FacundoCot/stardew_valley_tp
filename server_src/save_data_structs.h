@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "../common_src/item_types.h"
 #include "../common_src/zone.h"
@@ -29,6 +30,31 @@ struct PlayerSaveData {
     std::vector<ItemSaveData> inventory;
 };
 
+struct CropSaveData {
+    ItemType type;
+
+    int required_waterings;
+    int growth_days;
+    int regrowth_days;
+    int tolerated_missed_waterings;
+
+    int days_grown;
+    int waterings_today;
+    int last_watering_window;
+    int missed_waterings;
+    int watering_delay_minutes;
+    int ready_days;
+
+    bool ready_to_harvest;
+};
+
+struct FarmPlotSaveData {
+    int x;
+    int y;
+    bool has_crop = false;
+    CropSaveData crop{};
+};
+
 struct GameSaveData {
     std::string game_code;
     std::string game_name;
@@ -37,6 +63,7 @@ struct GameSaveData {
     bool multiplayer;
     int day;
     std::vector<PlayerSaveData> players;
+    std::vector<FarmPlotSaveData> farm_plots;
 };
 
 #endif
