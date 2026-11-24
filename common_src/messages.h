@@ -94,13 +94,14 @@ struct PlayerState {
     int max_energy;
     bool unconscious;
     CharacterAppearance appearance;
+    Direction facing = Direction::DOWN;
 
 
     PlayerState(std::string name, float x, float y,
                 int health, int max_health, int energy, int max_energy, bool unconscious,
-              CharacterAppearance appearance):
+              CharacterAppearance appearance, Direction facing):
         player_name(std::move(name)), x(x), y(y), health(health), max_health(max_health), 
-        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance) {}
+        energy(energy), max_energy(max_energy), unconscious(unconscious), appearance(appearance), facing(facing) {}
 
     /*
     // -- TEMPORAL, solo para que compile hasta que el server guarde el estado del CharacterAppearance en game.h
@@ -185,6 +186,7 @@ struct ServerMessage {
   std::vector<GameInfoForMenu> games;
   std::vector<uint8_t> world_info;
   std::vector<FarmPlotState> farm_plots;
+  bool multiplayer_enabled = false;
 };
 
 struct MenuRequest {

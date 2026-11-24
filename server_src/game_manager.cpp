@@ -272,13 +272,17 @@ void GameManager::select_slot(int client_id, int slot_index) {
 }
 
 void GameManager::enable_multiplayer(int client_id) {
-    game->enable_multiplayer();
+    bool enabled = game->enable_multiplayer();
 
     ServerMessage msg{};
     msg.type = MessageType::MULTIPLAYER_ENABLED;
     msg.game_code = game_code;
 
     registry.send(client_id, msg);
+
+    if (enabled) {
+        send_state();
+    }
 }
 
 void GameManager::interact_merchant(int client_id, MerchantType merchant) {

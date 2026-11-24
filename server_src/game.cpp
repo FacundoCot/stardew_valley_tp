@@ -273,7 +273,8 @@ std::vector<PlayerState> Game::snapshot(ZoneId zone, const std::string& self_nam
                     player.energy,
                     config.initial_energy,
                     player.unconscious, 
-                    player.appearance
+                    player.appearance,
+                    player.facing
             });
         }
     }
@@ -567,7 +568,8 @@ ServerMessage Game::game_state(int client_id) const {
         me.energy,
         config.initial_energy,
         me.unconscious,
-        me.appearance
+        me.appearance,
+        me.facing
     };
 
     msg.players = snapshot(me.zone, name);
@@ -577,6 +579,7 @@ ServerMessage Game::game_state(int client_id) const {
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();
     msg.farm_plots = farm_plots_state();
+    msg.multiplayer_enabled = multiplayer_enabled;
 
     return msg;
 }

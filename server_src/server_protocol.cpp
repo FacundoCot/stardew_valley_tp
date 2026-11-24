@@ -259,6 +259,9 @@ void ServerProtocol::send_player_state(const PlayerState& player) {
   send_or_throw(&unconscious, sizeof(unconscious));
 
   send_appearance(player.appearance);
+
+  const uint8_t facing = static_cast<uint8_t>(player.facing);
+  send_or_throw(&facing, sizeof(facing));
 }
 
 void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) {
@@ -402,6 +405,10 @@ void ServerProtocol::send_message(const ServerMessage& message) {
           send_inventory_state(message.inventory);
           send_time_state(message.time);
           send_farm_plots(message.farm_plots);
+
+          const uint8_t multiplayer_enabled = message.multiplayer_enabled ? 1 : 0;
+          send_or_throw(&multiplayer_enabled, sizeof(multiplayer_enabled));
+
           break;
         }
         /*
@@ -501,11 +508,9 @@ void ServerProtocol::send_appearance_part(const uint16_t part){
     send_or_throw(&temp, sizeof(uint16_t));
 }
 
-void ServerProtocol::send_farm_plots(
-    const std::vector<FarmPlotState>& plots) {
+void ServerProtocol::send_farm_plots(const std::vector<FarmPlotState>& plots) {
 
-    const uint16_t count =
-        htons(static_cast<uint16_t>(plots.size()));
+    const uint16_t count = htons(static_cast<uint16_t>(plots.size()));
 
     send_or_throw(&count, sizeof(count));
 
