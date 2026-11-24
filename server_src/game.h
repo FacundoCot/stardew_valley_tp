@@ -133,6 +133,7 @@ public:
     bool confirm_next_day(int client_id);
     bool all_players_ready() const;
     bool start_next_day_game();
+    std::optional<CharacterAppearance> appearance_for(const std::string& player_name) const;
     bool player_name(int client_id, std::string& player_name) const;
     bool name_to_client_id(int& client_id, const std::string& player_name) const;
     GameSaveData get_save_data(const std::string& game_code, const std::string& game_name, 

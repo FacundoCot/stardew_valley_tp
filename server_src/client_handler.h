@@ -26,7 +26,7 @@ private:
     ClientRegistry& registry;
 
     std::shared_ptr<Game> game;
-    std::string player_name;
+    std::string username;
 
     // uso unique_ptr para poder inicializar joiner y reciever recien cuando
     // el cliente se haya unido a una partida

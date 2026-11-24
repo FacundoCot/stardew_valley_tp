@@ -46,7 +46,7 @@ public:
                         const std::string& player_name,
                         const CharacterAppearance& appearance);
 
-    ServerMessage list_games();
+    ServerMessage list_games(const std::string& username);
     };
 
 #endif
