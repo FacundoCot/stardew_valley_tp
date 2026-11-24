@@ -20,9 +20,14 @@ MainWindow::MainWindow(QWidget* parent):
         QMainWindow(parent), ui(new Ui::MainWindow), sheet_scene(nullptr) {
     ui->setupUi(this);
 
-    const int zone_count = 2 + CAVE_LEVELS;
-    for (int i = 0; i < zone_count; ++i) {
-        scenes.push_back(new MapScene(MAP_COLUMNS, MAP_ROWS, this));
+    for (int i = 0; i < ZONE_COUNT; ++i) {
+        if (i == ZONE_HOUSE) {
+            scenes.push_back(new MapScene(HOUSE_COLUMNS, HOUSE_ROWS, this));
+        } else if (i == ZONE_COMMUNITY_CENTER) {
+            scenes.push_back(new MapScene(CENTER_COLUMNS, CENTER_ROWS, this));
+        } else {
+            scenes.push_back(new MapScene(MAP_COLUMNS, MAP_ROWS, this));
+        }
     }
     change_zone(0);
 
@@ -32,8 +37,14 @@ MainWindow::MainWindow(QWidget* parent):
         std::string cave_level = "Caverna" + std::to_string(level);
         ui->zoneComboBox->addItem(QString::fromStdString(cave_level));
     }
+    ui->zoneComboBox->addItem("Casa");
+    ui->zoneComboBox->addItem("Centro comunitario");
 
     ui->layerComboBox->addItems(scenes.front()->layer_names());
+
+    for (int i = 0; i < ELEMENT_COUNT; ++i) {
+        ui->elementTypeComboBox->addItem(QString::fromStdString(ELEMENT_TYPES[i].name));
+    }
 
     
     sheet_scene = new SheetScene(this);
@@ -55,6 +66,8 @@ MainWindow::MainWindow(QWidget* parent):
             &MainWindow::change_sheet);
     connect(ui->selectionSizeComboBox, &QComboBox::currentIndexChanged, this,
             &MainWindow::change_selection_size);
+    connect(ui->elementTypeComboBox, &QComboBox::currentIndexChanged, this,
+            &MainWindow::change_element_type);
     connect(ui->openAction, &QAction::triggered, this, &MainWindow::open_map);
     connect(ui->saveAction, &QAction::triggered, this, &MainWindow::save_map);
 }
@@ -105,6 +118,12 @@ void MainWindow::change_layer(int index) {
     for (MapScene* scene: scenes) {
         scene->set_layer(index);
     }
+
+    bool elements = (index == LAYER_ELEMENTS);
+    ui->elementTypeComboBox->setEnabled(elements);
+    ui->sheetComboBox->setEnabled(!elements);
+    ui->sheetGraphicsView->setEnabled(!elements);
+    ui->selectionSizeComboBox->setEnabled(!elements);
 }
 
 void MainWindow::change_tool(bool painting) {
@@ -140,6 +159,15 @@ void MainWindow::change_selection_size(int index) {
     }
 
     sheet_scene->set_selection_size(index + 1);
+}
+
+void MainWindow::change_element_type(int index) {
+    if (index < 0) {
+        return;
+    }
+    for (MapScene* scene: scenes) {
+        scene->set_element_type(index);
+    }
 }
 
 void MainWindow::open_map() {

@@ -16,10 +16,13 @@ const int LAYER_WALLS = 1;
 const int LAYER_OBJECTS = 2;
 const int LAYER_DECOR = 3;
 const int LAYER_COUNT = 4;
+const int LAYER_ELEMENTS = LAYER_COUNT;
 
 const int TILE_DATA_SHEET = 0; // rutas
 const int TILE_DATA_COLUMN = 1;
 const int TILE_DATA_ROW = 2;
+
+const int ELEMENT_DATA_TYPE = 0; 
 
 class MapScene: public QGraphicsScene {
     Q_OBJECT
@@ -45,6 +48,9 @@ private:
     // celdas de cada capa
     std::vector<std::vector<QGraphicsItem*>> layer_cells;
 
+    int element_type; // elegido
+    std::vector<QGraphicsItem*> element_cells; // aparte de layer_cells
+
     int to_cell(qreal coordinate) const;
     void apply_at(const QPointF& position);
 
@@ -52,6 +58,8 @@ private:
 
     void paint_selection(int column, int row); // seleccion completa
     void erase_selection(int column, int row);
+
+    void erase_element(int column, int row);
 
 protected:
     void drawBackground(QPainter* painter, const QRectF& rect) override;
@@ -68,8 +76,16 @@ public:
 
     QGraphicsItem* tile_item(int layer_index, int column, int row) const;
 
-    void paint_cell(int layer_index, int column, int row, const QPixmap& piece, const std::string& sheet_name, 
-                int piece_column, int piece_row);
+    void paint_cell(int layer_index, int column, int row, const QPixmap& piece,
+                    const std::string& sheet_name, int piece_column, int piece_row);
+
+    void place_element(int type_index, int column, int row);
+
+    void set_element_type(int new_type);
+    QGraphicsItem* element_item(int column, int row) const;
+
+    int column_count() const;
+    int row_count() const;
 
     void clear_tiles();
 };

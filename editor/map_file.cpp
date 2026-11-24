@@ -8,10 +8,9 @@
 #include "common_src/define.h"
 
 void MapFile::write_layer(std::ostream& writer, const MapScene* scene, int layer,
-                          int map_columns, int map_rows,
                           std::set<std::string>& sheets) const {
-    for (int row = 0; row < map_rows; ++row) {
-        for (int column = 0; column < map_columns; ++column) {
+    for (int row = 0; row < scene->row_count(); ++row) {
+        for (int column = 0; column < scene->column_count(); ++column) {
             const QGraphicsItem* item = scene->tile_item(layer, column, row);
             if (item == nullptr) {
                 continue;
@@ -30,16 +29,36 @@ void MapFile::write_layer(std::ostream& writer, const MapScene* scene, int layer
     }
 }
 
+void MapFile::write_elements(std::ostream& writer, const MapScene* scene) const {
+    for (int row = 0; row < scene->row_count(); ++row) {
+        for (int column = 0; column < scene->column_count(); ++column) {
+            const QGraphicsItem* item = scene->element_item(column, row);
+            if (item == nullptr) {
+                continue;
+            }
+            const int type = item->data(ELEMENT_DATA_TYPE).toInt();
+
+            writer << "[[zone.element]]\n";
+            writer << "type = \"" << ELEMENT_TYPES[type].id << "\"\n";
+            writer << "x = " << column << "\n";
+            writer << "y = " << row << "\n\n";
+        }
+    }
+}
+
 void MapFile::write_zone(std::ostream& writer, const MapScene* scene,
-                         const std::string& kind, int level, int map_columns,
-                         int map_rows, std::set<std::string>& sheets) const {
+                         const std::string& kind, int level,
+                         std::set<std::string>& sheets) const {
     writer << "[[zone]]\n";
     writer << "kind = \"" << kind << "\"\n";
-    writer << "level = " << level << "\n\n";
+    writer << "level = " << level << "\n";
+    writer << "width = " << scene->column_count() << "\n";
+    writer << "height = " << scene->row_count() << "\n\n";
 
     for (int layer = 0; layer < LAYER_COUNT; ++layer) {
-        write_layer(writer, scene, layer, map_columns, map_rows, sheets);
+        write_layer(writer, scene, layer, sheets);
     }
+    write_elements(writer, scene);
 }
 
 bool MapFile::save(const std::string& path, const std::string& map_name,
@@ -63,11 +82,13 @@ bool MapFile::save(const std::string& path, const std::string& map_name,
 
     // cargando las sheets usadas a medida que escribe las zonas
     std::set<std::string> used_sheets;
-    write_zone(writer, scenes[0], "farm", 0, map_columns, map_rows, used_sheets);
-    write_zone(writer, scenes[1], "village", 0, map_columns, map_rows, used_sheets);
-    for (size_t i = 2; i < scenes.size(); ++i) {
-        write_zone(writer, scenes[i], "cave", static_cast<int>(i) - 1, map_columns, map_rows, used_sheets);
+    write_zone(writer, scenes[ZONE_FARM], "farm", 0, used_sheets);
+    write_zone(writer, scenes[ZONE_VILLAGE], "village", 0, used_sheets);
+    for (int level = 1; level <= CAVE_LEVELS; ++level) {
+        write_zone(writer, scenes[ZONE_FIRST_CAVE + level - 1], "cave", level, used_sheets);
     }
+    write_zone(writer, scenes[ZONE_HOUSE], "house", 0, used_sheets);
+    write_zone(writer, scenes[ZONE_COMMUNITY_CENTER], "community_center", 0, used_sheets);
 
     for (const std::string& sheet: used_sheets) {
         writer << "[[sheet]]\n";
@@ -79,18 +100,21 @@ bool MapFile::save(const std::string& path, const std::string& map_name,
     return writer.good();
 }
 
-int MapFile::zone_index(const std::string& kind, int level, int zone_count) const {
+int MapFile::zone_index(const std::string& kind, int level) const {
     int index = -1;
 
     if (kind == "farm") {
-        index = 0;
+        index = ZONE_FARM;
     } else if (kind == "village") {
-        index = 1;
+        index = ZONE_VILLAGE;
     } else if (kind == "cave") {
-        int new_index = level + 1;
-        if (level >= 1 && new_index < zone_count) {
-            index = new_index;
+        if (level >= 1 && level <= CAVE_LEVELS) {
+            index = ZONE_FIRST_CAVE + level - 1;
         }
+    } else if (kind == "house") {
+        index = ZONE_HOUSE;
+    } else if (kind == "community_center") {
+        index = ZONE_COMMUNITY_CENTER;
     }
 
     return index;
@@ -100,6 +124,15 @@ int MapFile::layer_index(const std::string& id) const {
     for (int layer = 0; layer < LAYER_COUNT; ++layer) {
         if (LAYER_IDS[layer] == id) {
             return layer;
+        }
+    }
+    return -1;
+}
+
+int MapFile::element_index(const std::string& id) const {
+    for (int type = 0; type < ELEMENT_COUNT; ++type) {
+        if (ELEMENT_TYPES[type].id == id) {
+            return type;
         }
     }
     return -1;
@@ -137,8 +170,7 @@ bool MapFile::load_sheets(const toml::table& root, const std::string& assets_pat
 }
 
 bool MapFile::load_tile(const toml::table& tile, const std::map<std::string, QPixmap>& sheets,
-                        int map_columns, int map_rows, MapScene* scene,
-                        std::string& error) const {
+                        MapScene* scene, std::string& error) const {
     const int x = tile["x"].value_or(-1);
     const int y = tile["y"].value_or(-1);
     const int col = tile["col"].value_or(-1);
@@ -151,8 +183,8 @@ bool MapFile::load_tile(const toml::table& tile, const std::map<std::string, QPi
         error = "Error: capa desconocida";
         return false;
     }
-    if (x < 0 || y < 0 || x >= map_columns || y >= map_rows) {
-        error = "Error: tile fuera del mapa";
+    if (x < 0 || y < 0 || x >= scene->column_count() || y >= scene->row_count()) {
+        error = "Error: tile fuera de la zona";
         return false;
     }
 
@@ -175,29 +207,69 @@ bool MapFile::load_tile(const toml::table& tile, const std::map<std::string, QPi
     return true;
 }
 
+bool MapFile::load_element(const toml::table& element, MapScene* scene,
+                           std::string& error) const {
+    const int x = element["x"].value_or(-1);
+    const int y = element["y"].value_or(-1);
+    const std::string type_id = element["type"].value_or(std::string());
+
+    const int type = element_index(type_id);
+    if (type < 0) {
+        error = "Error: elemento desconocido";
+        return false;
+    }
+    if (x < 0 || y < 0 || x >= scene->column_count() || y >= scene->row_count()) {
+        error = "Error: elemento fuera de la zona";
+        return false;
+    }
+    scene->place_element(type, x, y);
+    return true;
+}
+
 bool MapFile::load_zone(const toml::table& zone, const std::map<std::string, QPixmap>& sheets,
                         int map_columns, int map_rows, const std::vector<MapScene*>& scenes,
                         std::string& error) const {
     const std::string kind = zone["kind"].value_or(std::string());
     const int level = zone["level"].value_or(0);
-    const int index = zone_index(kind, level, static_cast<int>(scenes.size()));
+    const int index = zone_index(kind, level);
     if (index < 0) {
         error = "Error: zona desconocida";
         return false;
     }
+    MapScene* scene = scenes[static_cast<size_t>(index)];
+
+    // asumo estándar si el archivo no lo tiene presente
+    if (zone["width"].value_or(map_columns) != scene->column_count() ||
+        zone["height"].value_or(map_rows) != scene->row_count()) {
+        error = "Error: tamaño de zona distinto al del editor";
+        return false;
+    }
 
     const toml::array* tiles = zone["tile"].as_array();
-    if (tiles == nullptr) {
-        return true;  // zona sin tiles
-    }
-    for (const toml::node& node : *tiles) {
-        const toml::table* tile = node.as_table();
-        if (tile == nullptr) {
-            error = "Error: [[zone.tile]] mal formado";
-            return false;
+    if (tiles != nullptr) {
+        for (const toml::node& node : *tiles) {
+            const toml::table* tile = node.as_table();
+            if (tile == nullptr) {
+                error = "Error: [[zone.tile]] mal formado";
+                return false;
+            }
+            if (!load_tile(*tile, sheets, scene, error)) {
+                return false;
+            }
         }
-        if (!load_tile(*tile, sheets, map_columns, map_rows, scenes[static_cast<size_t>(index)], error)) {
-            return false;
+    }
+
+    const toml::array* elements = zone["element"].as_array();
+    if (elements != nullptr) {
+        for (const toml::node& node : *elements) {
+            const toml::table* element = node.as_table();
+            if (element == nullptr) {
+                error = "Error: [[zone.element]] mal formado";
+                return false;
+            }
+            if (!load_element(*element, scene, error)) {
+                return false;
+            }
         }
     }
     return true;

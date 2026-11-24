@@ -10,6 +10,7 @@
 #include <QPixmap>
 #include <toml++/toml.hpp>
 
+#include "map_definitions.h"
 #include "map_scene.h"
 
 
@@ -18,11 +19,13 @@ const bool LAYER_SOLID[LAYER_COUNT] = {false, true, true, false};
 
 class MapFile {
 private:
-    void write_zone(std::ostream& out, const MapScene* scene, const std::string& kind, int level, 
-                    int map_columns, int map_rows, std::set<std::string>& sheets) const;
+    void write_zone(std::ostream& out, const MapScene* scene, const std::string& kind, int level,
+                    std::set<std::string>& sheets) const;
 
-    void write_layer(std::ostream& out, const MapScene* scene, int layer, int map_columns, int map_rows,
+    void write_layer(std::ostream& out, const MapScene* scene, int layer,
                      std::set<std::string>& sheets) const;
+
+    void write_elements(std::ostream& out, const MapScene* scene) const;
 
     bool load_sheets(const toml::table& root, const std::string& assets_path,
                      std::map<std::string, QPixmap>& sheets, std::string& error) const;
@@ -31,11 +34,14 @@ private:
                     int map_rows, const std::vector<MapScene*>& scenes, std::string& error) const;
 
     bool load_tile(const toml::table& tile, const std::map<std::string, QPixmap>& sheets,
-                   int map_columns, int map_rows, MapScene* scene, std::string& error) const;
+                   MapScene* scene, std::string& error) const;
 
-    int zone_index(const std::string& kind, int level, int zone_count) const;
+    bool load_element(const toml::table& element, MapScene* scene, std::string& error) const;
+
+    int zone_index(const std::string& kind, int level) const;
 
     int layer_index(const std::string& id) const;
+    int element_index(const std::string& id) const;
 
 public:
     // false si falló algo al guardar

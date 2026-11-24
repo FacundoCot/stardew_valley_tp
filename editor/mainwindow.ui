@@ -77,6 +77,20 @@
       <widget class="QComboBox" name="layerComboBox"/>
      </item>
      <item>
+      <widget class="QLabel" name="elementTypeLabel">
+       <property name="text">
+        <string>Elemento</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="elementTypeComboBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="sheetLabel">
        <property name="text">
         <string>Hoja de tiles</string>

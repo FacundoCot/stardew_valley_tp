@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <cmath>
 
+#include <QBrush>
 #include <QGraphicsPixmapItem>
+#include <QGraphicsRectItem>
 #include <QLineF>
 #include <QPen>
 #include <QString>
 
 #include "common_src/define.h" 
+#include "map_definitions.h"
 
 MapScene::MapScene(int map_columns, int map_rows, QObject* parent):
         QGraphicsScene(parent),
@@ -22,7 +25,9 @@ MapScene::MapScene(int map_columns, int map_rows, QObject* parent):
         press_column(0),
         press_row(0),
         layer_cells(LAYER_COUNT,
-                    std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)) {
+                    std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)),
+        element_type(0),
+        element_cells(map_columns * map_rows, nullptr) {
     setSceneRect(0, 0, columns * TILE_SIZE, rows * TILE_SIZE);
 }
 
@@ -43,7 +48,7 @@ void MapScene::set_tile(const QPixmap& new_tile, std::string sheet_name, int row
 }
 
 QStringList MapScene::layer_names() const {
-    return {"Pisos", "Paredes", "Objetos", "Decoraciones"};
+    return {"Pisos", "Paredes", "Objetos", "Decoraciones", "Elementos"};
 }
 
 QGraphicsItem* MapScene::tile_item(int layer_index, int column, int row) const {
@@ -82,6 +87,9 @@ void MapScene::mousePressEvent(QGraphicsSceneMouseEvent* event) {
 }
 
 void MapScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event) {
+    if (layer == LAYER_ELEMENTS) {
+        return; // los elementos se ponen de a uno
+    }
     if (event->buttons().testFlag(Qt::LeftButton)) {
         const int column = to_cell(event->scenePos().x());
         const int row = to_cell(event->scenePos().y());
@@ -97,6 +105,14 @@ void MapScene::apply_at(const QPointF& position) {
     const int column = to_cell(position.x());
     const int row = to_cell(position.y());
     if (column < 0 || row < 0 || column >= columns || row >= rows) {
+        return;
+    }
+    if (layer == LAYER_ELEMENTS) {
+        if (tool == PAINT) {
+            place_element(element_type, column, row);
+        } else {
+            erase_element(column, row);
+        }
         return;
     }
     if (tool == PAINT) {
@@ -168,10 +184,66 @@ void MapScene::erase_cell(int layer_index, int column, int row) {
     layer_cells[layer_index][index] = nullptr;
 }
 
-void MapScene::clear_tiles() {
-    clear(); // saca y destruye todos los items
+void MapScene::set_element_type(int new_type) {
+    element_type = new_type;
+}
 
+QGraphicsItem* MapScene::element_item(int column, int row) const {
+    return element_cells[row * columns + column];
+}
+
+int MapScene::column_count() const {
+    return columns;
+}
+
+int MapScene::row_count() const {
+    return rows;
+}
+
+void MapScene::place_element(int type_index, int column, int row) {
+    const ElementType& type = ELEMENT_TYPES[type_index];
+
+    if (type.unique) {
+        // miro que no haya otro unique en la zona y si hay se borra
+        for (QGraphicsItem*& element : element_cells) {
+            if (element != nullptr && element->data(ELEMENT_DATA_TYPE).toInt() == type_index) {
+                removeItem(element);
+                delete element;
+                element = nullptr;
+            }
+        }
+    }
+    erase_element(column, row);  // reemplazo lo que haya en la celda
+
+    QGraphicsRectItem* item = addRect(0, 0, TILE_SIZE, TILE_SIZE, QPen(Qt::NoPen), QBrush(type.color));
+    item->setPos(column * TILE_SIZE, row * TILE_SIZE);
+    item->setZValue(LAYER_COUNT + 1);
+    item->setToolTip(QString::fromStdString(type.name));
+
+    item->setData(ELEMENT_DATA_TYPE, type_index);
+
+    element_cells[row * columns + column] = item;
+}
+
+void MapScene::erase_element(int column, int row) {
+    const int index = row * columns + column;
+
+    QGraphicsItem* item = element_cells[index];
+    if (item == nullptr) {
+        return;
+    }
+
+    removeItem(item);
+    delete item;
+    element_cells[index] = nullptr;
+}
+
+void MapScene::clear_tiles() {
+    clear();
+
+    // limpio todas las referencias muertas
     for (std::vector<QGraphicsItem*>& cells: layer_cells) {
         std::fill(cells.begin(), cells.end(), nullptr);
     }
+    std::fill(element_cells.begin(), element_cells.end(), nullptr);
 }

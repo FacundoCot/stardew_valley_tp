@@ -6,14 +6,19 @@
 
 #include <QMainWindow>
 #include <QPixmap>
+#include "map_definitions.h"
 #include "map_scene.h"
 #include "sheet_scene.h"
 
-const int CAVE_LEVELS = 10;
-
-// totalmente provisional
+// para exterior
 const int MAP_COLUMNS = 180;
 const int MAP_ROWS = 120;
+
+// division para interiores
+const int HOUSE_COLUMNS = 40;
+const int HOUSE_ROWS = 30;
+const int CENTER_COLUMNS = 70;
+const int CENTER_ROWS = 50;
 
 const std::string ASSETS_PATH = "client_src/data/assets";
 
@@ -40,6 +45,7 @@ private slots:
     void change_sheet(int index);
     void change_tile(const QPixmap& tile, int row, int column);
     void change_selection_size(int index);
+    void change_element_type(int index);
 
     void open_map();
     void save_map();
