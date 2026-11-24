@@ -11,6 +11,25 @@
 #include "village_zone.h"
 
 namespace {
+// 4 grupos de 6 puntos. Cada grupo es una grilla de 3 columnas x 2 filas,
+// con 2 celdas de separacion. Los puntos son centro de celda (+0.5).
+std::vector<std::pair<float, float>> cave_enemy_spawns() {
+    return {
+        // Grupo A (noroeste)
+        {20.5f, 20.5f}, {22.5f, 20.5f}, {24.5f, 20.5f},
+        {20.5f, 22.5f}, {22.5f, 22.5f}, {24.5f, 22.5f},
+        // Grupo B (noreste)
+        {150.5f, 20.5f}, {152.5f, 20.5f}, {154.5f, 20.5f},
+        {150.5f, 22.5f}, {152.5f, 22.5f}, {154.5f, 22.5f},
+        // Grupo C (suroeste)
+        {20.5f, 95.5f}, {22.5f, 95.5f}, {24.5f, 95.5f},
+        {20.5f, 97.5f}, {22.5f, 97.5f}, {24.5f, 97.5f},
+        // Grupo D (sureste)
+        {150.5f, 95.5f}, {152.5f, 95.5f}, {154.5f, 95.5f},
+        {150.5f, 97.5f}, {152.5f, 97.5f}, {154.5f, 97.5f},
+    };
+}
+
 std::vector<Tile> bordered_grid(int width, int height, Tile interior) {
     std::vector<Tile> tiles(static_cast<size_t>(width) * height, interior);
     for (int row = 0; row < height; ++row) {
@@ -115,7 +134,7 @@ std::shared_ptr<const Zone> build_cave(int level) {
     }
     return std::make_shared<const CaveLevel>(
         level, ZONE_WIDTH, ZONE_HEIGHT, std::move(tiles), std::move(portals),
-        std::vector<std::pair<float, float>>{{45.5f, 30.5f}});
+        cave_enemy_spawns());
 }
 }  // namespace
 

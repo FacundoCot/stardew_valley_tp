@@ -10,6 +10,7 @@
 #include <optional>
 
 #include "common_src/farm_zone.h"
+#include "common_src/cave_level.h"
 #include "common_src/messages.h"
 #include "common_src/queue.h"
 #include "common_src/world.h"
@@ -24,6 +25,12 @@
 #include "merchant.h"
 #include "common_src/cell_pos.h"
 #include "farm_plot.h"
+#include "enemy_config.h"
+#include "random.h"
+#include "drop_table.h"
+#include "fight_set_tracker.h"
+#include "enemy_spawner.h"
+#include "projectile.h"
 
 //const int MAX_HEALTH = 100; //elim
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -73,10 +80,16 @@ private:
     std::shared_ptr<const World> world;
     std::shared_ptr<const FarmZone> farm;
     GameConfig config;
+    EnemyConfig enemy_config;
     ItemCatalog item_catalog;
     std::map<MerchantType, std::unique_ptr<Merchant>> merchants;
     GameClock clock;
     std::vector<std::unique_ptr<Enemy>> enemies;
+    Random rng;
+    DropTable drop_table;
+    FightSetTracker fight_sets;
+    EnemySpawner spawner;
+    std::vector<std::unique_ptr<Projectile>> projectiles;
     std::map<std::string, Player> players;          // nombre -> jugador
     std::map<int, std::string> connected_clients;   // client_id -> nombre
     std::set<int> ready_clients;
@@ -93,18 +106,22 @@ private:
     // Versiones SIN lock: solo se llaman con mtx ya tomado
     
     bool damage_player_unlocked(const std::string& player_name, int amount);
-    bool nearest_player_unlocked(float x, float y, EnemyWorld::Target& target) const;
+    bool nearest_player_unlocked(ZoneId zone, float x, float y, EnemyWorld::Target& target) const;
     bool remove_dead_enemies_unlocked();
     uint32_t get_initial_coins() const;
     bool add_player_unlocked(int client_id, const std::string& player_name,
                              ZoneId zone, float x, float y, const CharacterAppearance& appearance);
     std::map<std::string, int> bed_by_player;
-    MovementResult move_player_unlocked(Player& player, float new_x, float new_y);
+    MovementResult move_player_unlocked(const std::string& name, Player& player,
+                                        float new_x, float new_y);
 
     std::vector<PlayerState> snapshot(ZoneId zone, const std::string& self_name) const;
     std::vector<MapPlayerState> map_snapshot() const;
     
-    std::vector<EnemyState> enemy_snapshot() const;
+    std::vector<EnemyState> enemy_snapshot(ZoneId zone) const;
+    std::vector<ProjectileState> projectile_snapshot(ZoneId zone) const;
+    bool player_incident_near_unlocked(ZoneId zone, float x, float y, float radius) const;
+    void handle_enemy_killed_unlocked(Enemy& enemy, const std::string& killer);
     InventoryState inventory_state(int client_id) const;
     TimeState time_state() const;
 
@@ -115,7 +132,8 @@ private:
     bool near_merchant_unlocked(const Player& player, MerchantType merchant) const;
 
 public:
-    explicit Game(std::shared_ptr<const World> world, const GameConfig& config);
+    explicit Game(std::shared_ptr<const World> world, const GameConfig& config,
+                  const EnemyConfig& enemy_config);
 
     bool add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance);
     bool enable_multiplayer();
