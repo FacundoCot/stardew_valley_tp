@@ -121,6 +121,37 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
 
           return std::make_shared<InteractMerchantAction>(static_cast<MerchantType>(merchant_type));
         }
+
+        case ActionType::TILL_SOIL:
+        case ActionType::PLANT_SEED:
+        case ActionType::WATER_CROP:
+        case ActionType::HARVEST_CROP: {
+            uint16_t network_x;
+            uint16_t network_y;
+
+            recv_or_throw(&network_x, sizeof(network_x));
+            recv_or_throw(&network_y, sizeof(network_y));
+
+            const int x = ntohs(network_x);
+            const int y = ntohs(network_y);
+
+            switch (static_cast<ActionType>(op)) {
+                case ActionType::TILL_SOIL:
+                    return std::make_shared<TillSoilAction>(x, y);
+
+                case ActionType::PLANT_SEED:
+                    return std::make_shared<PlantSeedAction>(x, y);
+
+                case ActionType::WATER_CROP:
+                    return std::make_shared<WaterCropAction>(x, y);
+
+                case ActionType::HARVEST_CROP:
+                    return std::make_shared<HarvestCropAction>(x, y);
+
+                default:
+                    throw std::runtime_error("invalid crop operation");
+            }
+        }
           
         default:
             throw std::runtime_error("invalid game operation");
@@ -235,6 +266,9 @@ void ServerProtocol::send_player_state(const PlayerState& player) {
   send_or_throw(&unconscious, sizeof(unconscious));
 
   send_appearance(player.appearance);
+
+  const uint8_t facing = static_cast<uint8_t>(player.facing);
+  send_or_throw(&facing, sizeof(facing));
 }
 
 void ServerProtocol::send_games_list(const std::vector<GameInfoForMenu>& games) {
@@ -401,6 +435,11 @@ void ServerProtocol::send_message(const ServerMessage& message) {
 
           send_inventory_state(message.inventory);
           send_time_state(message.time);
+          send_farm_plots(message.farm_plots);
+
+          const uint8_t multiplayer_enabled = message.multiplayer_enabled ? 1 : 0;
+          send_or_throw(&multiplayer_enabled, sizeof(multiplayer_enabled));
+
           break;
         }
         /*
@@ -498,4 +537,35 @@ void ServerProtocol::send_appearance_part(const uint16_t part){
     uint16_t temp;
     temp = htons(part);
     send_or_throw(&temp, sizeof(uint16_t));
+}
+
+void ServerProtocol::send_farm_plots(const std::vector<FarmPlotState>& plots) {
+
+    const uint16_t count = htons(static_cast<uint16_t>(plots.size()));
+
+    send_or_throw(&count, sizeof(count));
+
+    for (const FarmPlotState& plot : plots) {
+        const uint16_t x = htons(plot.cell_x);
+        const uint16_t y = htons(plot.cell_y);
+
+        const uint8_t has_crop = plot.has_crop ? 1 : 0;
+
+        const uint8_t crop_type = static_cast<uint8_t>(plot.crop_type);
+
+        const uint16_t grown = htons(plot.days_grown);
+        const uint16_t required = htons(plot.growth_days);
+
+        const uint8_t needs_water = plot.needs_water ? 1 : 0;
+        const uint8_t ready = plot.ready_to_harvest ? 1 : 0;
+
+        send_or_throw(&x, sizeof(x));
+        send_or_throw(&y, sizeof(y));
+        send_or_throw(&has_crop, sizeof(has_crop));
+        send_or_throw(&crop_type, sizeof(crop_type));
+        send_or_throw(&grown, sizeof(grown));
+        send_or_throw(&required, sizeof(required));
+        send_or_throw(&needs_water, sizeof(needs_water));
+        send_or_throw(&ready, sizeof(ready));
+    }
 }

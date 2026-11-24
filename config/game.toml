@@ -24,3 +24,46 @@ plata = 50
 oro = 80
 leche = 30
 huevo = 3
+
+[cultivos.frutilla]
+riegos_por_dia = 2
+dias_crecimiento = 4
+dias_rebrote = 2
+riegos_omitidos_permitidos = 0
+
+[cultivos.cebolla]
+riegos_por_dia = 3
+dias_crecimiento = 2
+dias_rebrote = 0
+riegos_omitidos_permitidos = 0
+
+[cultivos.papa]
+riegos_por_dia = 2
+dias_crecimiento = 3
+dias_rebrote = 0
+riegos_omitidos_permitidos = 1
+
+[cultivos.calabaza]
+riegos_por_dia = 1
+dias_crecimiento = 7
+dias_rebrote = 0
+riegos_omitidos_permitidos = 0
+
+[energia_acciones]
+preparar_tierra = 2
+plantar = 1
+regar = 1
+cosechar = 1
+
+[calidad_cultivos]
+minutos_riego_por_punto = 60
+penalizacion_riego_omitido = 10
+minutos_cosecha_por_punto = 80
+
+suerte_min_pct = 85
+suerte_max_pct = 115
+
+umbral_bueno = 50
+umbral_excelente = 65
+umbral_increible = 80
+umbral_perfecta = 95

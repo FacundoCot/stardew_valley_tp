@@ -23,6 +23,8 @@
 #include "game_config.h"
 #include "item_catalog.h"
 #include "merchant.h"
+#include "common_src/cell_pos.h"
+#include "farm_plot.h"
 #include "enemy_config.h"
 #include "random.h"
 #include "drop_table.h"
@@ -94,6 +96,12 @@ private:
     bool multiplayer_enabled = false;
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
+    std::map<CellPos, FarmPlot> farm_plots;
+
+    std::optional<ItemType> crop_type_for_seed(ItemType seed_type);
+    int generate_luck(int minimum, int maximum);
+    Quality quality_from_score(int score, const GameConfig& config);
+    std::vector<FarmPlotState> farm_plots_state() const;
 
     // Versiones SIN lock: solo se llaman con mtx ya tomado
     
@@ -168,6 +176,12 @@ public:
     bool interact_with_merchant(int client_id, MerchantType merchant);
     std::optional<MerchantType> get_active_merchant(int client_id) const;
     std::optional<std::string> get_merchant_catalog(int client_id) const;
+    
+    //plantaciones
+    bool till_soil(int client_id, int x, int y);
+    bool plant_seed(int client_id, int x, int y);
+    bool water_crop(int client_id, int x, int y);
+    bool harvest_crop(int client_id, int x, int y);
 };
 
 #endif
