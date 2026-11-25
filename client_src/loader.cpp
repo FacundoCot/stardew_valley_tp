@@ -56,4 +56,6 @@ void Loader::load_everything() {
     load_texture("exit", "client_src/data/menu/salir.png");
     load_texture("btn_confirm_day", "client_src/data/next_day_button.jpg");
     load_texture("enable", "client_src/data/menu/enable_button.jpg");
+    load_texture("empty", "client_src/data/menu/empty_button.jpg");
+    load_texture("btn_chat", "client_src/data/assets/Misc/expression_chat.png");
 }

@@ -61,31 +61,40 @@ void PlayerVisual::draw( const PlayerState &state,
 
   Translator::Rect body = translator.body_rect();
   body.x += body.width*step_dx;
+  auto iter = PLAYER_FACING.find(state.facing);
+  int row = (iter != PLAYER_FACING.end()) ? iter->second : 0;
+
+  body.y += body.height*row;
 
   int player_dy =  (is_moving ? PLAYER_DY[pos_animation]*scale : 0);
   
   SDL2pp::Rect dest(x_screen, y_screen, body.width*2, body.height*2);
 
   SDL2pp::Rect src = to_SDLRect(body);
+  SDL_RendererFlip flip = (state.facing == Direction::LEFT) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
-  renderer.Copy(player, src, dest);
+  renderer.Copy(player, src, dest, 0.0, SDL2pp::NullOpt, flip);
 
-  draw_pants(translator, dest, ap, step_dx);
+  draw_pants(translator, dest, ap, step_dx, state.facing);
 
   if (ap.hair != 0) {
-    draw_hair(translator, dest, ap, player_dy);
+    draw_hair(translator, dest, ap, player_dy, state.facing);
   }
-  draw_shirt(translator, dest, ap, player_dy);
-  draw_hat(translator, dest, ap, player_dy);
+  draw_shirt(translator, dest, ap, player_dy, state.facing);
+  draw_hat(translator, dest, ap, player_dy, state.facing);
   
 }
 
 void PlayerVisual::draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& body,
-                              CharacterAppearance& ap, int& player_dy) {
+                              CharacterAppearance& ap, int& player_dy, const Direction& facing) {
 
   SDL2pp::Texture& hair = loader.get_texture("hair");
 
   Translator::Rect hair_dimensions = translator.hair_rect();
+  auto iter = HAIR_FACING.find(facing);
+  int row = (iter != HAIR_FACING.end()) ? iter->second : 0;
+
+  hair_dimensions.y += hair_dimensions.height*row;
 
   int dy = HAIR_DY + (ap.body == 1 ? FEMALE_DY : 0);
 
@@ -103,11 +112,17 @@ void PlayerVisual::draw_hair(AppearanceTranslator& translator, SDL2pp::Rect& bod
 
 }
 
-void PlayerVisual::draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& body, CharacterAppearance& ap, int& step_dx) {
+void PlayerVisual::draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& body, 
+                              CharacterAppearance& ap, int& step_dx, const Direction& facing
+) {
     SDL2pp::Texture& pants = loader.get_texture("pants");
 
   Translator::Rect pants_dimensions = translator.pants_rect();
   pants_dimensions.x += step_dx * pants_dimensions.width;
+  auto iter = PANTS_FACING.find(facing);
+  int row = (iter != PANTS_FACING.end()) ? iter->second : 0;
+
+  pants_dimensions.y += pants_dimensions.height*row;
 
   int dy = PANTS_DY + (ap.body == 1 ? FEMALE_DY : 0);
 
@@ -118,14 +133,20 @@ void PlayerVisual::draw_pants(AppearanceTranslator& translator, SDL2pp::Rect& bo
   uint16_t pants_color = ap.pants_color % COLOR_COUNT;
   pants.SetColorMod(COLORS[pants_color][0], COLORS[pants_color][1], COLORS[pants_color][2]);
 
-  renderer.Copy(pants, src, dest);
+  SDL_RendererFlip flip = (facing == Direction::LEFT) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+
+  renderer.Copy(pants, src, dest, 0.0, SDL2pp::NullOpt, flip);
 }
 
 void PlayerVisual::draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& body,
-                               CharacterAppearance& ap, int& player_dy) {
+                               CharacterAppearance& ap, int& player_dy, const Direction& facing) {
   SDL2pp::Texture& shirt = loader.get_texture("shirts");
 
   Translator::Rect shirt_dimension = translator.shirt_rect();
+  auto iter = SHIRT_FACING.find(facing);
+  int row = (iter != SHIRT_FACING.end()) ? iter->second : 0;
+
+  shirt_dimension.y += shirt_dimension.height*row;
 
   int dy = SHIRT_DY + (ap.body == 1 ? FEMALE_DY : 0);
   
@@ -140,7 +161,7 @@ void PlayerVisual::draw_shirt(AppearanceTranslator& translator, SDL2pp::Rect& bo
 }
 
 void PlayerVisual::draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body, 
-                            CharacterAppearance& ap, int& player_dy) {
+                            CharacterAppearance& ap, int& player_dy, const Direction& facing) {
 
   if (ap.hat == 0) {
     return;
@@ -149,6 +170,11 @@ void PlayerVisual::draw_hat(AppearanceTranslator& translator, SDL2pp::Rect& body
   SDL2pp::Texture& hat = loader.get_texture("hats");
 
   Translator::Rect hat_dimension = translator.hat_rect();
+
+  auto iter = HAT_FACING.find(facing);
+  int row = (iter != HAT_FACING.end()) ? iter->second : 0;
+
+  hat_dimension.y += hat_dimension.height*row;
 
   int dy = HAT_DY + (ap.body == 1 ? FEMALE_DY : 0);
   

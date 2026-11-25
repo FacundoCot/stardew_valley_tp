@@ -18,6 +18,7 @@ private:
   std::string serialize_confirm_day(const ClientMessage &msg_to_server);
   std::string serialize_select_slot(const ClientMessage &msg_to_server);
   std::string serialize_username(const ClientMessage &msg_to_server);
+  std::string serialize_chat(const ClientMessage &msg_to_server);
 
   void append_u16_t(std::string& buffer, uint16_t appearance_item);
   void serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer);
@@ -27,6 +28,7 @@ private:
   ZoneId rcv_zone_id();
   void rcv_projectiles(ServerMessage &msg);
   void rcv_plot(ServerMessage &msg);
+  void rcv_chat_message(ServerMessage &msg);
 
 public:
   explicit ClientProtocol(Socket &&skt_rcv);

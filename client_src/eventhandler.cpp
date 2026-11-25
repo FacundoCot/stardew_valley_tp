@@ -8,7 +8,7 @@
 #include <SDL2/SDL.h>
 #include <stdexcept>
 
-EventHandler::EventHandler(MenuInGame& menu) : menu(menu) {}
+EventHandler::EventHandler(MenuInGame& menu, ChatView& chat) : menu(menu), chat(chat) {}
 
 ClientMessage EventHandler::get_event_to_protocol(const SDL_Event &e,
                                                   ClientMessage &msg) {
@@ -58,6 +58,22 @@ ClientMessage EventHandler::get_next_event(const SDL_Event &e, Visual &visual,
       return msg;
 
     case (ClientState::PLAYING):
+      if (chat.is_chat_open()) {
+        if (e.key.keysym.sym == SDLK_ESCAPE && e.key.repeat == 0) {
+          chat.toggle();
+          msg.type = ActionType::NULL_ACTION;
+          return msg;
+        }
+        auto text_to_send = chat.handle_text_event(e);
+        if (text_to_send.has_value()) {
+          msg.type = ActionType::CHAT;
+          msg.chat_text = *text_to_send;
+          return msg;
+        }
+
+        msg.type = ActionType::NULL_ACTION;
+        return msg;
+      }
       if(e.type == SDL_KEYDOWN) {
         change_window_dimension(e, visual, camera);
         if (e.key.keysym.sym == SDLK_ESCAPE && e.key.repeat == 0) {
@@ -76,7 +92,15 @@ ClientMessage EventHandler::get_next_event(const SDL_Event &e, Visual &visual,
           msg.type = ActionType::DISCONNECT;
           return msg;
         }
+        if (action == MenuAction::ENABLE_MULTP) {
+          msg.type = ActionType::ENABLE_MULTIPLAYER;
+          return msg;
+        }
       }
+      else if (chat.handle_click(e) || (e.key.keysym.sym == SDLK_RETURN && e.key.repeat == 0)) {
+        chat.toggle();
+      }
+
       msg.type = ActionType::NULL_ACTION;
       return msg;
 
