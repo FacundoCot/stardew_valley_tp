@@ -8,17 +8,19 @@
 #include "visual.h"
 #include "menu_in_game.h"
 #include "button.h"
+#include "chat_view.h"
 
 class EventHandler {
 private:
   MenuInGame& menu;
+  ChatView& chat;
 
   ClientMessage get_event_to_protocol(const SDL_Event &e, ClientMessage &msg);
   ClientMessage select_slot(const SDL_Event& e, ClientMessage& msg);
   bool is_select_slot(const SDL_Event &e);
 
 public:
-  explicit EventHandler(MenuInGame& menu);
+  explicit EventHandler(MenuInGame& menu, ChatView& chat);
   ClientMessage get_next_event(const SDL_Event &e, Visual &visual,
                                Camera &camera, ClientState& state, Button& btn);
   bool is_disconnect(const SDL_Event &e);

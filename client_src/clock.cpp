@@ -48,8 +48,8 @@ void Clock::draw(Visual& visual) {
     uint8_t g = 40;
     uint8_t b = 20;
 
-    visual.draw_text(day_info, x_day, y_day, r, g, b);
-    visual.draw_text(hour_str, x_hour, y_hour, r, g, b);
+    visual.draw_text_cached("clock_day", day_info, x_day, y_day, r, g, b);
+    visual.draw_text_cached("clock_hour", hour_str, x_hour, y_hour, r, g, b);
 
 }
 

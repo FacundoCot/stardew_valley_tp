@@ -17,6 +17,8 @@
 #include "health_energy.h"
 #include "map_visual.h"
 #include "menu_in_game.h"
+#include "chat_view.h"
+#include "audio_manager.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -43,7 +45,9 @@ private:
   Clock clock;
   Inventory inventory;
   MenuInGame menu_game;
+  ChatView chat;
   EventHandler e_handler;
+  AudioManager audio;
 
   ZoneId zone_player = ZoneId::FARM_ZONE;
 
@@ -55,6 +59,7 @@ private:
 
   bool running = true;
   bool was_intentional = false;
+  int volume_music = 10;
 
   void stop();
 

@@ -99,6 +99,19 @@ std::string ClientProtocol::serialize_select_slot(const ClientMessage &msg_to_se
   return buffer;
 }
 
+std::string ClientProtocol::serialize_chat(const ClientMessage &msg_to_server) {
+  size_t len_msg = msg_to_server.chat_text.length() + sizeof(uint16_t) + sizeof(uint8_t);
+  std::string buffer;
+  buffer.reserve(len_msg);
+
+  buffer += static_cast<uint8_t>(msg_to_server.type);
+  
+  append_u16_t(buffer, static_cast<uint16_t>(msg_to_server.chat_text.length()));
+  buffer += msg_to_server.chat_text;
+
+  return buffer;
+}
+
 std::string ClientProtocol::serialize_username(const ClientMessage &msg_to_server) {
   size_t len_msg = sizeof(uint8_t) + sizeof(uint16_t) + msg_to_server.player_name.size();
   std::string buffer;
@@ -133,12 +146,18 @@ std::string ClientProtocol::serialize(const ClientMessage &msg_to_server) {
   case ActionType::SELECT_SLOT:
     return serialize_select_slot(msg_to_server);
 
+  case ActionType::CHAT:
+    return serialize_chat(msg_to_server);
+
   case ActionType::USERNAME:
     return serialize_username(msg_to_server);
 
   case ActionType::LIST_GAMES:
     return std::string(1, static_cast<char>(ActionType::LIST_GAMES));
 
+  case ActionType::ENABLE_MULTIPLAYER:
+    return std::string(1, static_cast<char>(ActionType::ENABLE_MULTIPLAYER));
+  
   default:
     throw std::runtime_error("Error at: client_protocol: action not exists!");
   }
@@ -163,6 +182,11 @@ ServerMessage ClientProtocol::rcv_from_server() {
   case MessageType::GAME_JOINED:
     response.game_code = rcv_string();
     break;
+
+  case MessageType::MULTIPLAYER_ENABLED:
+    response.game_code = rcv_string();
+    break;
+
   case MessageType::GAME_STATE: {
 
 
@@ -173,6 +197,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
     skt.recvall(&count_player, sizeof(uint16_t));
     count_player = ntohs(count_player);
 
+    response.players.reserve(count_player);
+
     for(uint16_t i = 0; i < count_player; i++) {
       response.players.push_back(rcv_player_state());
     }
@@ -180,6 +206,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
     uint16_t map_count;
     skt.recvall(&map_count, sizeof(uint16_t));
     map_count = ntohs(map_count);
+
+    response.map_players.reserve(map_count);
 
     for (uint16_t i = 0; i < map_count; i++) {
       MapPlayerState player;
@@ -270,6 +298,10 @@ ServerMessage ClientProtocol::rcv_from_server() {
   }
   case MessageType::WORLD_INFO:
     rcv_world_info(response);
+    break;
+
+  case MessageType::CHAT_MESSAGE:
+    rcv_chat_message(response);
     break;
   case MessageType::USERNAME:
     break;
@@ -425,6 +457,8 @@ void ClientProtocol::rcv_projectiles(ServerMessage &response) {
 
     uint16_t count = ntohs(count_net);
 
+    response.projectiles.reserve(count);
+
     for (uint16_t i = 0; i < count; i++) {
       ProjectileState projectil;
 
@@ -446,12 +480,14 @@ void ClientProtocol::rcv_projectiles(ServerMessage &response) {
 
 }
 
-void ClientProtocol::rcv_plot(ServerMessage& reponse) {
+void ClientProtocol::rcv_plot(ServerMessage& response) {
   uint16_t plot_count_net;
 
   skt.recvall(&plot_count_net, sizeof(uint16_t));
 
   uint16_t plot_count = ntohs(plot_count_net);
+  
+  response.farm_plots.reserve(plot_count);
 
   for (uint16_t i = 0; i < plot_count; i++) {
     FarmPlotState plot;
@@ -479,6 +515,15 @@ void ClientProtocol::rcv_plot(ServerMessage& reponse) {
     plot.needs_water = needs_water != 0;
     plot.ready_to_harvest = ready != 0;
 
-    reponse.farm_plots.push_back(plot);
+    response.farm_plots.push_back(plot);
   }
+}
+
+void ClientProtocol::rcv_chat_message(ServerMessage &response) {
+  uint8_t kind;
+  skt.recvall(&kind, sizeof(uint8_t));
+
+  response.chat.kind = static_cast<ChatKind>(kind);
+  response.chat.sender = rcv_string();
+  response.chat.text = rcv_string();
 }

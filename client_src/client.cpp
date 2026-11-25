@@ -29,7 +29,7 @@ Client::Client(Queue<ServerMessage>& responses,ClientProtocol &protocol_rcv)
     : responses(responses), protocol(protocol_rcv),
       sender(commands, protocol), camera(), visual("Stardew Valley", SCREEN_WIDTH, SCREEN_HEIGHT),
       loader(visual.get_renderer()), p_visual(visual.get_renderer(), loader), h_and_e(loader), clock(loader),
-      inventory(loader), menu_game(visual, loader) ,e_handler(menu_game)  {}
+      inventory(loader), menu_game(visual, loader), chat(visual, loader) ,e_handler(menu_game, chat), audio()  {}
 
 void Client::run() {
   sender.start();
@@ -69,6 +69,8 @@ void Client::run() {
   int btn_x =( visual.get_window().GetWidth() - btn_w) / 2 ;
   int btn_y = (visual.get_window().GetHeight() - btn_h) / 2;
   Button btn_confirm_day(btn_confirm_day_t, btn_x, btn_y, btn_w, btn_h);
+  audio.load_music("farm", "client_src/data/audio/07. Spring (Wild Horseradish Jam).mp3");
+  audio.set_volume_music(volume_music);
 
   int it = 1;
   Chronometer chrono;
@@ -115,6 +117,14 @@ void Client::simulate_it(Button& btn, int& it, MapVisual& m_visual) {
       if (response.type == MessageType::GAME_STATE) {
           update(response);
       }
+
+      if (response.type == MessageType::MULTIPLAYER_ENABLED) {
+        menu_game.update(response.game_code);
+      }
+
+      if (response.type == MessageType::CHAT_MESSAGE) {
+        chat.add_message(response.chat.sender, response.chat.text);
+      }
   }
 
   render(btn, it, m_visual);
@@ -152,16 +162,19 @@ void Client::render(Button& btn, int& it, MapVisual& m_visual) {
   }
   
   menu_game.display_menu();
+  chat.draw_button();
+  chat.display_chat();
   visual.present();
 }
 
 void Client::update(ServerMessage& response) {
 
-  players = response.players;
+  players = std::move(response.players);
   
   self = response.self_player;
   camera.update_pos(self, BODY_WIDTH*2, BODY_HEIGHT*2);
   zone_player = response.zone;
+  audio.play_music(zone_player.kind);
 
   clock.update_from_server(response.time);
   inventory.update_from_server(response);

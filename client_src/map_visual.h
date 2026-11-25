@@ -36,19 +36,19 @@ int H_TREE = 43;
 int W_PATH = 16;
 int H_PATH = 16;
 
-SerializedZone get_zone(ZoneId& kind);
+const SerializedZone& get_zone(ZoneId& kind);
 
 //farm
-void draw_farm(SerializedZone& zone, Camera& camera);
-void draw_cabin(SerializedZone& zone, Camera& camera);
-void draw_tree(SerializedZone& zone, Camera& camera);
-void draw_path(SerializedZone& zone, Camera& camera);
-void draw_grass(SerializedZone& zone, Camera& camera);
-void draw_walls(SerializedZone& zone, Camera& camera);
-void draw_portals(SerializedZone& zone, Camera& camera);
+void draw_farm(const SerializedZone& zone, Camera& camera);
+void draw_cabin(const SerializedZone& zone, Camera& camera);
+void draw_tree(const SerializedZone& zone, Camera& camera);
+void draw_path(const SerializedZone& zone, Camera& camera);
+void draw_grass(const SerializedZone& zone, Camera& camera);
+void draw_walls(const SerializedZone& zone, Camera& camera);
+void draw_portals(const SerializedZone& zone, Camera& camera);
 
 //village
-void draw_village(SerializedZone& zone, Camera& camera);
+void draw_village(const SerializedZone& zone, Camera& camera);
 
 public:
 explicit MapVisual(Visual& visual, Loader& loader, SerializedWorld&& world);

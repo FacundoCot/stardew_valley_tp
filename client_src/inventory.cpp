@@ -77,7 +77,7 @@ void Inventory::draw_coins(Visual& visual) {
     uint8_t b = 20;
 
     std::string coins_text = std::to_string(this->coins);
-    visual.draw_text(coins_text, coins_x, coins_y, r, g, b);
+    visual.draw_text_cached("inventory_coins",coins_text, coins_x, coins_y, r, g, b);
 }
 
 

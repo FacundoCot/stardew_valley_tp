@@ -13,7 +13,7 @@ MapVisual::MapVisual(Visual& visual, Loader& loader, SerializedWorld&& world) : 
 
 
 void MapVisual::draw_map(ZoneId& zone, Camera& camera) {
-    SerializedZone zone_ser = get_zone(zone);
+    const SerializedZone& zone_ser = get_zone(zone);
     switch (zone.kind) {
         case ZoneId::Kind::FARM:
             draw_farm(zone_ser, camera);
@@ -28,11 +28,20 @@ void MapVisual::draw_map(ZoneId& zone, Camera& camera) {
     return;
 }
 
-void MapVisual::draw_farm(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_farm(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& ground = loader.get_texture("ground");
 
-    for(uint16_t row = 0; row < zone.height ; row ++) {
-        for (uint16_t col = 0; col < zone.width; col++) {
+    const auto& view = camera.get_rect();
+
+    int start_col = std::max(0, view.x / TILE_SIZE);
+    int start_row = std::max(0, view.y / TILE_SIZE);
+
+    int end_col = std::min(static_cast<int>(zone.width), (view.x + view.w + TILE_SIZE - 1) / TILE_SIZE);
+    int end_row = std::min(static_cast<int>(zone.height), (view.y + view.h + TILE_SIZE - 1) / TILE_SIZE);
+
+
+    for(uint16_t row = start_row; row < end_row ; row ++) {
+        for (uint16_t col = start_col; col < end_col; col++) {
             Tile tile = zone.tiles[row*zone.width + col];
 
             int dest_x = col * TILE_SIZE - camera.get_rect().x;
@@ -49,16 +58,13 @@ void MapVisual::draw_farm(SerializedZone& zone, Camera& camera) {
             }  
         }
     }
-    draw_grass(zone, camera);
-    draw_tree(zone, camera);
-    draw_path(zone, camera); 
     draw_cabin(zone, camera);
-    draw_walls(zone, camera);
+    //draw_walls(zone, camera);
     draw_portals(zone, camera);
 
 }
 
-void MapVisual::draw_tree(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_tree(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& tree = loader.get_texture("tree1");
 
     for(uint16_t row = 0; row < zone.height ; row ++) {
@@ -84,7 +90,7 @@ void MapVisual::draw_tree(SerializedZone& zone, Camera& camera) {
 }
 
 
-void MapVisual::draw_path(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_path(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& path = loader.get_texture("ground");
 
     for(uint16_t row = 0; row < zone.height ; row ++) {
@@ -108,7 +114,7 @@ void MapVisual::draw_path(SerializedZone& zone, Camera& camera) {
     } 
 }
 
-void MapVisual::draw_cabin(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_cabin(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& cabin = loader.get_texture("cabin");
 
     int dest_x = zone.cabin.x*TILE_SIZE - camera.get_rect().x;
@@ -121,7 +127,7 @@ void MapVisual::draw_cabin(SerializedZone& zone, Camera& camera) {
 
 }
 
-void MapVisual::draw_grass(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_grass(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& grass = loader.get_texture("grass");
 
     int src_x = 31;
@@ -151,7 +157,7 @@ void MapVisual::draw_grass(SerializedZone& zone, Camera& camera) {
     }    
 }
 
-void MapVisual::draw_walls(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_walls(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& wall = loader.get_texture("rock");
 
     int src_x = 0;
@@ -178,7 +184,7 @@ void MapVisual::draw_walls(SerializedZone& zone, Camera& camera) {
 }
 
 
-void MapVisual::draw_village(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_village(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& ground = loader.get_texture("ground");
 
     for(uint16_t row = 0; row < zone.height ; row ++) {
@@ -204,7 +210,7 @@ void MapVisual::draw_village(SerializedZone& zone, Camera& camera) {
     draw_path(zone, camera);
 }
 
-SerializedZone MapVisual::get_zone(ZoneId& kind) {
+const SerializedZone& MapVisual::get_zone(ZoneId& kind) {
     for (const auto& z : world.zones) {
         if (z.id.kind == kind.kind) {
             return z;
@@ -214,7 +220,7 @@ SerializedZone MapVisual::get_zone(ZoneId& kind) {
 
 }
 
-void MapVisual::draw_portals(SerializedZone& zone, Camera& camera) {
+void MapVisual::draw_portals(const SerializedZone& zone, Camera& camera) {
     SDL2pp::Texture& portal = loader.get_texture("portal");
     int src_x = 0, src_y = 638, src_w = 47, src_h = 50;
 
