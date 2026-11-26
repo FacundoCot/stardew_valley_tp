@@ -159,9 +159,15 @@ void GameManager::handle_command(int client_id, const std::string& text) {
             return;
         }
 
-        // falta implementacion
-        send_system_message(client_id, "the implementation of the transaction is not yet available");
+    auto catalog = game->get_merchant_catalog(client_id);
+
+    if (!catalog) {
+        send_system_message(client_id, "No estas interactuando con ningun comerciante");
         return;
+    }
+
+    send_system_message(client_id, *catalog);
+    return;
     }
 
     if (command == "/comprar" || command == "/vender") {
@@ -174,12 +180,39 @@ void GameManager::handle_command(int client_id, const std::string& text) {
             return;
         }
 
-        // falta implementacion
-        send_system_message(client_id, "the implementation of the transaction is not yet available");
+        auto merchant = game->get_active_merchant(client_id);
+
+        if (!merchant) {
+            send_system_message(
+                client_id, "You have not selected any merchant"
+            );
+            return;
+        }
+
+        bool success;
+
+        if (command == "/comprar") {
+            success = game->buy_item(client_id, *merchant, product, quantity);
+        } else {
+            success = game->sell_item(client_id, *merchant, product, quantity);
+        }
+
+        if (!success) {
+            send_system_message(client_id, "The transaction failed");
+            return;
+        }
+
+        if (command == "/comprar") {
+            send_system_message(client_id, "buy succed");
+        } else {
+            send_system_message(client_id, "sell succed");
+        }
+
+        send_state();
         return;
     }
 
-    send_system_message(client_id, "Comando desconocido");
+    send_system_message(client_id, "Unknown command");
 }
 
 void GameManager::send_chat(int client_id, const std::string& text) {
@@ -239,11 +272,72 @@ void GameManager::select_slot(int client_id, int slot_index) {
 }
 
 void GameManager::enable_multiplayer(int client_id) {
-    game->enable_multiplayer();
+    bool enabled = game->enable_multiplayer();
 
     ServerMessage msg{};
     msg.type = MessageType::MULTIPLAYER_ENABLED;
     msg.game_code = game_code;
 
     registry.send(client_id, msg);
+
+    if (enabled) {
+        send_state();
+    }
+}
+
+void GameManager::interact_merchant(int client_id, MerchantType merchant) {
+    if (!game->interact_with_merchant(client_id, merchant)) {
+        send_system_message(client_id,"You can't interact with this NPC");
+        return;
+    }
+
+    std::string name;
+
+    switch (merchant) {
+        case MerchantType::PIERRE:
+            name = "Pierre";
+            break;
+        case MerchantType::ROBIN:
+            name = "Robin";
+            break;
+        case MerchantType::MARNIE:
+            name = "Marnie";
+            break;
+        case MerchantType::CLINT:
+            name = "Clint";
+            break;
+    }
+
+    ServerMessage message{};
+    message.type = MessageType::CHAT_MESSAGE;
+    message.chat.kind = ChatKind::NPC;
+    message.chat.sender = name;
+    message.chat.text =
+        "Hello! Commands: /consultar_catalogo, /comprar producto cantidad, /vender producto cantidad";
+
+    registry.send(client_id, message);
+}
+
+void GameManager::till_soil(int client_id, int x, int y) {
+    if (game->till_soil(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::plant_seed(int client_id, int x, int y) {
+    if (game->plant_seed(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::water_crop(int client_id, int x, int y) {
+    if (game->water_crop(client_id, x, y)) {
+        send_state();
+    }
+}
+
+void GameManager::harvest_crop(int client_id, int x, int y) {
+    if (game->harvest_crop(client_id, x, y)) {
+        send_state();
+    }
 }

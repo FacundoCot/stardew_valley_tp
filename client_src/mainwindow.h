@@ -12,7 +12,8 @@ enum Pages {
     MAIN,
     CUSTOM_CREATE,
     CONTINUE,
-    JOIN
+    JOIN,
+    NAME
 };
 
 namespace Ui {
@@ -36,12 +37,14 @@ class MainWindow : public QMainWindow {
         bool game_started = false;
         MenuStyle style = MenuStyle::CREATE;
         std::string join_code;
+        std::string username;
         
         void customization_menu(MenuStyle new_style);
         void closeEvent(QCloseEvent* event) override;
         void set_mainwindow_connections();
         void set_character_connections();
     private slots:
+        void on_submitUsernameButton_clicked();
         void on_createButton_clicked();
         void on_continueButton_clicked();
         void on_joinButton_clicked();

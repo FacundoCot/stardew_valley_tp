@@ -8,10 +8,15 @@ using SDL2pp::Renderer;
 using SDL2pp::Window;
 
 Visual::Visual(const std::string &tittle, const int &width, const int &height)
-    : sdl(SDL_INIT_VIDEO),
+    : sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO),
       window(tittle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
-             height, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE),
-      renderer(window, -1, SDL_RENDERER_ACCELERATED), ttf(), font("client_src/data/fonts/dayfont.ttf", 18), is_fulscreen(true) {}
+             height, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_RESIZABLE),
+      renderer(window, -1, SDL_RENDERER_ACCELERATED), ttf(), font("client_src/data/fonts/dayfont.ttf", 18), is_fulscreen(true) {
+
+       SDL_ShowCursor(SDL_ENABLE);
+       SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+       SDL_SetCursor(cursor);      
+      }
 
 Renderer &Visual::get_renderer() { return renderer; }
 
@@ -28,13 +33,13 @@ void Visual::present() { renderer.Present(); }
 
 void Visual::draw(SDL2pp::Texture& texture, int& src_x, 
              int& src_y, int& src_h, int& src_w, int& dest_x, 
-              int& dest_y, int& dest_w, int& dest_h) {
+              int& dest_y, int& dest_w, int& dest_h, SDL_RendererFlip flip) {
        
        SDL2pp::Rect src_rect(src_x, src_y, src_w, src_h);
 
        SDL2pp::Rect dest_rect(dest_x, dest_y, dest_w, dest_h);
 
-       renderer.Copy(texture, src_rect, dest_rect);
+       renderer.Copy(texture, src_rect, dest_rect, 0.0, SDL2pp::NullOpt, flip);
 
 }
 
@@ -68,34 +73,6 @@ void Visual::draw_text(const std::string& text, int& x, int& y, uint8_t& r, uint
        renderer.Copy(text_texture, SDL2pp::NullOpt, dest);
 }
 
-void Visual::draw_button(const SDL2pp::Rect &rect, const std::string& text, bool is_hovered) {
-       renderer.SetDrawBlendMode(SDL_BLENDMODE_NONE);
-       if (is_hovered) {
-           renderer.SetDrawColor(110, 110, 110, 255);
-       } else {
-           renderer.SetDrawColor(70, 70, 70, 255);
-       }
-       
-       renderer.FillRect(rect);
-
-       renderer.SetDrawColor(255, 255, 255, 255);
-       renderer.DrawRect(rect);
-
-       if (text.empty()) {return;}
-
-       SDL_Color color = {255, 255, 255, 255};
-       SDL2pp::Surface text_surface = font.RenderText_Solid(text, color);
-
-       SDL2pp::Texture text_texture(renderer, text_surface);
-       
-       int center_x = rect.x + (rect.w - text_surface.GetWidth()) / 2;
-       int center_y = rect.y + (rect.h - text_surface.GetHeight()) / 2;
-
-       SDL2pp::Rect dest(center_x, center_y, text_surface.GetWidth(), text_surface.GetHeight());
-
-       renderer.Copy(text_texture, SDL2pp::NullOpt, dest);
-}
-
 void Visual::draw_black_overlay() {
        renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
 
@@ -121,4 +98,52 @@ void Visual::draw_text_centered(const std::string& text, uint8_t& r, uint8_t& g,
        SDL2pp::Rect dest(window.GetWidth() / 2 - (s_w / 2), window.GetHeight() / 2 - (s_h / 2), s_w, s_h);
 
        renderer.Copy(text_texture, SDL2pp::NullOpt, dest);
+}
+
+CachedText& Visual::get_cached_text(const std::string& id,
+                                    const std::string text,
+                                    uint8_t r,
+                                    uint8_t g,
+                                    uint8_t b
+) {
+       
+       CachedText& cached = text_cache[id];
+       
+       if(!cached.texture || 
+          cached.text != text ||
+          cached.r != r || 
+          cached.g != g || 
+          cached.b != b) {
+              
+          SDL_Color color = {r,g,b, 255};
+
+          SDL2pp::Surface surface = font.RenderText_Solid(text, color);
+
+          auto new_texture = std::make_unique<SDL2pp::Texture>(renderer, surface);
+
+          cached.width = surface.GetWidth();
+          cached.height = surface.GetHeight();
+
+          cached.texture = std::move(new_texture);
+
+          cached.text = text;
+          cached.r = r;
+          cached.g = g;
+          cached.b = b;
+       }
+
+       return cached;
+}
+
+void Visual::draw_text_cached(const std::string id, const std::string text, 
+                                int& x, int& y, uint8_t r, uint8_t g, uint8_t b
+) {
+
+       if (text.empty()) {return;}
+
+       CachedText& cached = get_cached_text(id, text, r, g, b);
+
+       SDL2pp::Rect dest(x, y, cached.width, cached.height);
+
+       renderer.Copy(*cached.texture, SDL2pp::NullOpt, dest);
 }

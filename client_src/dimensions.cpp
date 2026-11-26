@@ -10,3 +10,14 @@ DimensionsStruct Dimensions::get_clock_dimensions(Visual& visual) {
     
     return clock;
 }
+
+DimensionsStruct Dimensions::get_health_stick(Visual& visual) {
+    DimensionsStruct energy_stick;
+    DimensionsStruct clock = get_clock_dimensions(visual);
+    energy_stick.y = clock.y + padding*2 + h_stick*scale_stick*2;
+    energy_stick.x = 0;
+    energy_stick.w = 0;
+    energy_stick.h = 0;
+
+    return energy_stick;
+}

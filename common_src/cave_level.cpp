@@ -26,7 +26,7 @@ CaveLevel::CaveLevel(int level_param, int width, int height,
 
     std::set<std::pair<int, int>> spawn_cells;
     for (const auto& spawn : spawn_points) {
-        if (!tile_grid.is_floor(spawn.first, spawn.second)) {
+        if (!tile_grid.is_walkable(spawn.first, spawn.second)) {
             throw std::invalid_argument("spawns de enemigo invalidos o repetidos");
         }
         const auto cell = tile_grid.cell(spawn.first, spawn.second);
@@ -52,7 +52,7 @@ int CaveLevel::height() const {
 }
 
 bool CaveLevel::is_walkable(float x, float y) const {
-    return tile_grid.is_floor(x, y);
+    return tile_grid.is_walkable(x, y);
 }
 
 const std::vector<Tile>& CaveLevel::grid() const {

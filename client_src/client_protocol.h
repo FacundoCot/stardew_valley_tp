@@ -17,6 +17,8 @@ private:
   std::string serialize_disconnect(const ClientMessage &msg_to_server);
   std::string serialize_confirm_day(const ClientMessage &msg_to_server);
   std::string serialize_select_slot(const ClientMessage &msg_to_server);
+  std::string serialize_username(const ClientMessage &msg_to_server);
+  std::string serialize_chat(const ClientMessage &msg_to_server);
 
   void append_u16_t(std::string& buffer, uint16_t appearance_item);
   void serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer);
@@ -24,6 +26,10 @@ private:
   CharacterAppearance rcv_appearance();
   PlayerState rcv_player_state();
   ZoneId rcv_zone_id();
+  void rcv_projectiles(ServerMessage &msg);
+  void rcv_plot(ServerMessage &msg);
+  void rcv_chat_message(ServerMessage &msg);
+
 public:
   explicit ClientProtocol(Socket &&skt_rcv);
 

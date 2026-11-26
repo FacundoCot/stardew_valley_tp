@@ -7,24 +7,25 @@ class Vampire : public Enemy {
 private:
     EnemyStats stats;
     bool female;
-    int pair_id;
     bool frenzy;
+    float speed_multiplier;
+    float damage_multiplier;
+    float frenzy_multiplier;
     float attack_cooldown;
 
-    bool try_move(float new_x, float new_y, EnemyWorld& world);
-
 public:
-    Vampire(float x, float y, const EnemyStats& enemy_stats,
-            bool is_female, int pair_id);
+    Vampire(ZoneId zone, float x, float y, const EnemyStats& enemy_stats,
+            bool is_female);
 
     bool act(EnemyWorld& world, float dt) override;
 
     EnemyKind kind() const override;
+    bool is_visible() const override;
 
     bool is_female() const;
-    int get_pair_id() const;
-
-    void enter_frenzy();
+    bool has_frenzy() const;
+    void on_partner_died() override;
+    void set_frenzy_multiplier(float multiplier);
 };
 
 #endif

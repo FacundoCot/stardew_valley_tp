@@ -7,7 +7,7 @@ MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, Q
  commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)) {
     ui->setupUi(this);
     
-    ui->stackedWidget->setCurrentIndex(MAIN);
+    ui->stackedWidget->setCurrentIndex(NAME);
     ui->titleLabel->setPixmap(QPixmap("client_src/data/menu/upscaledMainTitle.png"));
     set_mainwindow_connections();
     set_character_connections();
@@ -53,6 +53,23 @@ void MainWindow::closeEvent(QCloseEvent* event){
     event->accept();
 }
 
+void MainWindow::on_submitUsernameButton_clicked(){
+    username = ui->usernameBox->text().toStdString();
+    if(username.empty()) {
+        QMessageBox::warning(this, "Error", "Inserte un nombre válido.");
+        return;
+    }
+    
+    ClientMessage msg{};
+    msg.type = ActionType::USERNAME;
+    msg.player_name = username;
+    msg.player_name_len = username.length();
+
+    commands.push(msg);
+
+    timer->start(20);
+}
+
 void MainWindow::on_createButton_clicked(){
     customization_menu(MenuStyle::CREATE);
 }
@@ -93,11 +110,7 @@ void MainWindow::on_submitCodeButton_clicked(){
 void MainWindow::on_startCreateButton_clicked(){
     ClientMessage msg;
     
-    msg.player_name = ui->playerNameEdit->text().trimmed().toStdString();
-    if(msg.player_name.empty()){
-        QMessageBox::warning(this, "Error", "Inserte un nombre de jugador");
-        return;
-    }
+    msg.player_name = username;
     
     if (style == MenuStyle::CREATE){
         msg.type = ActionType::CREATE_GAME;
@@ -135,15 +148,21 @@ void MainWindow::timer_create_response() {
         return;
     }
     timer->stop();
-    ui->startCreateButton->setEnabled(true);
-
+    
     if(res.type == MessageType::ERROR){
         if (style == MenuStyle::JOIN) {
             QMessageBox::warning(this, "Error", "No se pudo unir. Posible código invalido.");
             ui->stackedWidget->setCurrentIndex(JOIN);
-        } else {
+        } else if (style == MenuStyle::CREATE) {
             QMessageBox::warning(this, "Error", "No se pudo crear la partida");
+        } else {
+            QMessageBox::warning(this, "Error", "No se pudo procesar el pedido.");
         }
+
+        ui->startCreateButton->setEnabled(true);
+    } else if (res.type == MessageType::USERNAME) {    
+        ui->usernameLabel->setText(QString::fromStdString(username));
+        ui->stackedWidget->setCurrentIndex(MAIN);
     } else {
         std::cout << res.game_code << std::endl;
         game_started = true;

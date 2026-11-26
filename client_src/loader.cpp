@@ -10,7 +10,7 @@
 
 
 
-Loader::Loader(SDL2pp::Renderer &renderer_rcv) : renderer(renderer_rcv) {} 
+Loader::Loader(SDL2pp::Renderer &renderer_rcv) : renderer(renderer_rcv) {load_everything();} 
 
 
 void Loader::load_texture(const std::string& asset_name, const std::string& path) {
@@ -41,4 +41,21 @@ void Loader::load_everything() {
     load_texture("sword", "client_src/data/sword.png");
     load_texture("watering_can", "client_src/data/water.png");
     load_texture("bed", "client_src/data/Single_Bed.png");
+    load_texture("shirts", "client_src/data/assets/Characters/StardewValley/shirts.png");
+    load_texture("pants", "client_src/data/assets/Characters/StardewValley/pants.png");
+    load_texture("hats", "client_src/data/assets/Characters/StardewValley/hats.png");
+    load_texture("hair", "client_src/data/assets/Characters/StardewValley/hairstyles.png");
+    load_texture("bodies", "client_src/data/assets/Characters/StardewValley/bodies.png");
+    load_texture("ground", "client_src/data/assets/Farm/Environment/ground.png");
+    load_texture("grass", "client_src/data/grass.png");
+    load_texture("cabin", "client_src/data/cabin_final.png");
+    load_texture("tree1", "client_src/data/assets/Misc/tree2/tree1.png");
+    load_texture("rock", "client_src/data/assets/Misc/rock.png");
+    load_texture("portal", "client_src/data/assets/Farm/Environment/Tilesets_Furniture.png");
+    load_texture("menu_in_game", "client_src/data/menu/woodTemplate.png");
+    load_texture("exit", "client_src/data/menu/salir.png");
+    load_texture("btn_confirm_day", "client_src/data/next_day_button.jpg");
+    load_texture("enable", "client_src/data/menu/enable_button.jpg");
+    load_texture("empty", "client_src/data/menu/empty_button.jpg");
+    load_texture("btn_chat", "client_src/data/assets/Misc/expression_chat.png");
 }

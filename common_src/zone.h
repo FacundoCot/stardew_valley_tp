@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-struct RectCabin {
+struct Rectangle {
     int x;
     int y;
     int width;
@@ -54,8 +54,15 @@ inline const ZoneId ZoneId::VILLAGE_ZONE{ZoneId::Kind::VILLAGE, 0};
 
 enum class Tile {
     WALL = 0,
-    FLOOR = 1
+    FLOOR = 1,
+    GRASS = 2,
+    PATH = 3,
+    TREE = 4
 };
+
+inline bool is_walkable_tile(Tile tile) {
+    return tile == Tile::FLOOR || tile == Tile::GRASS || tile == Tile::PATH;
+}
 
 enum class PortalType {
     STAIR = 0,
@@ -82,7 +89,7 @@ public:
 
     int width() const;
     int height() const;
-    bool is_floor(float x, float y) const;
+    bool is_walkable(float x, float y) const;
     std::pair<int, int> cell(float x, float y) const;
     const std::vector<Tile>& tiles_data() const;
 };

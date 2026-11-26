@@ -11,6 +11,7 @@ class ClientRegistry {
 private:
     std::mutex mtx;
     std::map<int, Queue<ServerMessage>*> queues;
+    std::map<int, std::string> usernames_by_client;
 
 public:
     // Anota la cola de salida de un cliente nuevo.
@@ -22,6 +23,8 @@ public:
     // Pone el mensaje en la cola del cliente. Si el cliente ya no
     // existe, no hace nada.
     void send(int client_id, const ServerMessage& message);
+
+    bool register_username(int client_id, const std::string& username);
 };
 
 #endif

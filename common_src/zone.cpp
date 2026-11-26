@@ -6,12 +6,12 @@
 #include <stdexcept>
 #include <utility>
 
-bool RectCabin::contains_cell(int column, int row) const {
+bool Rectangle::contains_cell(int column, int row) const {
     return column >= x && row >= y && column < x + width &&
            row < y + height;
 }
 
-bool RectCabin::contains(float px, float py) const {
+bool Rectangle::contains(float px, float py) const {
     return contains_cell(static_cast<int>(std::floor(px)),
                          static_cast<int>(std::floor(py)));
 }
@@ -35,13 +35,14 @@ int TileGrid::height() const {
     return grid_height;
 }
 
-bool TileGrid::is_floor(float x, float y) const {
+bool TileGrid::is_walkable(float x, float y) const {
     if (!std::isfinite(x) || !std::isfinite(y)) {
         return false;
     }
     const auto [column, row] = cell(x, y);
     return column >= 0 && row >= 0 && column < grid_width && row < grid_height &&
-           tiles[static_cast<size_t>(row * grid_width + column)] == Tile::FLOOR;
+           is_walkable_tile(
+               tiles[static_cast<size_t>(row * grid_width + column)]);
 }
 
 std::pair<int, int> TileGrid::cell(float x, float y) const {
@@ -61,9 +62,11 @@ void Zone::validate_portals(const TileGrid& grid) const {
         const auto [column, row] = portal.cell;
         if (column < 0 || row < 0 || column >= grid.width() ||
             row >= grid.height() ||
-            grid.tiles_data()[static_cast<size_t>(row * grid.width() + column)] !=
-                Tile::FLOOR) {
-            throw std::invalid_argument("un portal debe estar sobre piso");
+            !is_walkable_tile(
+                grid.tiles_data()[static_cast<size_t>(row * grid.width() +
+                                                       column)])) {
+            throw std::invalid_argument(
+                "un portal debe estar sobre un tile caminable");
         }
         if (!cells.emplace(portal.cell, true).second) {
             throw std::invalid_argument("hay dos portales en la misma celda");

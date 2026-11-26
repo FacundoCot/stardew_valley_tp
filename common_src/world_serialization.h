@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "world.h"
+#include "merchant_pos.h"
 
 struct SerializedPortal {
     PortalType type;
@@ -20,9 +21,10 @@ struct SerializedZone {
     uint16_t height;
     std::vector<Tile> tiles;
     std::vector<SerializedPortal> portals;
-    RectCabin cabin{};
+    Rectangle cabin{};
     std::vector<std::pair<float, float>> beds;
     std::vector<ZoneId::ZoneArea> areas;
+    std::vector<MerchantPosition> merchants;
 };
 
 struct SerializedWorld {

@@ -15,6 +15,10 @@
 #include "button.h"
 #include "inventory.h"
 #include "health_energy.h"
+#include "map_visual.h"
+#include "menu_in_game.h"
+#include "chat_view.h"
+#include "audio_manager.h"
 
 #include <vector>
 #include <SDL2pp/Rect.hh>
@@ -23,17 +27,29 @@
 class Client {
 
 private:
-  EventHandler e_handler;
+  
 
-  Queue<ServerMessage> responses;
+  Queue<ServerMessage>& responses;
   Queue<ClientMessage> commands;
 
-  ClientProtocol protocol;
-  Receiver receiver;
+  ClientProtocol& protocol;
   Sender sender;
 
   std::vector<PlayerState> players;
+  PlayerState self;
   Camera camera;
+  Visual visual; 
+  Loader loader;
+  PlayerVisual p_visual;
+  HealthEnergy h_and_e;
+  Clock clock;
+  Inventory inventory;
+  MenuInGame menu_game;
+  ChatView chat;
+  EventHandler e_handler;
+  AudioManager audio;
+
+  ZoneId zone_player = ZoneId::FARM_ZONE;
 
   ClientState current_state = ClientState::PLAYING;
 
@@ -43,21 +59,20 @@ private:
 
   bool running = true;
   bool was_intentional = false;
+  int volume_music = 10;
 
   void stop();
 
 public:
-  Client(EventHandler &&e_handler_rcv, ClientProtocol &&protocol);
+  Client(Queue<ServerMessage>& responses, ClientProtocol &protocol);
 
 
   void run();
-  void simulate_it(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& inventory, Loader& loader, HealthEnergy& h_and_e);
+  void simulate_it(Button& btn, int& it, MapVisual& m_visual);
 
-  void render(Clock& clock, Visual& visual, Button& btn, 
-    PlayerVisual& p_visual, Inventory& Inventory, Loader& loader, HealthEnergy& h_and_e);
+  void render(Button& btn, int& it, MapVisual& m_visual);
 
-  void update(ServerMessage& response, Clock& clock, Inventory& inventory, HealthEnergy& h_and_e);
+  void update(ServerMessage& response);
 
   ~Client();
 };

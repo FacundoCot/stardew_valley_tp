@@ -91,14 +91,15 @@ World::World(std::map<ZoneId, std::shared_ptr<const Zone>> zones_param):
         throw std::invalid_argument("falta la zona de pueblo");
     }
 
-    for (const auto& [id, zone] : zones) {
-        if (zone == nullptr) {
+    for (const auto& [id, entry_zone] : zones) {
+        if (entry_zone == nullptr) {
             throw std::invalid_argument("zona nula en el mundo");
         }
-        if (zone->width() != ZONE_WIDTH || zone->height() != ZONE_HEIGHT) {
+        if (entry_zone->width() != ZONE_WIDTH ||
+            entry_zone->height() != ZONE_HEIGHT) {
             throw std::invalid_argument("todas las zonas deben tener el mismo tamano");
         }
-        if (zone->id() != id) {
+        if (entry_zone->id() != id) {
             throw std::invalid_argument("la clave no coincide con el id de la zona");
         }
         if (is_cave(id)) {
@@ -112,7 +113,7 @@ World::World(std::map<ZoneId, std::shared_ptr<const Zone>> zones_param):
         }
 
         if (!is_cave(id)) {
-            for (const Portal& portal : zone->get_portals()) {
+            for (const Portal& portal : entry_zone->get_portals()) {
                 if (portal.type != PortalType::DUNGEON_DOOR &&
                     portal.type != PortalType::ROAD) {
                     throw std::invalid_argument(
@@ -120,7 +121,7 @@ World::World(std::map<ZoneId, std::shared_ptr<const Zone>> zones_param):
                 }
             }
         } else {
-            for (const Portal& portal : zone->get_portals()) {
+            for (const Portal& portal : entry_zone->get_portals()) {
                 if (portal.type == PortalType::DUNGEON_DOOR ||
                     portal.type == PortalType::ROAD) {
                     throw std::invalid_argument(
