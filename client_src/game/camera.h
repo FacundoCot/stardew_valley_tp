@@ -3,7 +3,7 @@
 
 #include "visual.h"
 #include <SDL2pp/Rect.hh>
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 
 class Camera {
 private:

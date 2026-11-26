@@ -5,3 +5,6 @@ file(GLOB UI_SOURCES "*.ui")
 target_sources(game_client
     PRIVATE ${CPP_SOURCES} ${H_SOURCES} ${UI_SOURCES}
 )
+
+add_subdirectory(game/)
+add_subdirectory(menu/)

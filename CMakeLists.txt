@@ -108,13 +108,22 @@ endif()
 if(GAME_CLIENT OR GAME_SERVER OR MAP_EDITOR)
     find_package(SDL2 REQUIRED)
     target_link_libraries(game_common PUBLIC SDL2::SDL2)
+
+    include(FetchContent)
+    FetchContent_Declare(
+        tomlplusplus
+        GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+        GIT_TAG v3.5.1
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_MakeAvailable(tomlplusplus)
 endif()
 
 # Program section
 # ---------------
 if(GAME_CLIENT)
-    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Multimedia)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Multimedia)
 
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
@@ -136,7 +145,7 @@ if(GAME_CLIENT)
     target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/client_src)
 
     # Link the game_common lib target
-    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
+    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia)
 endif()
 
 if(GAME_SERVER)
@@ -161,9 +170,17 @@ if(GAME_SERVER)
 endif()
 
 if(MAP_EDITOR)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+    find_package(tomlplusplus CONFIG REQUIRED)
+
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(map_editor)
-
+    
     # Make them depend on game_common lib
     add_dependencies(map_editor game_common SDL2pp::SDL2pp)
 
@@ -174,10 +191,10 @@ if(MAP_EDITOR)
     set_project_warnings(map_editor ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # add libSDL2pp's headers
-    target_include_directories(map_editor PRIVATE ${libSDL2pp_SOURCE_DIR})
+    target_include_directories(map_editor PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/editor) 
 
     # Link the game_common lib target
-    target_link_libraries(map_editor game_common SDL2pp::SDL2pp)
+    target_link_libraries(map_editor game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets tomlplusplus::tomlplusplus)
 endif()
 
 

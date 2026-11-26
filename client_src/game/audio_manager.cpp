@@ -1,7 +1,7 @@
 #include "audio_manager.h"
 #include <iostream>
 
-#include "../common_src/custom_error.h"
+#include "../../common_src/custom_error.h"
 
 
 AudioManager::AudioManager() : mixer(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 2048) {}

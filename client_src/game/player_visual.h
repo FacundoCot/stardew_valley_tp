@@ -5,10 +5,10 @@
 #include <utility>
 #include <unordered_map>
 
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include "camera.h"
 #include "loader.h"
-#include "appearance_translator.h"
+#include "../appearance_translator.h"
 
 
 struct PlayerAnim {

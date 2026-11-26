@@ -4,7 +4,8 @@
 #include <iostream>
 
 MainWindow::MainWindow(Queue<ServerMessage>& resp, Queue<ClientMessage>& comm, QWidget* parent) : QMainWindow(parent), responses(resp),
- commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)) {
+ commands(comm), ui(new Ui::MainWindow), timer(new QTimer(this)), music_player(new QMediaPlayer(this)), output(new QAudioOutput(this)),
+ sounds_player(new QSoundEffect(this)) {
     ui->setupUi(this);
     
     ui->stackedWidget->setCurrentIndex(NAME);

@@ -1,10 +1,10 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include "client_protocol.h"
-#include "receiver.h"
-#include "sender.h"
-#include "../common_src/queue.h"
+#include "../client_protocol.h"
+#include "../receiver.h"
+#include "../sender.h"
+#include "../../common_src/queue.h"
 
 class Menu {
     public:

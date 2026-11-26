@@ -1,7 +1,6 @@
 #include "camera.h"
-#include "../common_src/define.h"
+#include "../../common_src/define.h"
 #include "visual.h"
-#include "map_constants.h"
 
 Camera::Camera()
     : view(0, 0, 1920, 1080)  {}

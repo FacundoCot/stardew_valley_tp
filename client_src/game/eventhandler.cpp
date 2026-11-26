@@ -1,5 +1,5 @@
 #include "eventhandler.h"
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include "camera.h"
 #include "visual.h"
 #include "button.h"

@@ -1,5 +1,5 @@
 #include "menu_in_game.h"
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include <SDL2pp/Texture.hh>
 
 MenuInGame::MenuInGame(Visual& visual, Loader& loader) : visual(visual), 
