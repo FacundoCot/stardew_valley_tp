@@ -91,6 +91,21 @@ ItemCatalog::ItemCatalog(const GameConfig& config) {
 
     // Otros
     add_entry(ItemType::CHEST, "cofre", config);
+
+    // Decoracion
+    add_entry(ItemType::CHAIR, "silla", config);
+    add_entry(ItemType::BARREL_CLOSED, "barril_cerrado", config);
+    add_entry(ItemType::BARREL_SWORDS, "barril_espadas", config);
+    add_entry(ItemType::BARREL_WATER, "barril_agua", config);
+    add_entry(ItemType::CRATE_1, "caja_1", config);
+    add_entry(ItemType::CRATE_2, "caja_2", config);
+    add_entry(ItemType::FLOWERS_1, "flores_1", config);
+    add_entry(ItemType::FLOWERS_2, "flores_2", config);
+    add_entry(ItemType::PICTURE_1, "cuadro_1", config);
+    add_entry(ItemType::PICTURE_2, "cuadro_2", config);
+    add_entry(ItemType::WELL, "pozo", config);
+    add_entry(ItemType::STATUE, "estatua", config);
+    add_entry(ItemType::BEAM, "viga", config);
 }
 
 std::optional<ItemType> ItemCatalog::get_item_type(const std::string& name) const {

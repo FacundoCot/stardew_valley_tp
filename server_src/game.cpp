@@ -62,7 +62,7 @@ Game::Game(std::shared_ptr<const World> world_param,
     //inicializo los comerciantes
     merchants.emplace(MerchantType::PIERRE, std::make_unique<Pierre>(item_catalog));
     merchants.emplace(MerchantType::CLINT, std::make_unique<Clint>(item_catalog));
-    merchants.emplace(MerchantType::ROBIN, std::make_unique<Robin>(item_catalog));
+    merchants.emplace(MerchantType::ROBIN, std::make_unique<Robin>(item_catalog, clock.get_day()));
     merchants.emplace(MerchantType::MARNIE, std::make_unique<Marnie>(item_catalog));
 }
 
@@ -202,6 +202,16 @@ Game::MovementResult Game::move_player_unlocked(
 
         if (!world->is_walkable(player.zone, step_x, step_y)) {
             return MovementResult::BLOCKED;
+        }
+
+        if (player.zone == ZoneId::FARM_ZONE) {
+            const CellPos pos{
+                static_cast<int>(step_x), static_cast<int>(step_y)
+            };
+
+            if (has_placed_object_unlocked(pos)) {
+                return MovementResult::BLOCKED;
+            }
         }
 
     }
@@ -712,6 +722,9 @@ ServerMessage Game::game_state(int client_id) const {
     msg.inventory = inventory_state(client_id);
     msg.time = time_state();
     msg.farm_plots = farm_plots_state();
+    if (me.zone == ZoneId::FARM_ZONE) {
+        msg.placed_objects = placed_objects_state();
+    }
     msg.multiplayer_enabled = multiplayer_enabled;
 
     return msg;
@@ -780,6 +793,7 @@ bool Game::start_next_day_game() {
     }
 
     clock.start_next_day();
+    update_robin_catalog_unlocked();
     ready_clients.clear();
 
     return true;
@@ -884,8 +898,42 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         data.farm_plots.push_back(plot_data);
     }
 
-    return data;
-}
+    for (const auto& [pos, type] : decorations) {
+        data.decorations.push_back({
+            pos.x,
+            pos.y,
+            type
+        });
+    }
+
+    for (const auto& [pos, chest] : chests) {
+        ChestSaveData chest_data{};
+
+        chest_data.x = pos.x;
+        chest_data.y = pos.y;
+
+        const auto& stacks = chest.storage.get_stacks();
+
+        for (size_t i = 0; i < stacks.size(); ++i) {
+            if (!stacks[i]) {
+                continue;
+            }
+
+            const Stack& stack = *stacks[i];
+
+            chest_data.inventory.push_back({
+                stack.get_item().get_type(),
+                stack.get_item().get_quality(),
+                stack.get_quantity(),
+                static_cast<int>(i)
+            });
+        }
+
+        data.chests.push_back(std::move(chest_data));
+    }
+
+        return data;
+    }
 
 
 void Game::restore_save_data(const GameSaveData& data) {
@@ -896,8 +944,11 @@ void Game::restore_save_data(const GameSaveData& data) {
     ready_clients.clear();
     bed_by_player.clear();
     farm_plots.clear();
+    decorations.clear();
+    chests.clear();
 
     clock = GameClock(data.day, config.day_duration_seconds);
+    update_robin_catalog_unlocked();
     multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
@@ -937,6 +988,34 @@ void Game::restore_save_data(const GameSaveData& data) {
 
         farm_plots.emplace(CellPos{saved_plot.x, saved_plot.y}, plot);
     }
+
+    for (const auto& saved : data.decorations) {
+        if (!is_decoration(saved.type) || !can_place_object_unlocked(saved.x, saved.y)) {
+            throw std::runtime_error("Decoracion guardada invalida");
+        }
+        decorations.emplace(CellPos{saved.x, saved.y}, saved.type);
+    }
+
+    for (const auto& saved : data.chests) {
+        if (!can_place_object_unlocked(saved.x, saved.y)) {
+            throw std::runtime_error("Posicion de cofre invalida");
+        }
+
+        Chest chest;
+
+        for (const auto& item_data : saved.inventory) {
+            Item item(item_data.type, item_data.quality);
+
+            if (!chest.storage.place_item(
+                    item_data.index,
+                    item,
+                    item_data.quantity)) {
+                throw std::runtime_error("Inventario de cofre invalido");
+            }
+        }
+
+        chests.emplace(CellPos{saved.x, saved.y}, std::move(chest));
+    }
 }
 
 bool Game::select_slot(int client_id, int slot_index) {
@@ -975,6 +1054,7 @@ int Game::get_selected_slot(int client_id) const {
 }
 
 void Game::check_day_end_unlocked() {
+    close_unavailable_chests_unlocked();
     if (clock.is_finished()) {
         enemies.clear();
         projectiles.clear();
@@ -993,6 +1073,7 @@ void Game::check_day_end_unlocked() {
     }
 
     clock.finish_day();
+    close_unavailable_chests_unlocked();
     for (const auto& entry : players) {
         fight_sets.on_player_left_room(entry.first);
     }
@@ -1031,7 +1112,16 @@ bool Game::buy_item(int client_id, MerchantType merchant, const std::string& pro
     }
 
     auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
     auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return false;
+    }
 
     Player& player = player_it->second;
 
@@ -1087,7 +1177,16 @@ bool Game::sell_item(int client_id, MerchantType merchant, const std::string& pr
     }
 
     auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
     auto player_it = players.find(client_it->second);
+
+    if (player_it == players.end()) {
+        return false;
+    }
 
     Player& player = player_it->second;
 
@@ -1176,6 +1275,11 @@ bool Game::near_merchant_unlocked(const Player& player, MerchantType merchant) c
     }
 
     return false;
+}
+
+void Game::update_robin_catalog_unlocked() {
+    merchants.at(MerchantType::ROBIN) =
+        std::make_unique<Robin>(item_catalog, clock.get_day());
 }
 
 bool Game::interact_with_merchant(int client_id, MerchantType merchant) {
@@ -1361,6 +1465,10 @@ bool Game::till_soil(int client_id, int x, int y) {
     }
 
     CellPos pos{x, y};
+
+    if (has_placed_object_unlocked(pos)) {
+    return false;
+    }
 
     bool inserted = farm_plots.emplace(pos, FarmPlot{}).second;
 
@@ -1685,4 +1793,334 @@ std::vector<FarmPlotState> Game::farm_plots_state() const {
     }
 
     return states;
+}
+
+bool Game::is_decoration(ItemType type) {
+    switch (type) {
+        case ItemType::CHAIR:
+        case ItemType::BARREL_CLOSED:
+        case ItemType::BARREL_SWORDS:
+        case ItemType::BARREL_WATER:
+        case ItemType::CRATE_1:
+        case ItemType::CRATE_2:
+        case ItemType::FLOWERS_1:
+        case ItemType::FLOWERS_2:
+        case ItemType::PICTURE_1:
+        case ItemType::PICTURE_2:
+        case ItemType::WELL:
+        case ItemType::STATUE:
+        case ItemType::BEAM:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool Game::has_placed_object_unlocked(const CellPos& pos) const {
+    return decorations.find(pos) != decorations.end() 
+           || chests.find(pos) != chests.end();
+}
+
+bool Game::can_place_object_unlocked(int x, int y) const {
+    if (x < 0 || y < 0 || x >= farm->width() || y >= farm->height()) {
+        return false;
+    }
+
+    const size_t index = static_cast<size_t>(y) * farm->width() + x;
+
+    const Tile tile = farm->grid()[index];
+
+    if (tile != Tile::GRASS && tile != Tile::FLOOR) {
+        return false;
+    }
+
+    const CellPos pos{x, y};
+
+    if (has_placed_object_unlocked(pos) ||
+        farm_plots.find(pos) != farm_plots.end() ||
+        farm->portal_at(x + 0.5f, y + 0.5f)) {
+        return false;
+    }
+
+    // No colocar sobre camas
+    for (const auto& [bed_x, bed_y] : farm->beds()) {
+        if (std::floor(bed_x) == x &&
+            std::floor(bed_y) == y) {
+            return false;
+        }
+    }
+
+    // No colocar sobre jugadores
+    for (const auto& entry : players) {
+        const Player& player = entry.second;
+
+        if (player.zone == ZoneId::FARM_ZONE &&
+            std::floor(player.x) == x &&
+            std::floor(player.y) == y) {
+            return false;
+        }
+    }
+
+    // No bloquear posiciones de llegada de portales
+    for (const auto& entry : world->zones_data()) {
+        for (const Portal& portal : entry.second->get_portals()) {
+            if (portal.destination == ZoneId::FARM_ZONE &&
+                std::floor(portal.arrival.first) == x &&
+                std::floor(portal.arrival.second) == y) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Game::place_object(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    if (player.zone != ZoneId::FARM_ZONE ||
+        player.unconscious) {
+        return false;
+    }
+
+    if (!can_place_object_unlocked(x, y)) {
+        return false;
+    }
+
+    const int player_x =
+        static_cast<int>(std::floor(player.x));
+
+    const int player_y =
+        static_cast<int>(std::floor(player.y));
+
+    if (std::abs(player_x - x) > 1 ||
+        std::abs(player_y - y) > 1) {
+        return false;
+    }
+
+    const auto& slots = player.inventory.get_stacks();
+    const int slot = player.selected_slot;
+
+    if (slot < 0 ||
+        static_cast<size_t>(slot) >= slots.size() ||
+        !slots[slot]) {
+        return false;
+    }
+
+    const ItemType type =
+        slots[slot]->get_item().get_type();
+
+    const CellPos pos{x, y};
+
+    if (type == ItemType::CHEST) {
+        chests.try_emplace(pos);
+
+    } else if (is_decoration(type)) {
+        decorations.emplace(pos, type);
+
+    } else {
+        return false;
+    }
+
+    if (!player.inventory.remove_item(slot, RemoveMode::ONE)) {
+        if (type == ItemType::CHEST) {
+            chests.erase(pos);
+        } else {
+            decorations.erase(pos);
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+std::vector<PlacedObjectState> Game::placed_objects_state() const {
+    std::vector<PlacedObjectState> result;
+
+    result.reserve(decorations.size() + chests.size());
+
+    for (const auto& [pos, type] : decorations) {
+        result.push_back({
+            static_cast<uint16_t>(pos.x),
+            static_cast<uint16_t>(pos.y),
+            type
+        });
+    }
+
+    for (const auto& entry : chests) {
+        const CellPos& pos = entry.first;
+
+        result.push_back({
+            static_cast<uint16_t>(pos.x),
+            static_cast<uint16_t>(pos.y),
+            ItemType::CHEST
+        });
+    }
+
+    return result;
+}
+
+bool Game::near_chest_unlocked(const Player& player, const CellPos& pos) const {
+
+    if (player.zone != ZoneId::FARM_ZONE) {
+        return false;
+    }
+
+    const int player_x = static_cast<int>(player.x);
+    const int player_y = static_cast<int>(player.y);
+
+    return std::abs(player_x - pos.x) <= 1 && std::abs(player_y - pos.y) <= 1;
+}
+
+bool Game::close_chest_unlocked(int client_id) {
+    for (auto& [pos, chest] : chests) {
+        if (chest.get_opened_by() == client_id) {
+            return chest.close(client_id);
+        }
+    }
+
+    return false;
+}
+
+bool Game::close_chest(int client_id) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    return close_chest_unlocked(client_id);
+}
+
+bool Game::open_chest(int client_id, int x, int y) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (clock.is_finished()) {
+        return false;
+    }
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    const CellPos pos{x, y};
+
+    if (player.unconscious || !near_chest_unlocked(player, pos)) {
+        return false;
+    }
+
+    auto chest_it = chests.find(pos);
+
+    if (chest_it == chests.end()) {
+        return false;
+    }
+
+    Chest& chest = chest_it->second;
+
+    if (chest.is_opened()) {
+        return false;
+    }
+
+    //antes de abrir un cofre si tenemos otro abierto lo cerramos
+    close_chest_unlocked(client_id);
+
+    return chest.open(client_id);
+}
+
+void Game::close_unavailable_chests_unlocked() {
+    for (auto& [pos, chest] : chests) {
+        if (!chest.is_opened()) {
+            continue;
+        }
+
+        const int client_id = chest.get_opened_by();
+
+        auto client_it = connected_clients.find(client_id);
+
+        if (clock.is_finished() ||
+            client_it == connected_clients.end()) {
+
+            chest.close(client_id);
+            continue;
+        }
+
+        const Player& player = players.at(client_it->second);
+
+        if (player.unconscious ||
+            !near_chest_unlocked(player, pos)) {
+
+            chest.close(client_id);
+        }
+    }
+}
+
+Chest* Game::get_open_chest_unlocked(int client_id, const Player& player) {
+
+    if (clock.is_finished() || player.unconscious) {
+        return nullptr;
+    }
+
+    for (auto& [pos, chest] : chests) {
+        if (chest.get_opened_by() == client_id &&
+            near_chest_unlocked(player, pos)) {
+            return &chest;
+        }
+    }
+
+    return nullptr;
+}
+
+bool Game::deposit_item(int client_id, int slot_index, RemoveMode mode) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    Chest* chest = get_open_chest_unlocked(client_id, player);
+
+    if (!chest) {
+        return false;
+    }
+
+    return player.inventory.transfer_item(
+        chest->storage, slot_index, mode);
+}
+
+bool Game::withdraw_item(int client_id, int slot_index, RemoveMode mode) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto client_it = connected_clients.find(client_id);
+
+    if (client_it == connected_clients.end()) {
+        return false;
+    }
+
+    Player& player = players.at(client_it->second);
+
+    Chest* chest = get_open_chest_unlocked(client_id, player);
+
+    if (!chest) {
+        return false;
+    }
+
+    return chest->storage.transfer_item(player.inventory, slot_index, mode);
 }

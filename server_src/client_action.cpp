@@ -87,3 +87,10 @@ HarvestCropAction::HarvestCropAction(int x, int y): x(x), y(y) {}
 void HarvestCropAction::execute(GameActionHandler& handler) const {
     handler.harvest_crop(get_client_id(), x, y);
 }
+
+PlaceObjectAction::PlaceObjectAction(int x, int y):
+    x(x), y(y) {}
+
+void PlaceObjectAction::execute(GameActionHandler& handler) const {
+    handler.place_object(get_client_id(), x, y);
+}

@@ -13,6 +13,8 @@ class Storage {
 private:
     std::vector<std::optional<Stack>> stacks;
 
+    int quantity_to_remove(int current, RemoveMode mode); 
+
 public:
     explicit Storage(int capacity);
 
@@ -26,6 +28,8 @@ public:
     int count_item(const Item& item) const;
 
     const std::vector<std::optional<Stack>>& get_stacks() const;
+    
+    bool transfer_item(Storage& destination, int slot_index, RemoveMode mode);
 };
 
 #endif

@@ -12,6 +12,19 @@ semilla_cebolla = 5
 semilla_papa = 10
 semilla_calabaza = 20
 cofre = 50
+silla = 20
+barril_cerrado = 25
+barril_espadas = 40
+barril_agua = 25
+caja_1 = 15
+caja_2 = 15
+flores_1 = 10
+flores_2 = 10
+cuadro_1 = 30
+cuadro_2 = 30
+pozo = 60
+estatua = 80
+viga = 20
 
 [precios_venta]
 frutilla = 25

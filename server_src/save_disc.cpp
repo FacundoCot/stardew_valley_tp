@@ -29,7 +29,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     ready_to_harvest
 )
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FarmPlotSaveData, x, y, has_crop, crop)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, world_name, multiplayer, day, players, farm_plots)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DecorationSaveData, x, y, type)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ChestSaveData, x, y, inventory)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GameSaveData, game_code, game_name, owner_name, world_name, multiplayer,
+                                   day, players, farm_plots, decorations, chests)
 
 
 SaveDisc::SaveDisc(const std::filesystem::path& saves_directory):

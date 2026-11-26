@@ -169,4 +169,15 @@ public:
     void execute(GameActionHandler& handler) const override;
 };
 
+class PlaceObjectAction : public ClientAction {
+private:
+    int x;
+    int y;
+
+public:
+    PlaceObjectAction(int x, int y);
+
+    void execute(GameActionHandler& handler) const override;
+};
+
 #endif

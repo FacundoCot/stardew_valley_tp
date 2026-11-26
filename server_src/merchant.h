@@ -56,7 +56,7 @@ public:
 
 class Robin : public Merchant {
 public:
-    explicit Robin(const ItemCatalog& catalog);
+    Robin(const ItemCatalog& catalog, int day);
 };
 
 class Marnie : public Merchant {

@@ -16,6 +16,18 @@ struct ItemSaveData {
     int index;
 };
 
+struct DecorationSaveData {
+    int x;
+    int y;
+    ItemType type;
+};
+
+struct ChestSaveData {
+    int x;
+    int y;
+    std::vector<ItemSaveData> inventory;
+};
+
 struct PlayerSaveData {
     std::string name;
     CharacterAppearance appearance;
@@ -64,6 +76,8 @@ struct GameSaveData {
     int day;
     std::vector<PlayerSaveData> players;
     std::vector<FarmPlotSaveData> farm_plots;
+    std::vector<DecorationSaveData> decorations;
+    std::vector<ChestSaveData> chests;
 };
 
 #endif

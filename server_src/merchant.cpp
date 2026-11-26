@@ -46,7 +46,6 @@ const std::set<ItemType>& Merchant::get_items_to_buy() const {
 }
 
 // Pierre
-
 Pierre::Pierre(const ItemCatalog& catalog) : Merchant(catalog) {
     add_item_for_sale(ItemType::STRAWBERRY_SEED);
     add_item_for_sale(ItemType::ONION_SEED);
@@ -62,7 +61,6 @@ Pierre::Pierre(const ItemCatalog& catalog) : Merchant(catalog) {
 }
 
 // Clint
-
 Clint::Clint(const ItemCatalog& catalog) : Merchant(catalog) {
     add_item_to_buy(ItemType::COAL);
     add_item_to_buy(ItemType::LAPIS_LAZULI);
@@ -71,13 +69,29 @@ Clint::Clint(const ItemCatalog& catalog) : Merchant(catalog) {
 }
 
 // Robin
+Robin::Robin(const ItemCatalog& catalog, int day) :
+        Merchant(catalog) {
 
-Robin::Robin(const ItemCatalog& catalog) : Merchant(catalog) {
-    add_item_for_sale(ItemType::CHEST);
+    if (day % 2 != 0) {
+        add_item_for_sale(ItemType::CHEST);
+        add_item_for_sale(ItemType::CHAIR);
+        add_item_for_sale(ItemType::BARREL_CLOSED);
+        add_item_for_sale(ItemType::CRATE_1);
+        add_item_for_sale(ItemType::FLOWERS_1);
+        add_item_for_sale(ItemType::PICTURE_1);
+        add_item_for_sale(ItemType::WELL);
+    } else {
+        add_item_for_sale(ItemType::STATUE);
+        add_item_for_sale(ItemType::BARREL_SWORDS);
+        add_item_for_sale(ItemType::BARREL_WATER);
+        add_item_for_sale(ItemType::CRATE_2);
+        add_item_for_sale(ItemType::FLOWERS_2);
+        add_item_for_sale(ItemType::PICTURE_2);
+        add_item_for_sale(ItemType::BEAM);
+    }
 }
 
 // Marnie
-
 Marnie::Marnie(const ItemCatalog& catalog) : Merchant(catalog) {
     // La compra y venta de animales se implementara
     // cuando tengamos las estructuras correspondientes.

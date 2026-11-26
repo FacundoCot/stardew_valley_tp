@@ -125,7 +125,8 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
         case ActionType::TILL_SOIL:
         case ActionType::PLANT_SEED:
         case ActionType::WATER_CROP:
-        case ActionType::HARVEST_CROP: {
+        case ActionType::HARVEST_CROP:
+        case ActionType::PLACE_OBJECT:  {
             uint16_t network_x;
             uint16_t network_y;
 
@@ -147,6 +148,9 @@ std::shared_ptr<ClientAction> ServerProtocol::recv_action() {
 
                 case ActionType::HARVEST_CROP:
                     return std::make_shared<HarvestCropAction>(x, y);
+                
+                case ActionType::PLACE_OBJECT:
+                    return std::make_shared<PlaceObjectAction>(x, y);
 
                 default:
                     throw std::runtime_error("invalid crop operation");
@@ -436,6 +440,7 @@ void ServerProtocol::send_message(const ServerMessage& message) {
           send_inventory_state(message.inventory);
           send_time_state(message.time);
           send_farm_plots(message.farm_plots);
+          send_placed_objects(message.placed_objects);
 
           const uint8_t multiplayer_enabled = message.multiplayer_enabled ? 1 : 0;
           send_or_throw(&multiplayer_enabled, sizeof(multiplayer_enabled));
@@ -567,5 +572,28 @@ void ServerProtocol::send_farm_plots(const std::vector<FarmPlotState>& plots) {
         send_or_throw(&required, sizeof(required));
         send_or_throw(&needs_water, sizeof(needs_water));
         send_or_throw(&ready, sizeof(ready));
+    }
+}
+
+void ServerProtocol::send_placed_objects(
+        const std::vector<PlacedObjectState>& objects) {
+
+    if (objects.size() > std::numeric_limits<uint16_t>::max()) {
+        throw std::runtime_error("too many placed objects");
+    }
+
+    const uint16_t count =
+        htons(static_cast<uint16_t>(objects.size()));
+
+    send_or_throw(&count, sizeof(count));
+
+    for (const auto& object : objects) {
+        const uint16_t x = htons(object.cell_x);
+        const uint16_t y = htons(object.cell_y);
+        const uint8_t type = static_cast<uint8_t>(object.type);
+
+        send_or_throw(&x, sizeof(x));
+        send_or_throw(&y, sizeof(y));
+        send_or_throw(&type, sizeof(type));
     }
 }

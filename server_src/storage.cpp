@@ -14,6 +14,22 @@ Storage::Storage(int capacity) {
     stacks.resize(static_cast<size_t>(capacity));
 }
 
+int Storage::quantity_to_remove(int current, RemoveMode mode) {
+    switch (mode) {
+        case RemoveMode::ONE:
+            return 1;
+
+        case RemoveMode::HALF:
+            return (current + 1) / 2;
+
+        case RemoveMode::ALL:
+            return current;
+
+        default:
+            return 0;
+    }
+}
+
 // agregar objetos sin especificar casilleros
 int Storage::add_item(const Item& item, int quantity) {
     if (quantity <= 0) {
@@ -116,24 +132,7 @@ std::optional<Stack> Storage::remove_item(int index, RemoveMode mode) {
     Stack& stack = *stacks[index];
 
     const int current = stack.get_quantity();
-    int to_remove = 0;
-
-    switch (mode) {
-        case RemoveMode::ONE:
-            to_remove = 1;
-            break;
-
-        case RemoveMode::HALF:
-            to_remove = (current + 1) / 2;
-            break;
-
-        case RemoveMode::ALL:
-            to_remove = current;
-            break;
-
-        default:
-            return std::nullopt;
-    }
+    const int to_remove = quantity_to_remove(current, mode);
 
     // creo el stack a devolver con lo que saque
     Stack removed(stack.get_item(), to_remove);
@@ -194,4 +193,40 @@ int Storage::count_item(const Item& item) const {
 // permite consultar todos los casilleros del inventario, tanto ocupados como vacios
 const std::vector<std::optional<Stack>>& Storage::get_stacks() const {
     return stacks;
+}
+
+bool Storage::transfer_item(Storage& destination, int index, RemoveMode mode) {
+    if (this == &destination ||
+        index < 0 ||
+        static_cast<size_t>(index) >= stacks.size() ||
+        !stacks[index]) {
+        return false;
+    }
+
+    const Stack& stack = *stacks[index];
+
+    const Item item = stack.get_item();
+
+    const int quantity =
+        quantity_to_remove(stack.get_quantity(), mode);
+
+    if (quantity == 0 ||
+        !destination.can_add_item(item, quantity)) {
+        return false;
+    }
+
+    const auto removed = remove_item(index, mode);
+
+    if (!removed) {
+        return false;
+    }
+
+    if (destination.add_item(
+            removed->get_item(),
+            removed->get_quantity()) != 0) {
+        throw std::logic_error(
+            "No se pudo completar la transferencia");
+    }
+
+    return true;
 }

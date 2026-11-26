@@ -42,7 +42,22 @@ enum class ItemType : uint8_t {
 
     // Otros
     BED,
-    CHEST
+    CHEST,
+
+    // Decoracion
+    CHAIR,
+    BARREL_CLOSED,
+    BARREL_SWORDS,
+    BARREL_WATER,
+    CRATE_1,
+    CRATE_2,
+    FLOWERS_1,
+    FLOWERS_2,
+    PICTURE_1,
+    PICTURE_2,
+    WELL,
+    STATUE,
+    BEAM
 };
 
 enum class RemoveMode {

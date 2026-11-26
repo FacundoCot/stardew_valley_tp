@@ -341,3 +341,11 @@ void GameManager::harvest_crop(int client_id, int x, int y) {
         send_state();
     }
 }
+
+void GameManager::place_object(int client_id, int x, int y) {
+    if (game->place_object(client_id, x, y)) {
+        send_state();
+    } else {
+        send_system_message(client_id, "You cannot place this object here");
+    }
+}

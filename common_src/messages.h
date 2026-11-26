@@ -33,7 +33,12 @@ enum class ActionType : uint8_t {
   TILL_SOIL = 13,
   PLANT_SEED = 14,
   WATER_CROP = 15,
-  HARVEST_CROP = 16
+  HARVEST_CROP = 16,
+  PLACE_OBJECT = 17,
+  OPEN_CHEST = 18,
+  CLOSE_CHEST = 19,
+  DEPOSIT_ITEM = 20,
+  WITHDRAW_ITEM = 21
 };
 
 enum class EnemyKind : uint8_t {
@@ -91,6 +96,12 @@ enum class MessageType : uint8_t {
   WORLD_INFO = 7,
   MULTIPLAYER_ENABLED = 8,
   USERNAME = 9
+};
+
+struct PlacedObjectState {
+    uint16_t cell_x;
+    uint16_t cell_y;
+    ItemType type;
 };
 
 struct MapPlayerState {
@@ -203,6 +214,7 @@ struct ServerMessage {
   std::vector<GameInfoForMenu> games;
   std::vector<uint8_t> world_info;
   std::vector<FarmPlotState> farm_plots;
+  std::vector<PlacedObjectState> placed_objects;
   bool multiplayer_enabled = false;
 };
 

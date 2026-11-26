@@ -31,6 +31,7 @@
 #include "fight_set_tracker.h"
 #include "enemy_spawner.h"
 #include "projectile.h"
+#include "chest.h"
 
 //const int MAX_HEALTH = 100; //elim
 const int WEAKENED_HEALTH_PERCENT = 20;
@@ -97,6 +98,8 @@ private:
     mutable std::mutex mtx;
     Queue<std::shared_ptr<ClientAction>> actions;
     std::map<CellPos, FarmPlot> farm_plots;
+    std::map<CellPos, ItemType> decorations;
+    std::map<CellPos, Chest> chests;
 
     std::optional<ItemType> crop_type_for_seed(ItemType seed_type);
     int generate_luck(int minimum, int maximum);
@@ -127,9 +130,21 @@ private:
 
     void check_day_end_unlocked();
 
-    bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
-
+    //interacciones con npcs
     bool near_merchant_unlocked(const Player& player, MerchantType merchant) const;
+    void update_robin_catalog_unlocked();
+
+    //interacciones con objetos
+    bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
+    bool has_placed_object_unlocked(const CellPos& pos) const;
+    bool can_place_object_unlocked(int x, int y) const;
+    bool is_decoration(ItemType type);
+    std::vector<PlacedObjectState> placed_objects_state() const;
+    //cofres
+    bool near_chest_unlocked(const Player& player, const CellPos& pos) const;
+    bool close_chest_unlocked(int client_id);
+    void close_unavailable_chests_unlocked();
+    Chest* get_open_chest_unlocked(int client_id, const Player& player);
 
 public:
     explicit Game(std::shared_ptr<const World> world, const GameConfig& config,
@@ -182,6 +197,16 @@ public:
     bool plant_seed(int client_id, int x, int y);
     bool water_crop(int client_id, int x, int y);
     bool harvest_crop(int client_id, int x, int y);
+
+    // Colocacion de objetos
+    bool place_object(int client_id, int x, int y);
+
+    // Interacciones con cofres
+    bool open_chest(int client_id, int x, int y);
+    bool close_chest(int client_id);
+    bool deposit_item(int client_id, int slot_index, RemoveMode mode);
+    bool withdraw_item(int client_id, int slot_index, RemoveMode mode);
+    
 };
 
 #endif

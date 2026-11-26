@@ -70,6 +70,8 @@ public:
     void water_crop(int client_id, int x, int y) override;
     
     void harvest_crop(int client_id, int x, int y) override;
+
+    void place_object(int client_id, int x, int y) override;
 };
 
 #endif

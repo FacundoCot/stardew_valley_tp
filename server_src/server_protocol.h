@@ -31,6 +31,8 @@ private:
   void send_zone_id(ZoneId zone);
   void send_player_state(const PlayerState& player);
   void send_farm_plots(const std::vector<FarmPlotState>& plots);
+  void send_placed_objects(const std::vector<PlacedObjectState>& objects);
+  
 public:
   explicit ServerProtocol(Socket &skt);
 
