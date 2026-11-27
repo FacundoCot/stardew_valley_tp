@@ -16,5 +16,9 @@ void Sender::run() {
     }
   } catch (const ClosedQueue &) {
     return;
+  } catch (const std::runtime_error&) {
+    return;
+  } catch (...) {
+    std::cerr << "Unknown error." << std::endl;
   }
 }
