@@ -13,6 +13,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include "../common_src/cave_level.h"
 #include "../common_src/farm_zone.h"
@@ -81,23 +82,59 @@ std::string read_string(const toml::table& table, const std::string& key,
     return node->value_or<std::string>("");
 }
 
-Rectangle read_rect(const toml::table& zone, const std::string& key,
-                    const std::string& map_name, const std::string& zone_name,
-                    int zone_width, int zone_height) {
-    const toml::table* rect = zone[key].as_table();
-    if (rect == nullptr) {
-        throw map_error(map_name, "zona '" + zone_name + "' falta el campo '" + key + "'");
+Rectangle infer_structure_rect(
+        const std::set<std::pair<int, int>>& wall_cells,
+        const std::pair<int, int>& portal, const std::string& map_name,
+        const std::string& zone_name, const std::string& structure_name) {
+    // La puerta puede estar en una pared o justo delante de ella.
+    // Recorremos las paredes conectadas al portal para obtener el rectangulo.
+    std::vector<std::pair<int, int>> pending;
+    std::set<std::pair<int, int>> component;
+    constexpr std::array<std::pair<int, int>, 4> neighbors{{
+        {1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
+
+    if (wall_cells.count(portal) != 0) {
+        pending.push_back(portal);
+        component.insert(portal);
     }
-    const int x = read_int(*rect, "x", map_name, zone_name);
-    const int y = read_int(*rect, "y", map_name, zone_name);
-    const int width = read_int(*rect, "width", map_name, zone_name);
-    const int height = read_int(*rect, "height", map_name, zone_name);
-    if (width <= 0 || height <= 0 || x < 0 || y < 0 ||
-        x > zone_width - width || y > zone_height - height) {
-        throw map_error(map_name, "zona '" + zone_name + "' campo '" + key +
-                                  "' fuera de los limites");
+
+    for (const auto& [dx, dy] : neighbors) {
+        const std::pair<int, int> cell{portal.first + dx, portal.second + dy};
+        if (wall_cells.count(cell) != 0 && component.insert(cell).second) {
+            pending.push_back(cell);
+        }
     }
-    return {x, y, width, height};
+
+    for (size_t next = 0; next < pending.size(); ++next) {
+        const auto [x, y] = pending[next];
+
+        for (const auto& [dx, dy] : neighbors) {
+            const std::pair<int, int> cell{x + dx, y + dy};
+            if (wall_cells.count(cell) != 0 && component.insert(cell).second) {
+                pending.push_back(cell);
+            }
+        }
+    }
+
+    if (component.empty()) {
+        throw map_error(map_name, "no se pudo inferir " + structure_name +
+                                  " en zona '" + zone_name +
+                                  "': el portal no tiene paredes contiguas");
+    }
+
+    int min_x = portal.first;
+    int max_x = portal.first;
+    int min_y = portal.second;
+    int max_y = portal.second;
+
+    for (const auto& [x, y] : component) {
+        min_x = std::min(min_x, x);
+        max_x = std::max(max_x, x);
+        min_y = std::min(min_y, y);
+        max_y = std::max(max_y, y);
+    }
+
+    return {min_x, min_y, max_x - min_x + 1, max_y - min_y + 1};
 }
 
 std::pair<float, float> center(const std::pair<int, int>& cell) {
@@ -246,8 +283,7 @@ std::shared_ptr<const World> WorldLoader::load(
     std::map<ZoneId, std::vector<VisualTile>> visual_grids;
     std::map<ZoneId, std::vector<ElementInfo>> element_grids;
     std::map<ZoneId, std::vector<Portal>> zone_portals;
-    std::optional<Rectangle> cabin_rect;
-    std::optional<Rectangle> center_rect;
+    std::map<ZoneId, std::set<std::pair<int, int>>> wall_cells;
 
     for (const toml::node& zone_node : *zones_array) {
         const toml::table* zone_table = zone_node.as_table();
@@ -268,12 +304,9 @@ std::shared_ptr<const World> WorldLoader::load(
         if (kind == "farm") {
             if (level != 0) throw map_error(map_name, "zona 'farm' debe tener nivel 0");
             id = ZoneId::FARM_ZONE;
-            cabin_rect = read_rect(*zone_table, "cabin_rect", map_name, kind, width, height);
         } else if (kind == "village") {
             if (level != 0) throw map_error(map_name, "zona 'village' debe tener nivel 0");
             id = ZoneId::VILLAGE_ZONE;
-            center_rect = read_rect(*zone_table, "community_center_rect", map_name, kind,
-                                    width, height);
         } else if (kind == "house") {
             if (level != 0) throw map_error(map_name, "zona 'house' debe tener nivel 0");
             id = ZoneId::HOUSE_ZONE;
@@ -366,6 +399,10 @@ std::shared_ptr<const World> WorldLoader::load(
                 Tile& logical = grid[static_cast<size_t>(y * width + x)];
                 if (layer_found->second) {
                     logical = Tile::WALL;
+                    if(layer == "walls") {
+                        wall_cells[id].insert({x, y});
+                    }
+
                 } else if (layer == "ground") {
                     logical = Tile::FLOOR;
                 }
@@ -501,12 +538,13 @@ std::shared_ptr<const World> WorldLoader::load(
     const auto village_road = find_element(ZoneId::VILLAGE_ZONE, "road");
     const auto bed = find_element(ZoneId::HOUSE_ZONE, "bed");
 
-    if (!cabin_rect->contains_cell(house_door.first, house_door.second)) {
-        throw map_error(map_name, "house_door debe estar dentro de cabin_rect");
-    }
-    if (!center_rect->contains_cell(center_door.first, center_door.second)) {
-        throw map_error(map_name, "center_door debe estar dentro de community_center_rect");
-    }
+    const Rectangle cabin_rect = infer_structure_rect(
+        wall_cells[ZoneId::FARM_ZONE], house_door,
+        map_name, "farm", "la cabania");
+
+    const Rectangle center_rect = infer_structure_rect(
+        wall_cells[ZoneId::VILLAGE_ZONE], center_door,
+        map_name, "village", "el centro comunitario");
 
     std::vector<Portal> house_portals{
         {PortalType::HOUSE_EXIT, house_exit, ZoneId::FARM_ZONE, center(house_door)}};
@@ -705,7 +743,7 @@ std::shared_ptr<const World> WorldLoader::load(
         std::shared_ptr<Zone> zone;
         if (id == ZoneId::FARM_ZONE) {
             zone = std::make_shared<FarmZone>(
-                info.width, info.height, grid, *cabin_rect,
+                info.width, info.height, grid, cabin_rect,
                 std::vector<std::pair<float, float>>{}, portals);
         } else if (id == ZoneId::VILLAGE_ZONE) {
             std::vector<MerchantPosition> merchants;
