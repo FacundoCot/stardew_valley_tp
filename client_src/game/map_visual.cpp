@@ -1,10 +1,10 @@
 #include "map_visual.h"
 #include "visual.h"
-#include "../common_src/world_serialization.h"
+#include "../../common_src/world_serialization.h"
 #include "loader.h"
 #include "camera.h"
-#include "../common_src/zone.h"
-#include "map_constants.h"
+#include "../../common_src/zone.h"
+#include "../../common_src/define.h"
 
 #include <SDL2pp/SDL2pp.hh>
 

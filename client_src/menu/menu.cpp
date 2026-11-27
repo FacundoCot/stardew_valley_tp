@@ -2,7 +2,7 @@
 
 #include <QApplication>
 #include "mainwindow.h"
-#include "../common_src/character_appearance.h"
+#include "../../common_src/character_appearance.h"
 
 Menu::Menu(ClientProtocol& protocol, Queue<ServerMessage>& responses) : protocol(protocol), responses(responses),
     sender(commands, protocol) 

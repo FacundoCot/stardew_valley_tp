@@ -122,8 +122,8 @@ endif()
 # Program section
 # ---------------
 if(GAME_CLIENT)
-    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Multimedia)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Multimedia)
 
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
@@ -145,7 +145,7 @@ if(GAME_CLIENT)
     target_include_directories(game_client PRIVATE ${libSDL2pp_SOURCE_DIR} ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/client_src)
 
     # Link the game_common lib target
-    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets)
+    target_link_libraries(game_client game_common SDL2pp::SDL2pp Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia)
 endif()
 
 if(GAME_SERVER)

@@ -1,7 +1,7 @@
 #ifndef HEALTH_ENERGY_H
 #define HEALTH_ENERGY_H
 
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include "visual.h"
 #include "loader.h"
 

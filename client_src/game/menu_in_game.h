@@ -4,7 +4,7 @@
 #include "visual.h"
 #include "loader.h"
 #include "button.h"
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include <SDL2/SDL.h>
 #include <string>
 

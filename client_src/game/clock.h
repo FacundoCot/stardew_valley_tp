@@ -4,7 +4,7 @@
 #include "loader.h"
 #include "visual.h"
 #include <SDL2pp/Texture.hh>
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 
 
 class Clock {

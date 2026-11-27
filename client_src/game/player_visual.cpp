@@ -2,14 +2,14 @@
 #include <SDL2pp/Renderer.hh>
 #include <SDL2pp/Texture.hh>
 
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include "camera.h"
 #include "loader.h"
 #include "player_visual.h"
-#include "appearance_translator.h"
-#include "characterpreview.h"
+#include "../appearance_translator.h"
+#include "../menu/characterpreview.h"
 
-#include "map_constants.h"
+#include "../../common_src/define.h"
 
 using SDL2pp::Renderer;
 

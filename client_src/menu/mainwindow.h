@@ -2,11 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "../common_src/queue.h"
+#include "../../common_src/queue.h"
 #include <QTimer>
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include <QCloseEvent>
 #include "characterpreview.h"
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QSoundEffect>
 
 enum Pages {
     MAIN,
@@ -33,6 +36,9 @@ class MainWindow : public QMainWindow {
         Queue<ClientMessage>& commands;
         Ui::MainWindow* ui;
         QTimer* timer;
+        QMediaPlayer* music_player;
+        QAudioOutput* output;
+        QSoundEffect* sounds_player;
         bool exited = false;
         bool game_started = false;
         MenuStyle style = MenuStyle::CREATE;

@@ -1,7 +1,7 @@
 #include "inventory.h"
 #include "loader.h"
-#include "../common_src/messages.h"
-#include "../common_src/custom_error.h"
+#include "../../common_src/messages.h"
+#include "../../common_src/custom_error.h"
 #include "visual.h"
 #include <format>
 

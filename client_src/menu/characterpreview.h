@@ -3,9 +3,9 @@
 
 #include <QWidget>
 #include <QPixmap>
-#include "../common_src/character_appearance.h"
+#include "../../common_src/character_appearance.h"
 #include <QRect>
-#include "appearance_translator.h"
+#include "../appearance_translator.h"
 
 const int SHIRT_DX = 4;
 const int SHIRT_DY = 13;

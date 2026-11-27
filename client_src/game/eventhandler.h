@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "../common_src/messages.h"
+#include "../../common_src/messages.h"
 #include "camera.h"
 #include "visual.h"
 #include "menu_in_game.h"

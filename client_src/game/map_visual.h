@@ -5,8 +5,8 @@
 #include "loader.h"
 #include "visual.h"
 #include "camera.h"
-#include "../common_src/zone.h"
-#include "../common_src/world_serialization.h"
+#include "../../common_src/zone.h"
+#include "../../common_src/world_serialization.h"
 
 class MapVisual {
 private:

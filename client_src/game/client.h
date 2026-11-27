@@ -1,15 +1,15 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../common_src/chronometer.h"
-#include "../common_src/messages.h"
-#include "../common_src/queue.h"
+#include "../../common_src/chronometer.h"
+#include "../../common_src/messages.h"
+#include "../../common_src/queue.h"
 #include "camera.h"
-#include "client_protocol.h"
+#include "../client_protocol.h"
 #include "eventhandler.h"
 #include "player_visual.h"
-#include "receiver.h"
-#include "sender.h"
+#include "../receiver.h"
+#include "../sender.h"
 #include "visual.h"
 #include "clock.h"
 #include "button.h"

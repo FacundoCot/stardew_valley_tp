@@ -1,10 +1,10 @@
 #include "client.h"
-#include "../common_src/chronometer.h"
-#include "../common_src/custom_error.h"
-#include "../common_src/define.h"
-#include "../common_src/messages.h"
-#include "../common_src/queue.h"
-#include "../common_src/world_serialization.h"
+#include "../../common_src/chronometer.h"
+#include "../../common_src/custom_error.h"
+#include "../../common_src/define.h"
+#include "../../common_src/messages.h"
+#include "../../common_src/queue.h"
+#include "../../common_src/world_serialization.h"
 #include "camera.h"
 #include "eventhandler.h"
 #include "loader.h"
@@ -15,7 +15,6 @@
 #include "clock.h"
 #include "health_energy.h"
 #include "appearance_translator.h"
-#include "map_constants.h"
 
 
 #include <SDL2/SDL.h>
