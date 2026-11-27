@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget* parent):
     connect(ui->openAction, &QAction::triggered, this, &MainWindow::open_map);
     connect(ui->saveAction, &QAction::triggered, this, &MainWindow::save_map);
     connect(ui->validateAction, &QAction::triggered, this, &MainWindow::validate_map);
+    connect(ui->newAction, &QAction::triggered, this, &MainWindow::new_map);
 }
 
 void MainWindow::fill_sheet_list() {
@@ -208,6 +209,21 @@ void MainWindow::save_map() {
     } else {
         ui->statusbar->showMessage(QString::fromStdString("No se pudo guardar " + file_path));
     }
+}
+
+void MainWindow::new_map() {
+    QMessageBox::StandardButton answer = 
+        QMessageBox::question(this, "Nuevo mapa", "Se borra todo lo que hay en el editor. ¿Continuar?",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
+    for (MapScene* scene: scenes) {
+        scene->clear_tiles();
+    }
+    ui->statusbar->showMessage("Mapa nuevo.");
 }
 
 void MainWindow::validate_map() {

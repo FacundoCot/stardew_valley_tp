@@ -50,6 +50,7 @@ private slots:
     void open_map();
     void save_map();
     void validate_map();
+    void new_map();
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
