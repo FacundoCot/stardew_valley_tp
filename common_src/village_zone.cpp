@@ -8,19 +8,33 @@
 VillageZone::VillageZone(int width, int height, std::vector<Tile> tiles,
                          std::vector<Portal> portals,
                          std::vector<ZoneId::ZoneArea> areas_param,
-                         std::vector<MerchantPosition> merchants_param):
+                         std::vector<MerchantPosition> merchants_param,
+                         std::optional<Rectangle> community_center_param):
         Zone(std::move(portals)),
         tile_grid(width, height, std::move(tiles)),
         zone_areas(std::move(areas_param)),
-        merchant_positions(std::move(merchants_param)) {
+        merchant_positions(std::move(merchants_param)),
+        community_center_position(community_center_param) {
     validate_portals(tile_grid);
     validate_merchants();
 
     for (const Portal& portal : get_portals()) {
         if (portal.type != PortalType::ROAD &&
-            portal.type != PortalType::DUNGEON_DOOR) {
+            portal.type != PortalType::DUNGEON_DOOR &&
+            portal.type != PortalType::CENTER_DOOR) {
             throw std::invalid_argument(
-                "el pueblo solo puede tener caminos y puerta de mazmorra");
+                "tipo de portal invalido para el pueblo");
+        }
+    }
+
+    if (community_center_position.has_value()) {
+        const Rectangle& center = *community_center_position;
+        if (center.width < 1 || center.height < 1 || center.x < 0 ||
+            center.y < 0 || center.width > width || center.height > height ||
+            center.x > width - center.width ||
+            center.y > height - center.height) {
+            throw std::invalid_argument(
+                "el centro comunitario esta fuera de la grilla del pueblo");
         }
     }
 
@@ -87,6 +101,10 @@ const std::vector<ZoneId::ZoneArea>& VillageZone::areas() const {
 
 const std::vector<MerchantPosition>& VillageZone::merchants() const {
     return merchant_positions;
+}
+
+std::optional<Rectangle> VillageZone::community_center() const {
+    return community_center_position;
 }
 
 void VillageZone::validate_merchants() const {

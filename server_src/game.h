@@ -6,10 +6,12 @@
 #include <mutex>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 #include <optional>
 
 #include "common_src/farm_zone.h"
+#include "common_src/interior_zone.h"
 #include "common_src/cave_level.h"
 #include "common_src/messages.h"
 #include "common_src/queue.h"
@@ -79,6 +81,7 @@ private:
 
     std::shared_ptr<const World> world;
     std::shared_ptr<const FarmZone> farm;
+    std::pair<float, float> shared_bed_position;
     GameConfig config;
     EnemyConfig enemy_config;
     ItemCatalog item_catalog;
@@ -111,7 +114,6 @@ private:
     uint32_t get_initial_coins() const;
     bool add_player_unlocked(int client_id, const std::string& player_name,
                              ZoneId zone, float x, float y, const CharacterAppearance& appearance);
-    std::map<std::string, int> bed_by_player;
     MovementResult move_player_unlocked(const std::string& name, Player& player,
                                         float new_x, float new_y);
 
@@ -127,7 +129,7 @@ private:
 
     void check_day_end_unlocked();
 
-    bool is_in_own_bed_unlocked(const std::string& player_name, const Player& player) const;
+    bool is_at_shared_bed_unlocked(const Player& player) const;
 
     bool near_merchant_unlocked(const Player& player, MerchantType merchant) const;
 

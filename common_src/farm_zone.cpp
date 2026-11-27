@@ -30,18 +30,6 @@ FarmZone::FarmZone(int width, int height, std::vector<Tile> tiles,
         throw std::invalid_argument("la cabania esta fuera de la grilla");
     }
 
-    for (int row = cabin.y; row < cabin.y + cabin.height; ++row) {
-        for (int column = cabin.x; column < cabin.x + cabin.width; ++column) {
-            if (!tile_grid.is_walkable(column + 0.5f, row + 0.5f)) {
-                throw std::invalid_argument(
-                    "la cabania debe estar sobre tiles caminables");
-            }
-        }
-    }
-    if (bed_spots.empty()) {
-        throw std::invalid_argument("la granja debe tener camas");
-    }
-
     std::set<std::pair<int, int>> occupied;
     for (auto& bed : bed_spots) {
         const auto cell = cell_of(bed.first, bed.second);
@@ -59,13 +47,10 @@ FarmZone::FarmZone(int width, int height, std::vector<Tile> tiles,
     validate_portals(tile_grid);
     for (const Portal& portal : get_portals()) {
         if (portal.type != PortalType::DUNGEON_DOOR &&
-            portal.type != PortalType::ROAD) {
+            portal.type != PortalType::ROAD &&
+            portal.type != PortalType::HOUSE_DOOR) {
             throw std::invalid_argument(
-                "la granja solo puede tener puertas de mazmorra y caminos");
-        }
-        if (cabin.contains_cell(portal.cell.first, portal.cell.second)) {
-            throw std::invalid_argument(
-                "un portal no puede estar dentro de la cabania");
+                "tipo de portal invalido para la granja");
         }
     }
 }

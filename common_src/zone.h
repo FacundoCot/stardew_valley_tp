@@ -2,6 +2,8 @@
 #define ZONE_H
 
 #include <optional>
+#include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -19,7 +21,9 @@ struct ZoneId {
     enum class Kind {
         FARM = 0,
         VILLAGE = 1,
-        CAVE_LEVEL = 2
+        CAVE_LEVEL = 2,
+        HOUSE = 3,
+        COMMUNITY_CENTER = 4
     };
 
     enum class AreaType {
@@ -47,10 +51,15 @@ struct ZoneId {
 
     static const ZoneId FARM_ZONE;
     static const ZoneId VILLAGE_ZONE;
+    static const ZoneId HOUSE_ZONE;
+    static const ZoneId COMMUNITY_CENTER_ZONE;
 };
 
 inline const ZoneId ZoneId::FARM_ZONE{ZoneId::Kind::FARM, 0};
 inline const ZoneId ZoneId::VILLAGE_ZONE{ZoneId::Kind::VILLAGE, 0};
+inline const ZoneId ZoneId::HOUSE_ZONE{ZoneId::Kind::HOUSE, 0};
+inline const ZoneId ZoneId::COMMUNITY_CENTER_ZONE{
+    ZoneId::Kind::COMMUNITY_CENTER, 0};
 
 enum class Tile {
     WALL = 0,
@@ -68,7 +77,42 @@ enum class PortalType {
     STAIR = 0,
     DUNGEON_DOOR = 1,
     DUNGEON_EXIT = 2,
-    ROAD = 3
+    ROAD = 3,
+    HOUSE_DOOR = 4,
+    HOUSE_EXIT = 5,
+    CENTER_DOOR = 6,
+    CENTER_EXIT = 7
+};
+
+enum class StaticElementType : uint8_t {
+    BED = 0,
+    PIERRE = 1,
+    MARNIE = 2,
+    CLINT = 3,
+    ROBIN = 4,
+    ENEMY_SPAWN = 5,
+    ORE_COAL = 6,
+    ORE_LAPIS = 7,
+    ORE_SILVER = 8,
+    ORE_GOLD = 9,
+    TRAP_SPIKES = 10,
+    TRAP_FLAME_LEFT = 11,
+    TRAP_FLAME_RIGHT = 12,
+    TRAP_FLAME_DOWN = 13
+};
+
+struct StaticElement {
+    StaticElementType type;
+    std::pair<int, int> cell;
+};
+
+struct VisualTile {
+    int x;
+    int y;
+    std::string layer;
+    std::string sheet;
+    int col;
+    int row;
 };
 
 struct Portal {
@@ -97,6 +141,8 @@ public:
 class Zone {
 private:
     std::vector<Portal> portals;
+    std::vector<StaticElement> static_elements;
+    std::vector<VisualTile> visual_tiles;
 
 protected:
     void validate_portals(const TileGrid& grid) const;
@@ -111,6 +157,10 @@ public:
     virtual bool is_walkable(float x, float y) const = 0;
 
     const std::vector<Portal>& get_portals() const;
+    const std::vector<StaticElement>& get_static_elements() const;
+    const std::vector<VisualTile>& get_visual_tiles() const;
+    void set_static_elements(std::vector<StaticElement> elements);
+    void set_visual_tiles(std::vector<VisualTile> tiles);
     std::optional<Portal> portal_at(float x, float y) const;
 };
 
