@@ -23,16 +23,12 @@ struct ElementType {
     bool unique; // por zona
 };
 
-const int ELEMENT_COUNT = 33;
+const int ELEMENT_COUNT = 30;
 
 const QColor PORTAL_COLOR(70, 130, 255, 190);
 const QColor BED_COLOR(60, 180, 90, 190);
 const QColor NPC_COLOR(240, 160, 40, 190);
-
-const QColor SKELETON_COLOR(225, 225, 205, 210);
-const QColor ORC_COLOR(90, 160, 60, 210);
-const QColor VAMPIRE_COLOR(150, 20, 40, 210);
-const QColor SKULL_COLOR(235, 120, 40, 210);
+const QColor ENEMY_SPAWN_COLOR(220, 60, 60, 190);
 
 const QColor COAL_COLOR(60, 60, 60, 220);
 const QColor LAPIS_COLOR(40, 70, 170, 200);
@@ -60,10 +56,7 @@ const ElementType ELEMENT_TYPES[ELEMENT_COUNT] = {
     {"clint", "Clint", NPC_COLOR, true},
     {"pierre", "Pierre", NPC_COLOR, true},
     {"robin", "Robin", NPC_COLOR, true},
-    {"spawn_skeleton", "Spawn: esqueleto (solo)", SKELETON_COLOR, false},
-    {"spawn_orc", "Spawn: orcos (grupo de 3 a 6)", ORC_COLOR, false},
-    {"spawn_vampire", "Spawn: vampiros (pareja)", VAMPIRE_COLOR, false},
-    {"spawn_skull", "Spawn: calavera (una por nivel)", SKULL_COLOR, true},
+    {"enemy", "Spawn de enemigo", ENEMY_SPAWN_COLOR, false},
     {"ore_coal", "Mineral: carbón", COAL_COLOR, false},
     {"ore_lapis", "Mineral: lapislázuli", LAPIS_COLOR, false},
     {"ore_silver", "Mineral: plata", SILVER_COLOR, false},

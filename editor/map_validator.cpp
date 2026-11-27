@@ -144,10 +144,10 @@ void MapValidator::check_zone(int zone, const MapScene* scene,
         }
     }
 
-    // al menos un spawn de enemigos (de cualquier tipo) por caverna
+    // al menos un enemigo por caverna
     bool is_cave = (zone >= ZONE_FIRST_CAVE && zone < ZONE_HOUSE);
     if (is_cave) {
-        at_least_one_of(zone, counts, ENEMY_SPAWNS, "spawn de enemigo", problems);
+        at_least_one(zone, counts, "enemy", problems);
     }
 
     check_cave_elements(zone, counts, problems);
