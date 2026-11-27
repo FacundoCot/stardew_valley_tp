@@ -7,7 +7,7 @@
 #include <QPen>
 #include <QString>
 
-#include "common_src/define.h"
+#include "map_definitions.h"
 
 SheetScene::SheetScene(QObject* parent):
         QGraphicsScene(parent),

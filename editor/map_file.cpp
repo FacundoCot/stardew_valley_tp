@@ -5,7 +5,7 @@
 #include <QGraphicsItem>
 #include <QString>
 
-#include "common_src/define.h"
+#include "map_definitions.h"
 
 void MapFile::write_layer(std::ostream& writer, const MapScene* scene, int layer,
                           std::set<std::string>& sheets) const {
