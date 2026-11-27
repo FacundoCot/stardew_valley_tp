@@ -120720,7 +120720,7 @@ x = 90
 y = 38
 
 [[zone.element]]
-type = "spawn_skeleton"
+type = "enemy"
 x = 84
 y = 39
 
@@ -120730,19 +120730,14 @@ x = 85
 y = 39
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 95
-y = 39
-
-[[zone.element]]
 type = "ore_coal"
 x = 96
 y = 39
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 90
-y = 44
+type = "enemy"
+x = 93
+y = 41
 
 [[zone.element]]
 type = "dungeon_exit"
@@ -121843,19 +121838,19 @@ x = 92
 y = 35
 
 [[zone.element]]
-type = "spawn_orc"
-x = 88
-y = 37
-
-[[zone.element]]
-type = "spawn_orc"
-x = 92
+type = "enemy"
+x = 93
 y = 37
 
 [[zone.element]]
 type = "stair_down"
 x = 97
 y = 37
+
+[[zone.element]]
+type = "enemy"
+x = 88
+y = 38
 
 [[zone.element]]
 type = "ore_coal"
@@ -123798,13 +123793,8 @@ x = 93
 y = 37
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 96
-y = 37
-
-[[zone.element]]
-type = "spawn_orc"
-x = 81
+type = "enemy"
+x = 80
 y = 39
 
 [[zone.element]]
@@ -123813,7 +123803,7 @@ x = 83
 y = 39
 
 [[zone.element]]
-type = "spawn_orc"
+type = "enemy"
 x = 86
 y = 39
 
@@ -123828,14 +123818,14 @@ x = 92
 y = 39
 
 [[zone.element]]
+type = "enemy"
+x = 95
+y = 39
+
+[[zone.element]]
 type = "ore_lapis"
 x = 81
 y = 40
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 91
-y = 41
 
 [[zone.element]]
 type = "ore_coal"
@@ -125755,8 +125745,8 @@ x = 87
 y = 28
 
 [[zone.element]]
-type = "spawn_orc"
-x = 92
+type = "enemy"
+x = 93
 y = 30
 
 [[zone.element]]
@@ -125770,29 +125760,19 @@ x = 92
 y = 32
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 84
-y = 34
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 80
-y = 35
-
-[[zone.element]]
 type = "trap_spikes"
 x = 82
 y = 35
 
 [[zone.element]]
-type = "ore_lapis"
-x = 84
+type = "enemy"
+x = 81
 y = 36
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 82
-y = 37
+type = "ore_lapis"
+x = 84
+y = 36
 
 [[zone.element]]
 type = "dungeon_exit"
@@ -125805,9 +125785,9 @@ x = 92
 y = 40
 
 [[zone.element]]
-type = "spawn_orc"
+type = "enemy"
 x = 94
-y = 41
+y = 40
 
 [[zone.element]]
 type = "ore_coal"
@@ -128442,8 +128422,8 @@ layer = "walls"
 x = 86
 y = 51
 sheet = "Caverns/Environment/Dungeon_Tileset.png"
-col = 8
-row = 1
+col = 3
+row = 2
 layer = "walls"
 
 [[zone.tile]]
@@ -128571,19 +128551,19 @@ x = 76
 y = 37
 
 [[zone.element]]
-type = "spawn_vampire"
-x = 86
-y = 37
-
-[[zone.element]]
-type = "spawn_orc"
-x = 94
-y = 37
-
-[[zone.element]]
 type = "ore_silver"
 x = 96
 y = 37
+
+[[zone.element]]
+type = "enemy"
+x = 85
+y = 38
+
+[[zone.element]]
+type = "enemy"
+x = 94
+y = 38
 
 [[zone.element]]
 type = "trap_spikes"
@@ -128593,6 +128573,11 @@ y = 42
 [[zone.element]]
 type = "dungeon_exit"
 x = 77
+y = 45
+
+[[zone.element]]
+type = "enemy"
+x = 86
 y = 45
 
 [[zone.element]]
@@ -128611,13 +128596,8 @@ x = 96
 y = 46
 
 [[zone.element]]
-type = "spawn_orc"
-x = 78
-y = 47
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 89
+type = "enemy"
+x = 94
 y = 47
 
 [[zone.element]]
@@ -129559,14 +129539,6 @@ row = 3
 layer = "walls"
 
 [[zone.tile]]
-x = 92
-y = 46
-sheet = "Caverns/Environment/Dungeon_Tileset.png"
-col = 5
-row = 3
-layer = "walls"
-
-[[zone.tile]]
 x = 84
 y = 47
 sheet = "Caverns/Environment/Dungeon_Tileset.png"
@@ -129745,7 +129717,7 @@ x = 85
 y = 39
 
 [[zone.element]]
-type = "spawn_orc"
+type = "enemy"
 x = 88
 y = 39
 
@@ -129755,19 +129727,14 @@ x = 91
 y = 39
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 88
-y = 42
-
-[[zone.element]]
 type = "dungeon_exit"
 x = 90
 y = 43
 
 [[zone.element]]
-type = "spawn_skeleton"
+type = "enemy"
 x = 88
-y = 44
+y = 45
 
 [[zone.element]]
 type = "abandoned_chest"
@@ -131661,19 +131628,14 @@ x = 82
 y = 29
 
 [[zone.element]]
+type = "enemy"
+x = 82
+y = 31
+
+[[zone.element]]
 type = "stair_down"
 x = 88
 y = 31
-
-[[zone.element]]
-type = "spawn_orc"
-x = 94
-y = 31
-
-[[zone.element]]
-type = "spawn_vampire"
-x = 82
-y = 32
 
 [[zone.element]]
 type = "abandoned_chest"
@@ -131696,6 +131658,16 @@ x = 82
 y = 34
 
 [[zone.element]]
+type = "enemy"
+x = 86
+y = 34
+
+[[zone.element]]
+type = "enemy"
+x = 92
+y = 34
+
+[[zone.element]]
 type = "trap_spikes"
 x = 88
 y = 35
@@ -131704,11 +131676,6 @@ y = 35
 type = "ore_silver"
 x = 95
 y = 35
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 89
-y = 37
 
 [[zone.element]]
 type = "ore_lapis"
@@ -131721,19 +131688,14 @@ x = 86
 y = 39
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 90
-y = 40
+type = "enemy"
+x = 87
+y = 41
 
 [[zone.element]]
 type = "ore_coal"
 x = 90
 y = 41
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 86
-y = 42
 
 [[zone.element]]
 type = "ore_coal"
@@ -133386,9 +133348,9 @@ x = 89
 y = 34
 
 [[zone.element]]
-type = "spawn_skeleton"
+type = "enemy"
 x = 89
-y = 36
+y = 37
 
 [[zone.element]]
 type = "ore_lapis"
@@ -133411,8 +133373,8 @@ x = 95
 y = 39
 
 [[zone.element]]
-type = "spawn_orc"
-x = 99
+type = "enemy"
+x = 97
 y = 39
 
 [[zone.element]]
@@ -133421,18 +133383,13 @@ x = 84
 y = 41
 
 [[zone.element]]
-type = "spawn_skeleton"
+type = "enemy"
 x = 92
 y = 41
 
 [[zone.element]]
 type = "trap_spikes"
 x = 95
-y = 41
-
-[[zone.element]]
-type = "spawn_skull"
-x = 97
 y = 41
 
 [[zone.element]]
@@ -133448,6 +133405,11 @@ y = 43
 [[zone.element]]
 type = "ore_coal"
 x = 87
+y = 43
+
+[[zone.element]]
+type = "enemy"
+x = 96
 y = 43
 
 [[zone.element]]
@@ -136232,8 +136194,8 @@ x = 89
 y = 24
 
 [[zone.element]]
-type = "spawn_vampire"
-x = 89
+type = "enemy"
+x = 90
 y = 27
 
 [[zone.element]]
@@ -136252,14 +136214,14 @@ x = 94
 y = 28
 
 [[zone.element]]
-type = "spawn_skull"
-x = 94
-y = 30
+type = "enemy"
+x = 87
+y = 29
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 85
-y = 31
+type = "enemy"
+x = 93
+y = 30
 
 [[zone.element]]
 type = "trap_flame_down"
@@ -136282,8 +136244,8 @@ x = 82
 y = 39
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 84
+type = "enemy"
+x = 85
 y = 39
 
 [[zone.element]]
@@ -136307,18 +136269,13 @@ x = 93
 y = 42
 
 [[zone.element]]
-type = "spawn_orc"
+type = "enemy"
 x = 93
-y = 43
+y = 44
 
 [[zone.element]]
 type = "ore_gold"
 x = 84
-y = 45
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 86
 y = 45
 
 [[zone.element]]
@@ -142567,23 +142524,23 @@ x = 91
 y = 17
 
 [[zone.element]]
-type = "spawn_skull"
+type = "enemy"
 x = 86
-y = 19
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 80
-y = 20
-
-[[zone.element]]
-type = "spawn_skeleton"
-x = 92
-y = 20
+y = 18
 
 [[zone.element]]
 type = "abandoned_chest"
 x = 76
+y = 21
+
+[[zone.element]]
+type = "enemy"
+x = 81
+y = 21
+
+[[zone.element]]
+type = "enemy"
+x = 91
 y = 21
 
 [[zone.element]]
@@ -142602,19 +142559,14 @@ x = 82
 y = 24
 
 [[zone.element]]
-type = "trap_spikes"
-x = 90
+type = "enemy"
+x = 86
 y = 24
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 76
-y = 25
-
-[[zone.element]]
-type = "spawn_orc"
-x = 86
-y = 25
+type = "trap_spikes"
+x = 90
+y = 24
 
 [[zone.element]]
 type = "ore_silver"
@@ -142627,9 +142579,14 @@ x = 79
 y = 26
 
 [[zone.element]]
-type = "spawn_skeleton"
-x = 96
-y = 26
+type = "enemy"
+x = 76
+y = 27
+
+[[zone.element]]
+type = "enemy"
+x = 97
+y = 27
 
 [[zone.element]]
 type = "ore_silver"
@@ -142639,16 +142596,6 @@ y = 29
 [[zone.element]]
 type = "trap_flame_right"
 x = 72
-y = 30
-
-[[zone.element]]
-type = "spawn_vampire"
-x = 76
-y = 30
-
-[[zone.element]]
-type = "spawn_vampire"
-x = 95
 y = 30
 
 [[zone.element]]
@@ -142692,6 +142639,11 @@ x = 75
 y = 35
 
 [[zone.element]]
+type = "enemy"
+x = 79
+y = 36
+
+[[zone.element]]
 type = "trap_spikes"
 x = 82
 y = 36
@@ -142702,9 +142654,9 @@ x = 90
 y = 36
 
 [[zone.element]]
-type = "spawn_orc"
-x = 86
-y = 39
+type = "enemy"
+x = 93
+y = 36
 
 [[zone.element]]
 type = "ore_lapis"
@@ -142714,6 +142666,11 @@ y = 40
 [[zone.element]]
 type = "ore_lapis"
 x = 80
+y = 41
+
+[[zone.element]]
+type = "enemy"
+x = 86
 y = 41
 
 [[zone.element]]
