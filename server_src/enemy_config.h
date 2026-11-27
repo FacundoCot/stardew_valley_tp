@@ -36,8 +36,8 @@ struct EnemyConfig {
     EnemyTypeConfig skeleton;
     float skeleton_revive_seconds = 1.0f;
     EnemyTypeConfig orc;
-    int orc_group_min = 1;
-    int orc_group_max = 1;
+    int orc_group_min = 3;
+    int orc_group_max = 6;
     EnemyTypeConfig female_vampire;
     EnemyTypeConfig male_vampire;
     float blood_incident_radius = 1.0f;

@@ -78,6 +78,22 @@ const std::vector<Portal>& Zone::get_portals() const {
     return portals;
 }
 
+const std::vector<StaticElement>& Zone::get_static_elements() const {
+    return static_elements;
+}
+
+const std::vector<VisualTile>& Zone::get_visual_tiles() const {
+    return visual_tiles;
+}
+
+void Zone::set_static_elements(std::vector<StaticElement> elements) {
+    static_elements = std::move(elements);
+}
+
+void Zone::set_visual_tiles(std::vector<VisualTile> tiles) {
+    visual_tiles = std::move(tiles);
+}
+
 std::optional<Portal> Zone::portal_at(float x, float y) const {
     const auto cell_position = std::pair<int, int>(
         static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)));

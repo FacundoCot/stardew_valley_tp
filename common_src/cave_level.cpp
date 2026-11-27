@@ -18,9 +18,10 @@ CaveLevel::CaveLevel(int level_param, int width, int height,
     }
     validate_portals(tile_grid);
     for (const Portal& portal : get_portals()) {
-        if (portal.type == PortalType::DUNGEON_DOOR) {
+        if (portal.type != PortalType::DUNGEON_EXIT &&
+            portal.type != PortalType::STAIR) {
             throw std::invalid_argument(
-                "un nivel no puede tener puerta de entrada");
+                "tipo de portal invalido para un nivel de caverna");
         }
     }
 

@@ -295,18 +295,25 @@ void ServerProtocol::send_world_info(const World& world) {
      * u8  tipo de mensaje = 7
      * u32 tamaño del bloque que sigue (htonl)
      * bloque:
-     *   u8  version del formato = 8
+     *   u8  version del formato = 11
      *   u8  cantidad de zonas
      *   por cada zona:
      *     u8 kind, u8 level
      *     u16 ancho, u16 alto (htons)
      *     ancho * alto bytes de tiles (0=wall, 1=floor,
      *       2=grass, 3=path, 4=tree)
+     *     u16 cantidad de tiles visuales
+     *     por cada tile visual: i32 celda x, i32 celda y,
+     *       u16 longitud + bytes capa, u16 longitud + bytes sheet,
+     *       i32 columna sprite, i32 fila sprite
      *     u8 cantidad de portales
      *     por cada portal: u8 tipo, i32 celda x, i32 celda y,
      *       u8 kind destino, u8 level destino, i32 llegada x * 100,
      *       i32 llegada y * 100
-     *     datos propios de granja o pueblo
+     *     u16 cantidad de elementos estaticos
+     *     por elemento estatico: u8 tipo, i32 celda x, i32 celda y
+     *     datos propios de granja o pueblo, incluido el rectangulo exterior
+     *     opcional del centro comunitario
      */
     const uint8_t type = static_cast<uint8_t>(MessageType::WORLD_INFO);
     send_or_throw(&type, sizeof(uint8_t));
@@ -361,6 +368,10 @@ void ServerProtocol::send_message(const ServerMessage& message) {
             send_player_state(message.self_player);
 
             // Otros jugadores visibles
+            if (message.players.size() >
+                std::numeric_limits<uint16_t>::max()) {
+                throw std::runtime_error("too many players in zone");
+            }
             const uint16_t count = htons(static_cast<uint16_t>(message.players.size()));
 
             send_or_throw(&count, sizeof(count));
@@ -370,6 +381,10 @@ void ServerProtocol::send_message(const ServerMessage& message) {
             }
 
             // Jugadores para el mapa general
+            if (message.map_players.size() >
+                std::numeric_limits<uint16_t>::max()) {
+                throw std::runtime_error("too many players in map");
+            }
             const uint16_t map_count = htons(static_cast<uint16_t>(message.map_players.size()));
 
             send_or_throw(&map_count, sizeof(map_count));

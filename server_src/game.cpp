@@ -58,6 +58,22 @@ Game::Game(std::shared_ptr<const World> world_param,
     if (farm == nullptr) {
         throw std::invalid_argument("el mundo tiene que tener granja");
     }
+    const auto house = std::dynamic_pointer_cast<const InteriorZone>(
+        world->zone(ZoneId::HOUSE_ZONE));
+    if (house == nullptr) {
+        throw std::invalid_argument("el mundo tiene que tener casa");
+    }
+    if (house->beds().size() != 1) {
+        throw std::invalid_argument("la casa debe tener exactamente una cama");
+    }
+    const auto [bed_x, bed_y] = house->bed_position(0);
+    shared_bed_position = {
+        std::floor(bed_x) + 0.5f,
+        std::floor(bed_y) + 0.5f
+    };
+    if (!house->is_walkable(shared_bed_position.first, shared_bed_position.second)) {
+        throw std::invalid_argument("la cama debe estar sobre un tile caminable");
+    }
 
     //inicializo los comerciantes
     merchants.emplace(MerchantType::PIERRE, std::make_unique<Pierre>(item_catalog));
@@ -101,36 +117,9 @@ bool Game::add_player_unlocked(int client_id, const std::string &player_name,
 bool Game::add_player_auto(int client_id, const std::string& player_name, const CharacterAppearance& appearance) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    int bed_index;
-    const auto assigned_bed = bed_by_player.find(player_name);
-    if (assigned_bed != bed_by_player.end()) {
-        bed_index = assigned_bed->second;
-    } else {
-        bed_index = -1;
-        for (int candidate = 0; candidate < farm->bed_count(); ++candidate) {
-            bool occupied = false;
-            for (const auto& [other_player, other_bed] : bed_by_player) {
-                if (other_player != player_name && other_bed == candidate) {
-                    occupied = true;
-                    break;
-                }
-            }
-            if (!occupied) {
-                bed_index = candidate;
-                break;
-            }
-        }
-        if (bed_index < 0) {
-            return false;
-        }
-    }
-
-    const auto [x, y] = farm->bed_position(bed_index);
-    if (!add_player_unlocked(client_id, player_name, ZoneId::FARM_ZONE, x, y, appearance)) {
-        return false;
-    }
-    bed_by_player[player_name] = bed_index;
-    return true;
+    return add_player_unlocked(client_id, player_name, ZoneId::HOUSE_ZONE,
+                               shared_bed_position.first, shared_bed_position.second,
+                               appearance);
 }
 
 bool Game::is_multiplayer() const {
@@ -168,9 +157,15 @@ Game::MovementResult Game::move_player_unlocked(
             player.y = portal->arrival.second;
             if (portal->destination.kind == ZoneId::Kind::CAVE_LEVEL) {
                 const ZoneId room = portal->destination;
-                const bool occupied = std::any_of(players.begin(), players.end(),
-                    [&](const auto& entry) {
-                        return entry.first != name && entry.second.zone == room;
+                const bool occupied = std::any_of(
+                    connected_clients.begin(), connected_clients.end(),
+                    [&](const auto& client) {
+                        if (client.second == name) {
+                            return false;
+                        }
+                        const auto connected_player = players.find(client.second);
+                        return connected_player != players.end() &&
+                               connected_player->second.zone == room;
                     });
                 if (!occupied) {
                     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
@@ -756,13 +751,11 @@ bool Game::start_next_day_game() {
     }
 
     for (auto& [name, player] : players) {
-        const bool slept_well = !player.unconscious && is_in_own_bed_unlocked(name, player);
+        const bool slept_well = !player.unconscious && is_at_shared_bed_unlocked(player);
 
-        const auto [bed_x, bed_y] = farm->bed_position(bed_by_player.at(name));
-
-        player.x = bed_x;
-        player.y = bed_y;
-        player.zone = ZoneId::FARM_ZONE;
+        player.x = shared_bed_position.first;
+        player.y = shared_bed_position.second;
+        player.zone = ZoneId::HOUSE_ZONE;
 
         player.health = slept_well ? config.initial_health : config.initial_health / 2;
 
@@ -843,8 +836,7 @@ GameSaveData Game::get_save_data(const std::string& game_code, const std::string
         player_data.energy = player.energy;
         player_data.coins = player.coins;
         player_data.zone = player.zone;
-        // si hay una mala asignacion de la cama se va a lanzar una excepcion gracias al .at()
-        player_data.bed_index = bed_by_player.at(player_name);
+        player_data.bed_index = 0;
         player_data.selected_slot = player.selected_slot;
 
         const auto& stacks = player.inventory.get_stacks();
@@ -894,20 +886,27 @@ void Game::restore_save_data(const GameSaveData& data) {
     players.clear();
     connected_clients.clear();
     ready_clients.clear();
-    bed_by_player.clear();
     farm_plots.clear();
 
     clock = GameClock(data.day, config.day_duration_seconds);
     multiplayer_enabled = data.multiplayer;
 
     for (const PlayerSaveData& saved_player : data.players) {
+        float x = saved_player.x;
+        float y = saved_player.y;
+        ZoneId zone = saved_player.zone;
+        if (!world->is_walkable(zone, x, y)) {
+            x = shared_bed_position.first;
+            y = shared_bed_position.second;
+            zone = ZoneId::HOUSE_ZONE;
+        }
         Player player(
-            saved_player.x,
-            saved_player.y,
+            x,
+            y,
             saved_player.health,
             saved_player.energy,
             saved_player.coins,
-            saved_player.zone,
+            zone,
             saved_player.appearance
         );
         // se hacen aparte porque no son parte del constructor de player
@@ -921,9 +920,6 @@ void Game::restore_save_data(const GameSaveData& data) {
                 throw std::runtime_error("Inventario guardado invalido");
             }
         }
-
-        bed_by_player[saved_player.name] = saved_player.bed_index;
-
 
         players.emplace(saved_player.name, std::move(player));
     }
@@ -1000,21 +996,13 @@ void Game::check_day_end_unlocked() {
     projectiles.clear();
 }
 
-bool Game::is_in_own_bed_unlocked(const std::string& name, const Player& player) const {
-
-    if (!(player.zone == ZoneId::FARM_ZONE)) {
+bool Game::is_at_shared_bed_unlocked(const Player& player) const {
+    if (player.zone != ZoneId::HOUSE_ZONE) {
         return false;
     }
 
-    const auto bed_searched = bed_by_player.find(name);
-
-    if (bed_searched == bed_by_player.end()) {
-        return false;
-    }
-
-    const auto [bed_x, bed_y] = farm->bed_position(bed_searched->second);
-
-    return std::floor(player.x) == std::floor(bed_x) && std::floor(player.y) == std::floor(bed_y);
+    return std::floor(player.x) == std::floor(shared_bed_position.first) &&
+           std::floor(player.y) == std::floor(shared_bed_position.second);
 }
 
 bool Game::buy_item(int client_id, MerchantType merchant, const std::string& product, int quantity) {

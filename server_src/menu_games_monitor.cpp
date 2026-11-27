@@ -81,7 +81,14 @@ MenuResult MenuGamesMonitor::create_game(int client_id,
                                         const std::string& player_name,
                                         const CharacterAppearance& appearance){
     std::lock_guard<std::mutex> lock(mtx);
-    auto game = std::make_shared<Game>(catalog.get(world_name), config, enemy_config);
+    std::shared_ptr<Game> game;
+    try {
+        game = std::make_shared<Game>(catalog.get(world_name), config, enemy_config);
+    } catch (const std::exception& err) {
+        return MenuResult{false,
+                          std::string("No se pudo cargar el mapa: ") + err.what(),
+                          "", nullptr};
+    }
 
     if (!game->add_player_auto(client_id, player_name, appearance))
     {

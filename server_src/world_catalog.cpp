@@ -1,23 +1,50 @@
 #include "world_catalog.h"
 
+#include <filesystem>
 #include <stdexcept>
-
-#include "../common_src/default_world.h"
+#include "world_loader.h"
 
 WorldCatalog::WorldCatalog():
-        builders{{"por_defecto", build_default_world}} {}
+        builders{} {}
 
 std::shared_ptr<const World> WorldCatalog::get(const std::string& name) {
     std::lock_guard<std::mutex> lock(mtx);
-    const auto existing = worlds.find(name);
+    std::string canonical = name;
+    if (name == "por_defecto") {
+        canonical = "map_1";
+    }
+    if (canonical.empty() || canonical == "." || canonical == ".." ||
+        canonical.find('/') != std::string::npos ||
+        canonical.find('\\') != std::string::npos ||
+        canonical.find("..") != std::string::npos ||
+        std::filesystem::path(canonical).is_absolute()) {
+        throw std::invalid_argument("nombre de mapa invalido: " + name);
+    }
+
+    const auto existing = worlds.find(canonical);
     if (existing != worlds.end()) {
         return existing->second;
     }
-    const auto builder = builders.find(name);
-    if (builder == builders.end()) {
-        throw std::invalid_argument("mundo desconocido: " + name);
+
+    std::filesystem::path maps_directory;
+    std::filesystem::path current = std::filesystem::current_path();
+    for (std::filesystem::path candidate = current;
+         !candidate.empty(); candidate = candidate.parent_path()) {
+        const auto maps = candidate / "editor" / "maps";
+        if (std::filesystem::is_directory(maps)) {
+            maps_directory = maps;
+            break;
+        }
+        if (candidate == candidate.parent_path()) {
+            break;
+        }
     }
-    auto world = builder->second();
-    worlds.emplace(name, world);
+    if (maps_directory.empty()) {
+        throw std::runtime_error("No se encontro editor/maps para el mapa '" +
+                                 canonical + "'");
+    }
+
+    auto world = WorldLoader::load(canonical, maps_directory);
+    worlds.emplace(canonical, world);
     return world;
 }
