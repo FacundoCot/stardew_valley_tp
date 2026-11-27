@@ -10,7 +10,6 @@
 #include <QPen>
 #include <QString>
 
-#include "common_src/define.h" 
 #include "map_definitions.h"
 
 MapScene::MapScene(int map_columns, int map_rows, QObject* parent):
@@ -24,8 +23,7 @@ MapScene::MapScene(int map_columns, int map_rows, QObject* parent):
         selection_size(1),
         press_column(0),
         press_row(0),
-        layer_cells(LAYER_COUNT,
-                    std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)),
+        layer_cells(LAYER_COUNT, std::vector<QGraphicsItem*>(map_columns * map_rows, nullptr)),
         element_type(0),
         element_cells(map_columns * map_rows, nullptr) {
     setSceneRect(0, 0, columns * TILE_SIZE, rows * TILE_SIZE);

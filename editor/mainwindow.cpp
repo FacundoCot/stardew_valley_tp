@@ -9,11 +9,13 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QGraphicsView>
+#include <QMessageBox>
 #include <QRadioButton>
 #include <QStatusBar>
 #include <QString>
 
 #include "map_file.h"
+#include "map_validator.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget* parent):
@@ -70,13 +72,14 @@ MainWindow::MainWindow(QWidget* parent):
             &MainWindow::change_element_type);
     connect(ui->openAction, &QAction::triggered, this, &MainWindow::open_map);
     connect(ui->saveAction, &QAction::triggered, this, &MainWindow::save_map);
+    connect(ui->validateAction, &QAction::triggered, this, &MainWindow::validate_map);
 }
 
 void MainWindow::fill_sheet_list() {
     std::vector<std::string> folders;
     folders.push_back("Farm");
     folders.push_back("Market");
-    folders.push_back("Caverns/Environment");
+    folders.push_back("Caverns");
     folders.push_back("Misc");
 
     for (const std::string& folder : folders) {
@@ -204,6 +207,27 @@ void MainWindow::save_map() {
         ui->statusbar->showMessage(QString::fromStdString("Mapa guardado en " + file_path));
     } else {
         ui->statusbar->showMessage(QString::fromStdString("No se pudo guardar " + file_path));
+    }
+}
+
+void MainWindow::validate_map() {
+    MapValidator validator;
+    const std::vector<std::string> problems = validator.validate(scenes);
+
+    if (problems.empty()) {
+        ui->statusbar->showMessage("El mapa es válido.");
+        QMessageBox::information(this, "Validar mapa", "El mapa es válido.");
+    } else {
+        QString problems_box;
+        for (const std::string& problem : problems) {
+            problems_box += QString::fromStdString(problem) + "\n";
+        }
+
+        QMessageBox box(QMessageBox::Warning, "Validar mapa",
+                        QString("El mapa tiene " + QString::number(problems.size()) + " problema(s)."), 
+                        QMessageBox::Ok, this);
+        box.setDetailedText(problems_box); // desplegable para los problemas
+        box.exec();
     }
 }
 
