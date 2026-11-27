@@ -23,6 +23,10 @@ void MapVisual::draw_map(ZoneId& zone, Camera& camera) {
             break;
         case ZoneId::Kind::CAVE_LEVEL:
             return;
+        case ZoneId::Kind::HOUSE:
+            return;
+        case ZoneId::Kind::COMMUNITY_CENTER:
+            return;
     }
     
     return;

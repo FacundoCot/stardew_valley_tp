@@ -174,7 +174,7 @@ PortalType decode_portal_type(uint8_t value) {
 }
 
 StaticElementType decode_static_element_type(uint8_t value) {
-    if (value <= static_cast<uint8_t>(StaticElementType::TRAP_FLAME_DOWN)) {
+    if (value <= static_cast<uint8_t>(StaticElementType::TRAP_FLAME_UP)) {
         return static_cast<StaticElementType>(value);
     }
     throw std::runtime_error("tipo de elemento estatico invalido");
