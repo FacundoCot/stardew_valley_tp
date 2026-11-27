@@ -5,11 +5,11 @@
 #include <QGraphicsItem>
 
 #include "map_definitions.h"
-#include "map_file.h"  // LAYER_SOLID
+#include "map_file.h"
 #include "map_rules.h"
 
 std::string MapValidator::zone_name(int zone) const {
-    const auto found = ZONE_NAMES.find(zone);  // iterador
+    const auto found = ZONE_NAMES.find(zone);
     if (found != ZONE_NAMES.end()) {
         return found->second;
     }
@@ -107,6 +107,18 @@ void MapValidator::at_least_one(int zone, const std::vector<int>& counts, const 
     }
 }
 
+void MapValidator::at_least_one_of(int zone, const std::vector<int>& counts,
+                                   const std::unordered_set<std::string>& element_ids,
+                                   const std::string& what, std::vector<std::string>& problems) const {
+    int total = 0;
+    for (const std::string& id : element_ids) {
+        total += counts[static_cast<size_t>(type_of(id))];
+    }
+    if (total == 0) {
+        problems.push_back(zone_name(zone) + ": falta al menos un " + what);
+    }
+}
+
 void MapValidator::none(int zone, const std::vector<int>& counts, const std::string& element_id,
                         std::vector<std::string>& problems) const {
     const int type = type_of(element_id);
@@ -132,10 +144,10 @@ void MapValidator::check_zone(int zone, const MapScene* scene,
         }
     }
 
-    // al menos un enemigo por caverna
+    // al menos un spawn de enemigos (de cualquier tipo) por caverna
     bool is_cave = (zone >= ZONE_FIRST_CAVE && zone < ZONE_HOUSE);
     if (is_cave) {
-        at_least_one(zone, counts, "enemy", problems);
+        at_least_one_of(zone, counts, ENEMY_SPAWNS, "spawn de enemigo", problems);
     }
 
     check_cave_elements(zone, counts, problems);

@@ -120720,7 +120720,7 @@ x = 90
 y = 38
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 84
 y = 39
 
@@ -120730,7 +120730,7 @@ x = 85
 y = 39
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 95
 y = 39
 
@@ -120738,6 +120738,11 @@ y = 39
 type = "ore_coal"
 x = 96
 y = 39
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 90
+y = 44
 
 [[zone.element]]
 type = "dungeon_exit"
@@ -121828,14 +121833,24 @@ x = 88
 y = 35
 
 [[zone.element]]
+type = "abandoned_chest"
+x = 90
+y = 35
+
+[[zone.element]]
 type = "ore_lapis"
 x = 92
 y = 35
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_orc"
+x = 88
+y = 37
+
+[[zone.element]]
+type = "spawn_orc"
 x = 92
-y = 36
+y = 37
 
 [[zone.element]]
 type = "stair_down"
@@ -121846,11 +121861,6 @@ y = 37
 type = "ore_coal"
 x = 89
 y = 38
-
-[[zone.element]]
-type = "enemy"
-x = 92
-y = 39
 
 [[zone.element]]
 type = "stair_up"
@@ -123788,18 +123798,23 @@ x = 93
 y = 37
 
 [[zone.element]]
-type = "enemy"
-x = 81
-y = 38
+type = "spawn_skeleton"
+x = 96
+y = 37
 
 [[zone.element]]
-type = "enemy"
-x = 90
-y = 38
+type = "spawn_orc"
+x = 81
+y = 39
 
 [[zone.element]]
 type = "trap_spikes"
 x = 83
+y = 39
+
+[[zone.element]]
+type = "spawn_orc"
+x = 86
 y = 39
 
 [[zone.element]]
@@ -123816,6 +123831,11 @@ y = 39
 type = "ore_lapis"
 x = 81
 y = 40
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 91
+y = 41
 
 [[zone.element]]
 type = "ore_coal"
@@ -125735,8 +125755,8 @@ x = 87
 y = 28
 
 [[zone.element]]
-type = "enemy"
-x = 94
+type = "spawn_orc"
+x = 92
 y = 30
 
 [[zone.element]]
@@ -125750,7 +125770,12 @@ x = 92
 y = 32
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
+x = 84
+y = 34
+
+[[zone.element]]
+type = "spawn_skeleton"
 x = 80
 y = 35
 
@@ -125765,6 +125790,11 @@ x = 84
 y = 36
 
 [[zone.element]]
+type = "spawn_skeleton"
+x = 82
+y = 37
+
+[[zone.element]]
 type = "dungeon_exit"
 x = 92
 y = 38
@@ -125775,9 +125805,9 @@ x = 92
 y = 40
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_orc"
 x = 94
-y = 40
+y = 41
 
 [[zone.element]]
 type = "ore_coal"
@@ -128531,18 +128561,23 @@ x = 86
 y = 35
 
 [[zone.element]]
+type = "abandoned_chest"
+x = 92
+y = 36
+
+[[zone.element]]
 type = "ore_silver"
 x = 76
 y = 37
 
 [[zone.element]]
-type = "enemy"
-x = 77
+type = "spawn_vampire"
+x = 86
 y = 37
 
 [[zone.element]]
-type = "enemy"
-x = 95
+type = "spawn_orc"
+x = 94
 y = 37
 
 [[zone.element]]
@@ -128576,13 +128611,13 @@ x = 96
 y = 46
 
 [[zone.element]]
-type = "enemy"
-x = 77
+type = "spawn_orc"
+x = 78
 y = 47
 
 [[zone.element]]
-type = "enemy"
-x = 95
+type = "spawn_skeleton"
+x = 89
 y = 47
 
 [[zone.element]]
@@ -129710,7 +129745,7 @@ x = 85
 y = 39
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_orc"
 x = 88
 y = 39
 
@@ -129720,7 +129755,7 @@ x = 91
 y = 39
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 88
 y = 42
 
@@ -129730,8 +129765,13 @@ x = 90
 y = 43
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 88
+y = 44
+
+[[zone.element]]
+type = "abandoned_chest"
+x = 91
 y = 45
 
 [[zone.element]]
@@ -131621,14 +131661,24 @@ x = 82
 y = 29
 
 [[zone.element]]
-type = "enemy"
-x = 82
-y = 30
-
-[[zone.element]]
 type = "stair_down"
 x = 88
 y = 31
+
+[[zone.element]]
+type = "spawn_orc"
+x = 94
+y = 31
+
+[[zone.element]]
+type = "spawn_vampire"
+x = 82
+y = 32
+
+[[zone.element]]
+type = "abandoned_chest"
+x = 85
+y = 32
 
 [[zone.element]]
 type = "trap_spikes"
@@ -131646,16 +131696,6 @@ x = 82
 y = 34
 
 [[zone.element]]
-type = "enemy"
-x = 85
-y = 34
-
-[[zone.element]]
-type = "enemy"
-x = 91
-y = 34
-
-[[zone.element]]
 type = "trap_spikes"
 x = 88
 y = 35
@@ -131664,6 +131704,11 @@ y = 35
 type = "ore_silver"
 x = 95
 y = 35
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 89
+y = 37
 
 [[zone.element]]
 type = "ore_lapis"
@@ -131676,14 +131721,19 @@ x = 86
 y = 39
 
 [[zone.element]]
-type = "enemy"
-x = 88
-y = 39
+type = "spawn_skeleton"
+x = 90
+y = 40
 
 [[zone.element]]
 type = "ore_coal"
 x = 90
 y = 41
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 86
+y = 42
 
 [[zone.element]]
 type = "ore_coal"
@@ -133336,9 +133386,9 @@ x = 89
 y = 34
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 89
-y = 37
+y = 36
 
 [[zone.element]]
 type = "ore_lapis"
@@ -133361,9 +133411,9 @@ x = 95
 y = 39
 
 [[zone.element]]
-type = "enemy"
-x = 96
-y = 40
+type = "spawn_orc"
+x = 99
+y = 39
 
 [[zone.element]]
 type = "trap_flame_right"
@@ -133371,8 +133421,8 @@ x = 84
 y = 41
 
 [[zone.element]]
-type = "enemy"
-x = 86
+type = "spawn_skeleton"
+x = 92
 y = 41
 
 [[zone.element]]
@@ -133381,19 +133431,14 @@ x = 95
 y = 41
 
 [[zone.element]]
-type = "stair_down"
-x = 102
+type = "spawn_skull"
+x = 97
 y = 41
 
 [[zone.element]]
-type = "enemy"
-x = 93
-y = 42
-
-[[zone.element]]
-type = "enemy"
-x = 98
-y = 42
+type = "stair_down"
+x = 102
+y = 41
 
 [[zone.element]]
 type = "ore_coal"
@@ -136187,7 +136232,7 @@ x = 89
 y = 24
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_vampire"
 x = 89
 y = 27
 
@@ -136207,14 +136252,14 @@ x = 94
 y = 28
 
 [[zone.element]]
-type = "enemy"
-x = 85
-y = 29
+type = "spawn_skull"
+x = 94
+y = 30
 
 [[zone.element]]
-type = "enemy"
-x = 93
-y = 29
+type = "spawn_skeleton"
+x = 85
+y = 31
 
 [[zone.element]]
 type = "trap_flame_down"
@@ -136232,13 +136277,13 @@ x = 90
 y = 34
 
 [[zone.element]]
-type = "enemy"
-x = 89
-y = 37
-
-[[zone.element]]
 type = "dungeon_exit"
 x = 82
+y = 39
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 84
 y = 39
 
 [[zone.element]]
@@ -136262,18 +136307,18 @@ x = 93
 y = 42
 
 [[zone.element]]
-type = "enemy"
-x = 85
-y = 44
-
-[[zone.element]]
-type = "enemy"
+type = "spawn_orc"
 x = 93
-y = 44
+y = 43
 
 [[zone.element]]
 type = "ore_gold"
 x = 84
+y = 45
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 86
 y = 45
 
 [[zone.element]]
@@ -142512,11 +142557,6 @@ x = 84
 y = 17
 
 [[zone.element]]
-type = "enemy"
-x = 86
-y = 17
-
-[[zone.element]]
 type = "ore_gold"
 x = 88
 y = 17
@@ -142527,14 +142567,29 @@ x = 91
 y = 17
 
 [[zone.element]]
-type = "enemy"
-x = 81
+type = "spawn_skull"
+x = 86
+y = 19
+
+[[zone.element]]
+type = "spawn_skeleton"
+x = 80
 y = 20
 
 [[zone.element]]
-type = "enemy"
-x = 91
+type = "spawn_skeleton"
+x = 92
 y = 20
+
+[[zone.element]]
+type = "abandoned_chest"
+x = 76
+y = 21
+
+[[zone.element]]
+type = "abandoned_chest"
+x = 96
+y = 21
 
 [[zone.element]]
 type = "ore_lapis"
@@ -142552,14 +142607,19 @@ x = 90
 y = 24
 
 [[zone.element]]
-type = "ore_silver"
-x = 99
+type = "spawn_skeleton"
+x = 76
 y = 25
 
 [[zone.element]]
-type = "enemy"
-x = 76
-y = 26
+type = "spawn_orc"
+x = 86
+y = 25
+
+[[zone.element]]
+type = "ore_silver"
+x = 99
+y = 25
 
 [[zone.element]]
 type = "ore_lapis"
@@ -142567,7 +142627,7 @@ x = 79
 y = 26
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_skeleton"
 x = 96
 y = 26
 
@@ -142577,13 +142637,18 @@ x = 73
 y = 29
 
 [[zone.element]]
-type = "enemy"
-x = 86
-y = 29
-
-[[zone.element]]
 type = "trap_flame_right"
 x = 72
+y = 30
+
+[[zone.element]]
+type = "spawn_vampire"
+x = 76
+y = 30
+
+[[zone.element]]
+type = "spawn_vampire"
+x = 95
 y = 30
 
 [[zone.element]]
@@ -142602,11 +142667,6 @@ x = 73
 y = 31
 
 [[zone.element]]
-type = "enemy"
-x = 76
-y = 33
-
-[[zone.element]]
 type = "ore_coal"
 x = 86
 y = 33
@@ -142614,11 +142674,6 @@ y = 33
 [[zone.element]]
 type = "ore_coal"
 x = 87
-y = 33
-
-[[zone.element]]
-type = "enemy"
-x = 96
 y = 33
 
 [[zone.element]]
@@ -142647,7 +142702,7 @@ x = 90
 y = 36
 
 [[zone.element]]
-type = "enemy"
+type = "spawn_orc"
 x = 86
 y = 39
 
@@ -152285,6 +152340,30 @@ row = 51
 layer = "objects"
 
 [[zone.tile]]
+x = 16
+y = 16
+sheet = "Misc/tilesets_outdoors.png"
+col = 22
+row = 4
+layer = "objects"
+
+[[zone.tile]]
+x = 30
+y = 16
+sheet = "Misc/tilesets_outdoors.png"
+col = 22
+row = 4
+layer = "objects"
+
+[[zone.tile]]
+x = 45
+y = 16
+sheet = "Misc/tilesets_outdoors.png"
+col = 22
+row = 4
+layer = "objects"
+
+[[zone.tile]]
 x = 34
 y = 18
 sheet = "Farm/Environment/Tilesets_Furniture.png"
@@ -152645,6 +152724,22 @@ row = 51
 layer = "objects"
 
 [[zone.tile]]
+x = 15
+y = 32
+sheet = "Misc/tilesets_outdoors.png"
+col = 22
+row = 4
+layer = "objects"
+
+[[zone.tile]]
+x = 46
+y = 32
+sheet = "Misc/tilesets_outdoors.png"
+col = 22
+row = 4
+layer = "objects"
+
+[[zone.tile]]
 x = 46
 y = 35
 sheet = "Farm/Environment/Tilesets_Furniture.png"
@@ -152653,7 +152748,7 @@ row = 61
 layer = "objects"
 
 [[zone.tile]]
-x = 14
+x = 12
 y = 36
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 42
@@ -152661,7 +152756,7 @@ row = 5
 layer = "objects"
 
 [[zone.tile]]
-x = 15
+x = 13
 y = 36
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 43
@@ -152669,15 +152764,7 @@ row = 5
 layer = "objects"
 
 [[zone.tile]]
-x = 16
-y = 36
-sheet = "Farm/Environment/Tilesets_Furniture.png"
-col = 43
-row = 5
-layer = "objects"
-
-[[zone.tile]]
-x = 17
+x = 14
 y = 36
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 44
@@ -152709,7 +152796,7 @@ row = 59
 layer = "objects"
 
 [[zone.tile]]
-x = 14
+x = 12
 y = 37
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 42
@@ -152717,11 +152804,27 @@ row = 6
 layer = "objects"
 
 [[zone.tile]]
-x = 15
+x = 13
 y = 37
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 43
 row = 6
+layer = "objects"
+
+[[zone.tile]]
+x = 14
+y = 37
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 44
+row = 6
+layer = "objects"
+
+[[zone.tile]]
+x = 15
+y = 37
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 42
+row = 0
 layer = "objects"
 
 [[zone.tile]]
@@ -152729,7 +152832,7 @@ x = 16
 y = 37
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 43
-row = 6
+row = 0
 layer = "objects"
 
 [[zone.tile]]
@@ -152737,7 +152840,7 @@ x = 17
 y = 37
 sheet = "Farm/Environment/Tilesets_Furniture.png"
 col = 44
-row = 6
+row = 0
 layer = "objects"
 
 [[zone.tile]]
@@ -152765,28 +152868,93 @@ row = 60
 layer = "objects"
 
 [[zone.tile]]
-x = 28
-y = 11
+x = 15
+y = 38
 sheet = "Farm/Environment/Tilesets_Furniture.png"
-col = 41
-row = 26
-layer = "decor"
+col = 42
+row = 1
+layer = "objects"
+
+[[zone.tile]]
+x = 16
+y = 38
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 43
+row = 1
+layer = "objects"
+
+[[zone.tile]]
+x = 17
+y = 38
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 44
+row = 1
+layer = "objects"
 
 [[zone.tile]]
 x = 28
 y = 12
-sheet = "Farm/Environment/Tilesets_Furniture.png"
-col = 41
-row = 27
+sheet = "Market/World/StradewValley/Tilesets_Town_Interiors.png"
+col = 19
+row = 104
 layer = "decor"
 
 [[zone.tile]]
 x = 28
 y = 13
-sheet = "Farm/Environment/Tilesets_Furniture.png"
-col = 41
-row = 28
+sheet = "Market/World/StradewValley/Tilesets_Town_Interiors.png"
+col = 19
+row = 105
 layer = "decor"
+
+[[zone.tile]]
+x = 50
+y = 27
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 8
+row = 82
+layer = "decor"
+
+[[zone.tile]]
+x = 50
+y = 28
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 8
+row = 83
+layer = "decor"
+
+[[zone.tile]]
+x = 50
+y = 29
+sheet = "Farm/Environment/Tilesets_Furniture.png"
+col = 8
+row = 84
+layer = "decor"
+
+[[zone.element]]
+type = "offering_money"
+x = 16
+y = 17
+
+[[zone.element]]
+type = "offering_fight"
+x = 30
+y = 17
+
+[[zone.element]]
+type = "offering_metals"
+x = 45
+y = 17
+
+[[zone.element]]
+type = "offering_animals"
+x = 15
+y = 33
+
+[[zone.element]]
+type = "offering_crops"
+x = 46
+y = 33
 
 [[zone.element]]
 type = "center_exit"

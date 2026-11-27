@@ -23,12 +23,16 @@ struct ElementType {
     bool unique; // por zona
 };
 
-const int ELEMENT_COUNT = 24;
+const int ELEMENT_COUNT = 33;
 
 const QColor PORTAL_COLOR(70, 130, 255, 190);
 const QColor BED_COLOR(60, 180, 90, 190);
 const QColor NPC_COLOR(240, 160, 40, 190);
-const QColor ENEMY_SPAWN_COLOR(220, 60, 60, 190);
+
+const QColor SKELETON_COLOR(225, 225, 205, 210);
+const QColor ORC_COLOR(90, 160, 60, 210);
+const QColor VAMPIRE_COLOR(150, 20, 40, 210);
+const QColor SKULL_COLOR(235, 120, 40, 210);
 
 const QColor COAL_COLOR(60, 60, 60, 220);
 const QColor LAPIS_COLOR(40, 70, 170, 200);
@@ -37,6 +41,9 @@ const QColor GOLD_COLOR(240, 200, 40, 200);
 
 const QColor SPIKES_COLOR(150, 70, 200, 190);
 const QColor FLAMETHROWER_COLOR(220, 70, 150, 190);
+
+const QColor CHEST_COLOR(150, 100, 50, 210);
+const QColor OFFERING_COLOR(40, 170, 170, 200);
 
 const ElementType ELEMENT_TYPES[ELEMENT_COUNT] = {
     {"road", "Camino (granja <-> pueblo)", PORTAL_COLOR, true},
@@ -53,7 +60,10 @@ const ElementType ELEMENT_TYPES[ELEMENT_COUNT] = {
     {"clint", "Clint", NPC_COLOR, true},
     {"pierre", "Pierre", NPC_COLOR, true},
     {"robin", "Robin", NPC_COLOR, true},
-    {"enemy", "Spawn de enemigo", ENEMY_SPAWN_COLOR, false},
+    {"spawn_skeleton", "Spawn: esqueleto (solo)", SKELETON_COLOR, false},
+    {"spawn_orc", "Spawn: orcos (grupo de 3 a 6)", ORC_COLOR, false},
+    {"spawn_vampire", "Spawn: vampiros (pareja)", VAMPIRE_COLOR, false},
+    {"spawn_skull", "Spawn: calavera (una por nivel)", SKULL_COLOR, true},
     {"ore_coal", "Mineral: carbón", COAL_COLOR, false},
     {"ore_lapis", "Mineral: lapislázuli", LAPIS_COLOR, false},
     {"ore_silver", "Mineral: plata", SILVER_COLOR, false},
@@ -63,6 +73,12 @@ const ElementType ELEMENT_TYPES[ELEMENT_COUNT] = {
     {"trap_flame_down", "Trampa: lanzallamas hacia abajo", FLAMETHROWER_COLOR, false},
     {"trap_flame_left", "Trampa: lanzallamas hacia la izquierda", FLAMETHROWER_COLOR, false},
     {"trap_flame_right", "Trampa: lanzallamas hacia la derecha", FLAMETHROWER_COLOR, false},
+    {"abandoned_chest", "Cofre abandonado", CHEST_COLOR, false},
+    {"offering_crops", "Ofrenda: cultivos", OFFERING_COLOR, true},
+    {"offering_metals", "Ofrenda: metales", OFFERING_COLOR, true},
+    {"offering_animals", "Ofrenda: productos animales", OFFERING_COLOR, true},
+    {"offering_fight", "Ofrenda: pelea", OFFERING_COLOR, true},
+    {"offering_money", "Ofrenda: dinero", OFFERING_COLOR, true},
 };
 
 #endif

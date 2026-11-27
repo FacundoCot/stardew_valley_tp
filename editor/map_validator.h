@@ -2,6 +2,7 @@
 #define MAP_VALIDATOR_H
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "map_scene.h"
@@ -25,6 +26,9 @@ private:
                      std::vector<std::string>& problems) const;
     void at_least_one(int zone, const std::vector<int>& counts, const std::string& element_id,
                       std::vector<std::string>& problems) const;
+    void at_least_one_of(int zone, const std::vector<int>& counts,
+                         const std::unordered_set<std::string>& element_ids, const std::string& what,
+                         std::vector<std::string>& problems) const;
     void none(int zone, const std::vector<int>& counts, const std::string& element_id,
               std::vector<std::string>& problems) const;
 

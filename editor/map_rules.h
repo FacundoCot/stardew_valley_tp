@@ -30,20 +30,27 @@ const std::unordered_map<int, std::unordered_set<std::string>> REQUIRED_ELEMENTS
     {ZONE_FIRST_CAVE + 8, {"dungeon_exit", "stair_down", "stair_up"}},
     {ZONE_FIRST_CAVE + 9, {"dungeon_exit", "stair_up"}},
     {ZONE_HOUSE, {"house_exit", "bed"}},
-    {ZONE_COMMUNITY_CENTER, {"center_exit"}},
+    {ZONE_COMMUNITY_CENTER, {"center_exit", "offering_crops", "offering_metals", "offering_animals",
+                             "offering_fight", "offering_money"}},
+};
+
+const std::unordered_set<std::string> ENEMY_SPAWNS = {
+    "spawn_skeleton", "spawn_orc", "spawn_vampire", "spawn_skull",
 };
 
 // repetibles en cavernas
 const std::unordered_set<std::string> CAVE_ONLY_ELEMENTS = {
-    "enemy", "ore_coal", "ore_lapis", "ore_silver", "ore_gold", "trap_spikes",
+    "spawn_skeleton", "spawn_orc", "spawn_vampire", "spawn_skull",
+    "ore_coal", "ore_lapis", "ore_silver", "ore_gold", "trap_spikes",
     "trap_flame_up", "trap_flame_down", "trap_flame_left", "trap_flame_right",
+    "abandoned_chest",
 };
 
 // no pueden estar tapados
 const std::unordered_set<std::string> FLOOR_ELEMENTS = {
     "road", "dungeon_door", "house_door", "center_door", "stair_down", "stair_up", 
-    "dungeon_exit", "house_exit", "center_exit", "enemy", "marnie", "clint", "pierre", 
-    "robin", "trap_spikes"
+    "dungeon_exit", "house_exit", "center_exit", "spawn_skeleton", "spawn_orc", "spawn_vampire",
+    "spawn_skull", "marnie", "clint", "pierre", "robin", "trap_spikes"
 };
 
 #endif
