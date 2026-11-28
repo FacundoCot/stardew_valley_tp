@@ -49,6 +49,8 @@ class MainWindow : public QMainWindow {
         void closeEvent(QCloseEvent* event) override;
         void set_mainwindow_connections();
         void set_character_connections();
+        void continue_game(const std::string& code, const CharacterAppearance& appearance);
+        void list_games(const ServerMessage& res);
     private slots:
         void on_submitUsernameButton_clicked();
         void on_createButton_clicked();

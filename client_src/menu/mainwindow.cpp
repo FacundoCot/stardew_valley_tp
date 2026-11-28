@@ -76,8 +76,13 @@ void MainWindow::on_createButton_clicked(){
 }
 
 void MainWindow::on_continueButton_clicked(){
+    ClientMessage msg;
+    msg.type = ActionType::LIST_GAMES;
+
+    commands.push(msg);
+    
+    timer->start(20);
     ui->stackedWidget->setCurrentIndex(CONTINUE);
-    // consultar a servidor por partidas relacionadas a este cliente
 }
 
 void MainWindow::on_joinButton_clicked(){
@@ -164,6 +169,14 @@ void MainWindow::timer_create_response() {
     } else if (res.type == MessageType::USERNAME) {    
         ui->usernameLabel->setText(QString::fromStdString(username));
         ui->stackedWidget->setCurrentIndex(MAIN);
+
+    } else if (res.type == MessageType::GAMES_LIST) {
+        if(res.games.empty()){
+            QMessageBox::information(this, "Aviso", "No hay partidas ya jugadas.");
+        } else {
+            list_games(res);
+        }
+
     } else {
         std::cout << res.game_code << std::endl;
         game_started = true;
@@ -178,6 +191,49 @@ void MainWindow::customization_menu(MenuStyle new_style) {
     ui->farmNameEdit->setVisible(if_create);
     ui->farmNameLabel->setVisible(if_create);
     ui->stackedWidget->setCurrentIndex(CUSTOM_CREATE);
+}
+
+void MainWindow::list_games(const ServerMessage& res) {
+    for(const GameInfoForMenu& game : res.games) {
+        QWidget* gameWidget = new QWidget(ui->scrollAreaWidgetContents);
+        QHBoxLayout* gameBox = new QHBoxLayout(gameWidget);
+        
+        CharacterPreview* appearance = new CharacterPreview(gameWidget);
+        appearance->set_appearance(game.appearance);
+
+        QLabel* game_name = new QLabel(QString::fromStdString(game.game_name), gameWidget);
+        QLabel* owner_name = new QLabel(QString::fromStdString(game.owner_name), gameWidget);
+        // QLabel* player_name = new QLabel(QString::fromStdString(game.player_name), gameWidget);
+        
+        QString multiplayer = (game.multiplayer ? "Multiplayer" : "Singleplayer");
+        QLabel* multiplayer_info = new QLabel(multiplayer, gameWidget);
+
+        QPushButton* joinGameButton = new QPushButton("Ingresar", gameWidget);
+
+        gameBox->addWidget(appearance);
+        gameBox->addWidget(game_name);
+        gameBox->addWidget(owner_name);
+        gameBox->addWidget(multiplayer_info);
+        gameBox->addWidget(joinGameButton);
+        
+        std::string code = game.game_code;
+        CharacterAppearance player_appearance = game.appearance;
+        connect(joinGameButton, &QPushButton::clicked, this, 
+            [code, player_appearance, this](){ continue_game(code, player_appearance); });
+    }   
+}
+
+void MainWindow::continue_game(const std::string& code, const CharacterAppearance& appearance){
+    ClientMessage msg{};
+
+    msg.type = ActionType::JOIN_GAME;
+    msg.game_code = code;
+    msg.player_name = username;
+    msg.player_name_len = username.size();
+    msg.appearance = appearance;
+
+    commands.push(msg);
+    timer->start(20);
 }
 
 MainWindow::~MainWindow() { delete ui; }

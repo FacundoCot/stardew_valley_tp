@@ -41,6 +41,11 @@ void CharacterPreview::next_part(uint16_t& part, const int count)  {
 
 CharacterAppearance CharacterPreview::get_appearance() const { return appearance; }
 
+void CharacterPreview::set_appearance(const CharacterAppearance& new_appearance) {
+    appearance = new_appearance;
+    update();
+}
+
 int CharacterPreview::cycle(int item, int change, int amount) {
     int next = (item + change) % amount;
     if (next < 0) 

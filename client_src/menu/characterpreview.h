@@ -27,6 +27,7 @@ class CharacterPreview : public QWidget {
         explicit CharacterPreview(QWidget* parent = nullptr);
 
         CharacterAppearance get_appearance() const;
+        void set_appearance(const CharacterAppearance& new_appearance);
 
     public slots:
         void prev_body();    

@@ -36,8 +36,8 @@ QWidget {
     <property name="topMargin">
      <number>0</number>
     </property>
-    <item row="3" column="1">
-     <spacer name="verticalSpacerDown">
+    <item row="0" column="1">
+     <spacer name="verticalSpacerUp">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -68,22 +68,6 @@ QWidget {
       </property>
      </spacer>
     </item>
-    <item row="0" column="1">
-     <spacer name="verticalSpacerUp">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
     <item row="1" column="2">
      <spacer name="horizontalSpacerRight">
       <property name="orientation">
@@ -109,7 +93,7 @@ QWidget {
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <property name="sizePolicy">
@@ -1599,6 +1583,24 @@ border: 2px solid #F1B86F;</string>
                    <height>519</height>
                   </rect>
                  </property>
+                 <layout class="QGridLayout" name="gridLayout_14">
+                  <item row="0" column="0">
+                   <layout class="QVBoxLayout" name="continueVLayout"/>
+                  </item>
+                  <item row="1" column="0">
+                   <spacer name="continueVSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
                 </widget>
                </widget>
               </item>
@@ -2310,6 +2312,22 @@ border: 2px solid #F1B86F;</string>
        </layout>
       </widget>
      </widget>
+    </item>
+    <item row="3" column="1">
+     <spacer name="verticalSpacerDown">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
    </layout>
   </widget>
