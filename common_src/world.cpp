@@ -1,5 +1,4 @@
 #include "world.h"
-#include "define.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -15,6 +14,27 @@
 namespace {
 bool is_cave(ZoneId id) {
     return id.kind == ZoneId::Kind::CAVE_LEVEL;
+}
+
+bool valid_portal_type(ZoneId::Kind kind, PortalType type) {
+    switch (kind) {
+        case ZoneId::Kind::FARM:
+            return type == PortalType::DUNGEON_DOOR ||
+                   type == PortalType::ROAD ||
+                   type == PortalType::HOUSE_DOOR;
+        case ZoneId::Kind::VILLAGE:
+            return type == PortalType::ROAD ||
+                   type == PortalType::DUNGEON_DOOR ||
+                   type == PortalType::CENTER_DOOR;
+        case ZoneId::Kind::HOUSE:
+            return type == PortalType::HOUSE_EXIT;
+        case ZoneId::Kind::COMMUNITY_CENTER:
+            return type == PortalType::CENTER_EXIT;
+        case ZoneId::Kind::CAVE_LEVEL:
+            return type == PortalType::DUNGEON_EXIT ||
+                   type == PortalType::STAIR;
+    }
+    return false;
 }
 
 std::pair<int, int> cell_of(float x, float y) {
@@ -95,38 +115,65 @@ World::World(std::map<ZoneId, std::shared_ptr<const Zone>> zones_param):
         if (entry_zone == nullptr) {
             throw std::invalid_argument("zona nula en el mundo");
         }
-        if (entry_zone->width() != ZONE_WIDTH ||
-            entry_zone->height() != ZONE_HEIGHT) {
-            throw std::invalid_argument("todas las zonas deben tener el mismo tamano");
-        }
         if (entry_zone->id() != id) {
             throw std::invalid_argument("la clave no coincide con el id de la zona");
         }
-        if (is_cave(id)) {
-            if (id.level < 1 || id.level > 10) {
-                throw std::invalid_argument(
-                    "nivel de caverna fuera de rango");
-            }
-        } else if (id.level != 0) {
-            throw std::invalid_argument(
-                "una zona que no es caverna debe tener nivel 0");
+        switch (id.kind) {
+            case ZoneId::Kind::CAVE_LEVEL:
+                if (id.level < 1 || id.level > 10) {
+                    throw std::invalid_argument(
+                        "nivel de caverna fuera de rango");
+                }
+                break;
+            case ZoneId::Kind::FARM:
+            case ZoneId::Kind::VILLAGE:
+            case ZoneId::Kind::HOUSE:
+            case ZoneId::Kind::COMMUNITY_CENTER:
+                if (id.level != 0) {
+                    throw std::invalid_argument(
+                        "una zona que no es caverna debe tener nivel 0");
+                }
+                break;
+            default:
+                throw std::invalid_argument("tipo de zona invalido");
         }
 
-        if (!is_cave(id)) {
-            for (const Portal& portal : entry_zone->get_portals()) {
-                if (portal.type != PortalType::DUNGEON_DOOR &&
-                    portal.type != PortalType::ROAD) {
-                    throw std::invalid_argument(
-                        "una zona de superficie solo puede tener puertas y caminos");
-                }
+        for (const Portal& portal : entry_zone->get_portals()) {
+            if (!valid_portal_type(id.kind, portal.type)) {
+                throw std::invalid_argument(
+                    "tipo de portal invalido para la zona");
             }
-        } else {
-            for (const Portal& portal : entry_zone->get_portals()) {
-                if (portal.type == PortalType::DUNGEON_DOOR ||
-                    portal.type == PortalType::ROAD) {
-                    throw std::invalid_argument(
-                        "una zona de caverna no puede tener puertas ni caminos");
-                }
+            switch (portal.type) {
+                case PortalType::HOUSE_DOOR:
+                    if (id.kind != ZoneId::Kind::FARM ||
+                        portal.destination != ZoneId::HOUSE_ZONE) {
+                        throw std::invalid_argument(
+                            "la puerta de la granja debe llevar a la casa");
+                    }
+                    break;
+                case PortalType::HOUSE_EXIT:
+                    if (id.kind != ZoneId::Kind::HOUSE ||
+                        portal.destination != ZoneId::FARM_ZONE) {
+                        throw std::invalid_argument(
+                            "la salida de la casa debe llevar a la granja");
+                    }
+                    break;
+                case PortalType::CENTER_DOOR:
+                    if (id.kind != ZoneId::Kind::VILLAGE ||
+                        portal.destination != ZoneId::COMMUNITY_CENTER_ZONE) {
+                        throw std::invalid_argument(
+                            "la puerta del pueblo debe llevar al centro comunitario");
+                    }
+                    break;
+                case PortalType::CENTER_EXIT:
+                    if (id.kind != ZoneId::Kind::COMMUNITY_CENTER ||
+                        portal.destination != ZoneId::VILLAGE_ZONE) {
+                        throw std::invalid_argument(
+                            "la salida del centro debe llevar al pueblo");
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }

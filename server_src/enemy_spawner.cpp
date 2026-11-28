@@ -2,8 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <set>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 #include "../common_src/cave_level.h"
 #include "orc.h"
@@ -12,109 +13,151 @@
 #include "vampire.h"
 
 namespace {
+enum class SpawnCategory {
+    ORC,
+    VAMPIRE_PAIR,
+    SKELETON,
+    SKULL
+};
+
 EnemyStats stats(const EnemyTypeConfig& c) {
     return {c.max_health, c.damage, c.speed, c.attack_cooldown, c.attack_range};
 }
-bool near(const std::pair<float, float>& a, const std::pair<float, float>& b) {
-    return std::max(std::abs(a.first - b.first), std::abs(a.second - b.second)) <= 2.5f;
+
+std::vector<std::pair<float, float>> group_positions(
+        const CaveLevel& level, const std::pair<float, float>& anchor,
+        const std::vector<std::pair<float, float>>& spawn_points,
+        int count, Random& rng) {
+    constexpr int SPAWN_SEARCH_RADIUS = 2;
+    const int anchor_x = static_cast<int>(std::floor(anchor.first));
+    const int anchor_y = static_cast<int>(std::floor(anchor.second));
+    std::vector<std::pair<float, float>> candidates;
+    for (int y = anchor_y - SPAWN_SEARCH_RADIUS;
+         y <= anchor_y + SPAWN_SEARCH_RADIUS; ++y) {
+        for (int x = anchor_x - SPAWN_SEARCH_RADIUS;
+             x <= anchor_x + SPAWN_SEARCH_RADIUS; ++x) {
+            const std::pair<float, float> position{
+                static_cast<float>(x) + 0.5f,
+                static_cast<float>(y) + 0.5f
+            };
+            bool is_other_spawn = false;
+            for (const auto& spawn : spawn_points) {
+                if (static_cast<int>(std::floor(spawn.first)) == x &&
+                    static_cast<int>(std::floor(spawn.second)) == y &&
+                    (x != anchor_x || y != anchor_y)) {
+                    is_other_spawn = true;
+                    break;
+                }
+            }
+            if (!is_other_spawn &&
+                level.is_walkable(position.first, position.second)) {
+                candidates.push_back(position);
+            }
+        }
+    }
+    rng.shuffle(candidates.begin(), candidates.end());
+
+    std::vector<std::pair<float, float>> positions;
+    positions.reserve(static_cast<size_t>(count));
+    for (int i = 0; i < count && i < static_cast<int>(candidates.size()); ++i) {
+        positions.push_back(candidates[static_cast<size_t>(i)]);
+    }
+    while (static_cast<int>(positions.size()) < count) {
+        positions.push_back(anchor);
+    }
+    return positions;
 }
 }
 
 std::vector<std::unique_ptr<Enemy>> EnemySpawner::populate(
     ZoneId zone, const CaveLevel& level, const World&) {
-    const auto& points = level.enemy_spawns();
-    std::vector<int> free(points.size());
-    for (size_t i = 0; i < points.size(); ++i) free[i] = static_cast<int>(i);
-    std::vector<std::vector<int>> groups;
-    std::set<int> seen;
-    for (int index : free) {
-        if (seen.count(index)) continue;
-        std::vector<int> group{index};
-        seen.insert(index);
-        for (size_t cursor = 0; cursor < group.size(); ++cursor) {
-            for (int candidate : free) {
-                if (!seen.count(candidate) && near(points[group[cursor]], points[candidate])) {
-                    seen.insert(candidate); group.push_back(candidate);
-                }
-            }
-        }
-        groups.push_back(std::move(group));
+    if (config.skulls_per_level > 1) {
+        throw std::invalid_argument(
+            "spawn.calaveras_por_nivel no puede superar 1");
     }
+    const auto& points = level.enemy_spawns();
+    std::vector<SpawnCategory> categories{
+        SpawnCategory::ORC
+    };
+    const int vampire_pairs = rng.range(config.vampire_pairs_min,
+                                        config.vampire_pairs_max);
+    for (int i = 0; i < vampire_pairs; ++i) {
+        categories.push_back(SpawnCategory::VAMPIRE_PAIR);
+    }
+    const int skeleton_count = rng.range(config.skeletons_min,
+                                         config.skeletons_max);
+    const size_t skeleton_sites =
+        std::min(static_cast<size_t>(skeleton_count), points.size());
+    for (size_t i = 0; i < skeleton_sites; ++i) {
+        categories.push_back(SpawnCategory::SKELETON);
+    }
+    if (config.skulls_per_level == 1) {
+        categories.push_back(SpawnCategory::SKULL);
+    }
+
+    rng.shuffle(categories.begin(), categories.end());
+    if (categories.size() > points.size()) {
+        categories.resize(points.size());
+    }
+    while (categories.size() < points.size()) {
+        categories.push_back(SpawnCategory::ORC);
+    }
+    rng.shuffle(categories.begin(), categories.end());
+
+    std::vector<size_t> point_order(points.size());
+    for (size_t i = 0; i < point_order.size(); ++i) {
+        point_order[i] = i;
+    }
+    rng.shuffle(point_order.begin(), point_order.end());
+
     std::vector<std::unique_ptr<Enemy>> result;
     int next_group = 1;
-    auto take = [&](int index) {
-        free.erase(std::remove(free.begin(), free.end(), index), free.end());
-    };
-    auto make_orc = [&](int index, int group) {
-        auto enemy = std::make_unique<Orc>(zone, points[index].first, points[index].second, stats(config.orc));
-        enemy->set_group_id(group);
-        result.push_back(std::move(enemy));
-    };
-    std::vector<int> order(groups.size());
-    for (size_t i = 0; i < groups.size(); ++i) order[i] = static_cast<int>(i);
-    rng.shuffle(order.begin(), order.end());
-    const int count = rng.range(config.orc_group_min, config.orc_group_max);
-    bool orcs_placed = false;
-    for (int group_index : order) {
-        const auto& group = groups[group_index];
-        if (static_cast<int>(group.size()) < count) continue;
-        std::vector<int> selected = group;
-        rng.shuffle(selected.begin(), selected.end());
-        for (int i = 0; i < count; ++i) {
-            make_orc(selected[i], next_group);
-            take(selected[i]);
-        }
-        ++next_group;
-        orcs_placed = true;
-        break;
-    }
-    if (!orcs_placed) {
-        std::cerr << "No hay espacio para orcos en zona " << zone.level << "\n";
-    }
-    const int pair_count = rng.range(config.vampire_pairs_min, config.vampire_pairs_max);
-    for (int pair = 0; pair < pair_count; ++pair) {
-        bool placed = false;
-        std::vector<std::pair<int, int>> candidates;
-        for (size_t i = 0; i < points.size(); ++i) {
-            if (std::find(free.begin(), free.end(), static_cast<int>(i)) == free.end()) continue;
-            for (size_t j = i + 1; j < points.size(); ++j) {
-                if (std::find(free.begin(), free.end(), static_cast<int>(j)) != free.end() &&
-                    near(points[i], points[j])) {
-                    candidates.emplace_back(static_cast<int>(i), static_cast<int>(j));
+    for (size_t i = 0; i < point_order.size(); ++i) {
+        const auto& anchor = points[point_order[i]];
+        switch (categories[i]) {
+            case SpawnCategory::ORC: {
+                const int count = rng.range(config.orc_group_min,
+                                            config.orc_group_max);
+                const auto positions = group_positions(
+                    level, anchor, points, count, rng);
+                for (const auto& position : positions) {
+                    auto enemy = std::make_unique<Orc>(
+                        zone, position.first, position.second, stats(config.orc));
+                    enemy->set_group_id(next_group);
+                    result.push_back(std::move(enemy));
                 }
+                ++next_group;
+                break;
             }
-        }
-        rng.shuffle(candidates.begin(), candidates.end());
-        if (!candidates.empty()) {
-            const auto [first, second] = candidates.front();
-                auto female = std::make_unique<Vampire>(zone, points[first].first, points[first].second,
-                                                         stats(config.female_vampire), true);
-                auto male = std::make_unique<Vampire>(zone, points[second].first, points[second].second,
-                                                       stats(config.male_vampire), false);
+            case SpawnCategory::VAMPIRE_PAIR: {
+                const auto positions = group_positions(
+                    level, anchor, points, 2, rng);
+                auto female = std::make_unique<Vampire>(
+                    zone, positions[0].first, positions[0].second,
+                    stats(config.female_vampire), true);
+                auto male = std::make_unique<Vampire>(
+                    zone, positions[1].first, positions[1].second,
+                    stats(config.male_vampire), false);
                 female->set_frenzy_multiplier(config.frenzy_multiplier);
                 male->set_frenzy_multiplier(config.frenzy_multiplier);
-                female->set_group_id(next_group); male->set_group_id(next_group);
-                result.push_back(std::move(female)); result.push_back(std::move(male));
-                take(first); take(second); ++next_group;
-                placed = true;
+                female->set_group_id(next_group);
+                male->set_group_id(next_group);
+                result.push_back(std::move(female));
+                result.push_back(std::move(male));
+                ++next_group;
+                break;
+            }
+            case SpawnCategory::SKELETON:
+                result.push_back(std::make_unique<Skeleton>(
+                    zone, anchor.first, anchor.second, stats(config.skeleton),
+                    config.skeleton_revive_seconds));
+                break;
+            case SpawnCategory::SKULL:
+                result.push_back(std::make_unique<Skull>(
+                    zone, anchor.first, anchor.second, rng.range(0, 1) == 1,
+                    config.skull));
+                break;
         }
-        if (!placed) std::cerr << "No hay espacio para vampiros en zona " << zone.level << "\n";
-    }
-    const int skeleton_count = rng.range(config.skeletons_min, config.skeletons_max);
-    for (int i = 0; i < skeleton_count; ++i) {
-        if (free.empty()) { std::cerr << "No hay espacio para esqueletos en zona " << zone.level << "\n"; break; }
-        const int at = rng.range(0, static_cast<int>(free.size()) - 1);
-        const int point = free[at];
-        result.push_back(std::make_unique<Skeleton>(zone, points[point].first, points[point].second,
-                                                    stats(config.skeleton), config.skeleton_revive_seconds));
-        take(point);
-    }
-    for (int i = 0; i < config.skulls_per_level; ++i) {
-        if (free.empty()) { std::cerr << "No hay espacio para calaveras en zona " << zone.level << "\n"; break; }
-        const int point = free[rng.range(0, static_cast<int>(free.size()) - 1)];
-        result.push_back(std::make_unique<Skull>(zone, points[point].first, points[point].second,
-                                                 rng.range(0, 1) == 1, config.skull));
-        take(point);
     }
     return result;
 }

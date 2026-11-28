@@ -5,13 +5,13 @@
 #include "../common_src/queue.h"
 #include "../common_src/messages.h"
 #include "receiver.h"
-#include "menu_in_game.h"
+#include "game/menu_in_game.h"
 
-#include "menu.h"
-#include "client.h"
+#include "menu/menu.h"
+#include "game/client.h"
 #include "client_protocol.h"
-#include "eventhandler.h"
-#include "ui_mainwindow.h"
+#include "game/eventhandler.h"
+#include "menu/ui_mainwindow.h"
 
 int main(int argc, char *argv[]) {
   if (argc != CLIENT_PARAMETERS) {

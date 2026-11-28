@@ -71,8 +71,10 @@ EnemyTypeConfig enemy_type(const toml::table& data, const std::string& section) 
 
 int bounded_group(const toml::table& data, const std::string& key) {
     const int value = positive_int(data, "orco", key);
-    if (value > 6) {
-        throw std::runtime_error("Valor invalido en configuracion: orco." + key);
+    if (value < 3 || value > 6) {
+        throw std::runtime_error(
+            "Valor invalido en configuracion: orco." + key +
+            " debe estar entre 3 y 6");
     }
     return value;
 }
@@ -115,6 +117,11 @@ EnemyConfig EnemyConfig::load(const std::string& path) {
         result.vampire_pairs_max < result.vampire_pairs_min ||
         result.vampire_pairs_max > 3) {
         throw std::runtime_error("Valor invalido en configuracion: spawn");
+    }
+    if (result.skulls_per_level > 1) {
+        throw std::runtime_error(
+            "Valor invalido en configuracion: spawn.calaveras_por_nivel "
+            "no puede superar 1");
     }
     return result;
 }

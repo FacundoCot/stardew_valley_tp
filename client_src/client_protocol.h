@@ -30,6 +30,8 @@ private:
   void rcv_plot(ServerMessage &msg);
   void rcv_chat_message(ServerMessage &msg);
 
+  void recv_or_throw(void *data, unsigned int size);
+
 public:
   explicit ClientProtocol(Socket &&skt_rcv);
 

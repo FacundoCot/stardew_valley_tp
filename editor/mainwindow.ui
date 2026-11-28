@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1200</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Editor de mapas</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <item>
+     <widget class="QGraphicsView" name="mapGraphicsView"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1200</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="fileMenu">
+    <property name="title">
+     <string>Archivo</string>
+    </property>
+    <addaction name="newAction"/>
+    <addaction name="openAction"/>
+    <addaction name="saveAction"/>
+   </widget>
+   <widget class="QMenu" name="mapMenu">
+    <property name="title">
+     <string>Mapa</string>
+    </property>
+    <addaction name="validateAction"/>
+   </widget>
+   <addaction name="fileMenu"/>
+   <addaction name="mapMenu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="paletteDockWidget">
+   <property name="windowTitle">
+    <string>Paleta</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="paletteWidget">
+    <layout class="QVBoxLayout" name="paletteLayout">
+     <item>
+      <widget class="QLabel" name="zoneLabel">
+       <property name="text">
+        <string>Zona</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="zoneComboBox"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="layerLabel">
+       <property name="text">
+        <string>Capa</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="layerComboBox"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="elementTypeLabel">
+       <property name="text">
+        <string>Elemento</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="elementTypeComboBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="sheetLabel">
+       <property name="text">
+        <string>Hoja de tiles</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="sheetComboBox"/>
+     </item>
+     <item>
+      <widget class="QGraphicsView" name="sheetGraphicsView">
+       <property name="minimumSize">
+        <size>
+         <width>280</width>
+         <height>280</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="selectionSizeLabel">
+       <property name="text">
+        <string>Tamaño de selección:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="selectionSizeComboBox">
+       <item>
+        <property name="text">
+         <string>16x16</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>32x32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>48x48</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="paintRadioButton">
+       <property name="text">
+        <string>Pintar</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="eraseRadioButton">
+       <property name="text">
+        <string>Borrar</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="newAction">
+   <property name="text">
+    <string>Nuevo</string>
+   </property>
+  </action>
+  <action name="openAction">
+   <property name="text">
+    <string>Abrir...</string>
+   </property>
+  </action>
+  <action name="saveAction">
+   <property name="text">
+    <string>Guardar...</string>
+   </property>
+  </action>
+  <action name="validateAction">
+   <property name="text">
+    <string>Validar</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

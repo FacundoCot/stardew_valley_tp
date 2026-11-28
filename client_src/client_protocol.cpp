@@ -17,7 +17,6 @@ void ClientProtocol::append_u16_t(std::string &buffer, uint16_t appearance_item)
   buffer.append(reinterpret_cast<const char*>(&appendable), sizeof(uint16_t));
 }
 
-
 void ClientProtocol::serialize_appearance(const ClientMessage& msg_to_server, std::string& buffer){
   append_u16_t(buffer, msg_to_server.appearance.body);
   append_u16_t(buffer, msg_to_server.appearance.hair);
@@ -171,9 +170,15 @@ void ClientProtocol::send_to_server(const ClientMessage &msg_to_server) {
   }
 }
 
+void ClientProtocol::recv_or_throw(void *data, unsigned int size) {
+  if (size > 0 && skt.recvall(data, size) == 0) {
+    throw std::runtime_error("Socket closed.");
+  }
+}
+
 ServerMessage ClientProtocol::rcv_from_server() {
   ServerMessage response{};
-  skt.recvall(&response.type, sizeof(uint8_t));
+  recv_or_throw(&response.type, sizeof(uint8_t));
 
   switch (response.type) {
   case MessageType::GAME_CREATED:
@@ -194,7 +199,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
     response.self_player = rcv_player_state();
 
     uint16_t count_player;
-    skt.recvall(&count_player, sizeof(uint16_t));
+    recv_or_throw(&count_player, sizeof(uint16_t));
     count_player = ntohs(count_player);
 
     response.players.reserve(count_player);
@@ -204,7 +209,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
 
     uint16_t map_count;
-    skt.recvall(&map_count, sizeof(uint16_t));
+    recv_or_throw(&map_count, sizeof(uint16_t));
     map_count = ntohs(map_count);
 
     response.map_players.reserve(map_count);
@@ -216,10 +221,10 @@ ServerMessage ClientProtocol::rcv_from_server() {
 
       uint32_t coordinate;
 
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       player.x = ntohl(coordinate) / 100.0f;
 
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       player.y = ntohl(coordinate) / 100.0f;
 
       player.zone = rcv_zone_id();
@@ -227,35 +232,35 @@ ServerMessage ClientProtocol::rcv_from_server() {
     }
 
     uint16_t enemy_count;
-    skt.recvall(&enemy_count, sizeof(uint16_t));
+    recv_or_throw(&enemy_count, sizeof(uint16_t));
     enemy_count = ntohs(enemy_count);
 
     for (uint16_t i = 0; i < enemy_count; i++) {
       EnemyState enemy;
       
       uint8_t kind;
-      skt.recvall(&kind, sizeof(uint8_t));
+      recv_or_throw(&kind, sizeof(uint8_t));
       enemy.kind = static_cast<EnemyKind>(kind);
 
       uint32_t coordinate;
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       enemy.x = ntohl(coordinate) / 100.0f;
       
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       enemy.y = ntohl(coordinate) / 100.0f;
 
       uint16_t health;
-      skt.recvall(&health, sizeof(uint16_t));
+      recv_or_throw(&health, sizeof(uint16_t));
       enemy.health = ntohs(health);
 
       uint16_t max_health;
-      skt.recvall(&max_health, sizeof(uint16_t));
+      recv_or_throw(&max_health, sizeof(uint16_t));
       enemy.max_health = ntohs(max_health);
 
       uint8_t variant, frenzy;
 
-      skt.recvall(&variant, sizeof(uint8_t));
-      skt.recvall(&frenzy, sizeof(uint8_t));
+      recv_or_throw(&variant, sizeof(uint8_t));
+      recv_or_throw(&frenzy, sizeof(uint8_t));
 
       enemy.variant = static_cast<EnemyVariant>(variant);
       enemy.frenzy = frenzy != 0;
@@ -268,14 +273,14 @@ ServerMessage ClientProtocol::rcv_from_server() {
     rcv_plot(response);
 
     uint8_t multiplayer_enabled;
-    skt.recvall(&multiplayer_enabled, sizeof(uint8_t));
+    recv_or_throw(&multiplayer_enabled, sizeof(uint8_t));
     response.multiplayer_enabled = multiplayer_enabled != 0;
 
     break;
   }
   case MessageType::GAMES_LIST: {
     uint16_t count;
-    skt.recvall(&count, sizeof(count));
+    recv_or_throw(&count, sizeof(count));
     count = ntohs(count);
 
     for (uint16_t i = 0; i < count; i++) {
@@ -286,7 +291,7 @@ ServerMessage ClientProtocol::rcv_from_server() {
         game.owner_name = rcv_string();
 
         uint8_t multiplayer;
-        skt.recvall(&multiplayer, sizeof(multiplayer));
+        recv_or_throw(&multiplayer, sizeof(multiplayer));
         game.multiplayer = multiplayer != 0;
 
         game.player_name = rcv_string();
@@ -317,8 +322,8 @@ ServerMessage ClientProtocol::rcv_from_server() {
 ZoneId ClientProtocol::rcv_zone_id() {
     ZoneId zone;
     uint8_t kind, lvl;
-    skt.recvall(&kind, sizeof(uint8_t));
-    skt.recvall(&lvl, sizeof(uint8_t));
+    recv_or_throw(&kind, sizeof(uint8_t));
+    recv_or_throw(&lvl, sizeof(uint8_t));
 
     zone.kind = static_cast<ZoneId::Kind>(kind);
     zone.level = lvl;
@@ -329,7 +334,7 @@ ZoneId ClientProtocol::rcv_zone_id() {
 std::string ClientProtocol::rcv_string() {
   uint16_t length;
 
-  skt.recvall(&length, sizeof(uint16_t));
+  recv_or_throw(&length, sizeof(uint16_t));
   length = ntohs(length);
 
   if (length > 1024) {
@@ -337,7 +342,7 @@ std::string ClientProtocol::rcv_string() {
   }
 
   std::string value(length, '\0');
-  skt.recvall(value.data(), length);
+  recv_or_throw(value.data(), length);
 
   return value;
 }
@@ -350,7 +355,7 @@ void ClientProtocol::shutdown() {
 CharacterAppearance ClientProtocol::rcv_appearance(){
   uint16_t parts[7] = {};
   for(uint16_t& p : parts){
-    skt.recvall(&p, sizeof(uint16_t));
+    recv_or_throw(&p, sizeof(uint16_t));
     p = ntohs(p);
   }
   
@@ -359,29 +364,29 @@ CharacterAppearance ClientProtocol::rcv_appearance(){
 
 void ClientProtocol::rcv_inventory(ServerMessage &response) {
   uint32_t coins;
-  skt.recvall(&coins, sizeof(uint32_t));
+  recv_or_throw(&coins, sizeof(uint32_t));
   response.inventory.coins = ntohl(coins);
 
   uint8_t selected_slot;
-  skt.recvall(&selected_slot, sizeof(uint8_t));
+  recv_or_throw(&selected_slot, sizeof(uint8_t));
   response.inventory.selected_slot = selected_slot;
 
   uint8_t count;
-  skt.recvall(&count, sizeof(uint8_t));
+  recv_or_throw(&count, sizeof(uint8_t));
 
   for (uint8_t i = 0; i < count; i++) {
     InventorySlotState slot;
 
-    skt.recvall(&slot.index, sizeof(uint8_t));
+    recv_or_throw(&slot.index, sizeof(uint8_t));
 
     uint8_t type_raw, quality_raw;
-    skt.recvall(&type_raw, sizeof(uint8_t));
-    skt.recvall(&quality_raw, sizeof(uint8_t));
+    recv_or_throw(&type_raw, sizeof(uint8_t));
+    recv_or_throw(&quality_raw, sizeof(uint8_t));
 
     slot.type = static_cast<ItemType>(type_raw);
     slot.quality = static_cast<Quality>(quality_raw);
 
-    skt.recvall(&slot.quantity, sizeof(uint8_t));
+    recv_or_throw(&slot.quantity, sizeof(uint8_t));
 
     response.inventory.slot_vector.push_back(slot);
   }
@@ -389,23 +394,23 @@ void ClientProtocol::rcv_inventory(ServerMessage &response) {
 
 void ClientProtocol::rcv_time_state(ServerMessage &response) {
   uint16_t day_network;
-  skt.recvall(&day_network, sizeof(uint16_t));
+  recv_or_throw(&day_network, sizeof(uint16_t));
   response.time.day = ntohs(day_network);
 
-  skt.recvall(&response.time.hour, sizeof(uint8_t));
-  skt.recvall(&response.time.minute, sizeof(uint8_t));
-  skt.recvall(&response.time.finished, sizeof(uint8_t));
+  recv_or_throw(&response.time.hour, sizeof(uint8_t));
+  recv_or_throw(&response.time.minute, sizeof(uint8_t));
+  recv_or_throw(&response.time.finished, sizeof(uint8_t));
 }
 
 void ClientProtocol::rcv_world_info(ServerMessage &response) {
   uint32_t size_net;
-  skt.recvall(&size_net, sizeof(uint32_t));
+  recv_or_throw(&size_net, sizeof(uint32_t));
 
   uint32_t size = ntohl(size_net);
 
   std::vector<uint8_t> world_info_net(size);
 
-  skt.recvall(world_info_net.data(), size);
+  recv_or_throw(world_info_net.data(), size);
 
   response.world_info = std::move(world_info_net);
 
@@ -416,35 +421,35 @@ PlayerState ClientProtocol::rcv_player_state() {
     player.player_name = rcv_string();
 
     uint32_t coordinate;
-    skt.recvall(&coordinate, sizeof(uint32_t));
+    recv_or_throw(&coordinate, sizeof(uint32_t));
     float x = ntohl(coordinate) / 100.0f;
-    skt.recvall(&coordinate, sizeof(uint32_t));
+    recv_or_throw(&coordinate, sizeof(uint32_t));
     float y = ntohl(coordinate) / 100.0f;
 
     player.x = x;
     player.y = y;
 
     uint16_t health, max_health;
-    skt.recvall(&health, sizeof(uint16_t));
-    skt.recvall(&max_health, sizeof(uint16_t));
+    recv_or_throw(&health, sizeof(uint16_t));
+    recv_or_throw(&max_health, sizeof(uint16_t));
     player.health = ntohs(health);
     player.max_health = ntohs(max_health);
 
     uint16_t energy, max_energy;
-    skt.recvall(&energy, sizeof(uint16_t));
-    skt.recvall(&max_energy, sizeof(uint16_t));
+    recv_or_throw(&energy, sizeof(uint16_t));
+    recv_or_throw(&max_energy, sizeof(uint16_t));
 
     player.energy = htons(energy);
     player.max_energy = htons(max_energy);
 
     uint8_t unconscious;
-    skt.recvall(&unconscious, sizeof(uint8_t));
+    recv_or_throw(&unconscious, sizeof(uint8_t));
     player.unconscious = unconscious;
 
     player.appearance = rcv_appearance();
 
     uint8_t facing;
-    skt.recvall(&facing, sizeof(uint8_t));
+    recv_or_throw(&facing, sizeof(uint8_t));
     player.facing = static_cast<Direction>(facing);
 
     return player;
@@ -453,7 +458,7 @@ PlayerState ClientProtocol::rcv_player_state() {
 
 void ClientProtocol::rcv_projectiles(ServerMessage &response) {
     uint16_t count_net;
-    skt.recvall(&count_net, sizeof(uint16_t));
+    recv_or_throw(&count_net, sizeof(uint16_t));
 
     uint16_t count = ntohs(count_net);
 
@@ -463,15 +468,15 @@ void ClientProtocol::rcv_projectiles(ServerMessage &response) {
       ProjectileState projectil;
 
       uint8_t variant; 
-      skt.recvall(&variant, sizeof(uint8_t));
+      recv_or_throw(&variant, sizeof(uint8_t));
       projectil.variant = static_cast<EnemyVariant>(variant);
 
       uint32_t coordinate;
 
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       projectil.x = ntohl(coordinate);
 
-      skt.recvall(&coordinate, sizeof(uint32_t));
+      recv_or_throw(&coordinate, sizeof(uint32_t));
       projectil.y = coordinate;
 
       response.projectiles.push_back(projectil);
@@ -483,7 +488,7 @@ void ClientProtocol::rcv_projectiles(ServerMessage &response) {
 void ClientProtocol::rcv_plot(ServerMessage& response) {
   uint16_t plot_count_net;
 
-  skt.recvall(&plot_count_net, sizeof(uint16_t));
+  recv_or_throw(&plot_count_net, sizeof(uint16_t));
 
   uint16_t plot_count = ntohs(plot_count_net);
   
@@ -495,15 +500,15 @@ void ClientProtocol::rcv_plot(ServerMessage& response) {
     uint16_t x, y, grown, required;
     uint8_t has_crop, crop_type, needs_water, ready;
 
-    skt.recvall(&x, sizeof(uint16_t));
-    skt.recvall(&y, sizeof(uint16_t));
-    skt.recvall(&grown, sizeof(uint16_t));
-    skt.recvall(&required, sizeof(uint16_t));
+    recv_or_throw(&x, sizeof(uint16_t));
+    recv_or_throw(&y, sizeof(uint16_t));
+    recv_or_throw(&grown, sizeof(uint16_t));
+    recv_or_throw(&required, sizeof(uint16_t));
 
-    skt.recvall(&has_crop, sizeof(uint8_t));
-    skt.recvall(&crop_type, sizeof(uint8_t));
-    skt.recvall(&needs_water, sizeof(uint8_t));
-    skt.recvall(&ready, sizeof(uint8_t));
+    recv_or_throw(&has_crop, sizeof(uint8_t));
+    recv_or_throw(&crop_type, sizeof(uint8_t));
+    recv_or_throw(&needs_water, sizeof(uint8_t));
+    recv_or_throw(&ready, sizeof(uint8_t));
 
     plot.cell_x = ntohs(x);
     plot.cell_y = ntohs(y);
@@ -521,7 +526,7 @@ void ClientProtocol::rcv_plot(ServerMessage& response) {
 
 void ClientProtocol::rcv_chat_message(ServerMessage &response) {
   uint8_t kind;
-  skt.recvall(&kind, sizeof(uint8_t));
+  recv_or_throw(&kind, sizeof(uint8_t));
 
   response.chat.kind = static_cast<ChatKind>(kind);
   response.chat.sender = rcv_string();
