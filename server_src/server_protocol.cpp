@@ -311,7 +311,10 @@ void ServerProtocol::send_world_info(const World& world) {
      *       u8 kind destino, u8 level destino, i32 llegada x * 100,
      *       i32 llegada y * 100
      *     u16 cantidad de elementos estaticos
-     *     por elemento estatico: u8 tipo, i32 celda x, i32 celda y
+     *     por elemento estatico: u8 tipo (0-13 existentes,
+     *       14=ABANDONED_CHEST, 15=OFFERING_CROPS, 16=OFFERING_METALS,
+     *       17=OFFERING_ANIMALS, 18=OFFERING_FIGHT, 19=OFFERING_MONEY,
+     *       20=TRAP_FLAME_UP), i32 celda x, i32 celda y
      *     datos propios de granja o pueblo, incluido el rectangulo exterior
      *     opcional del centro comunitario
      */

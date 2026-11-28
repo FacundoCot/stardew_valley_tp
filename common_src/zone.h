@@ -98,7 +98,14 @@ enum class StaticElementType : uint8_t {
     TRAP_SPIKES = 10,
     TRAP_FLAME_LEFT = 11,
     TRAP_FLAME_RIGHT = 12,
-    TRAP_FLAME_DOWN = 13
+    TRAP_FLAME_DOWN = 13,
+    ABANDONED_CHEST = 14,
+    OFFERING_CROPS = 15,
+    OFFERING_METALS = 16,
+    OFFERING_ANIMALS = 17,
+    OFFERING_FIGHT = 18,
+    OFFERING_MONEY = 19,
+    TRAP_FLAME_UP = 20
 };
 
 struct StaticElement {
